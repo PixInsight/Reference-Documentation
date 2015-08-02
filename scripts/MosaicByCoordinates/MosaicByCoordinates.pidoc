@@ -54,7 +54,7 @@
    MosaicByCoordinates can cope with two kind of geometric distortions:
     \list{
       {
-         \s{Projection distortions \label Projection}:
+         \s{Projection distortions}:
          When two images are not centered in the same point they have different projections.
          The difference in the projections causes that there is not a lineal transformation between them.
          This effect is stronger in images with short focal length.
@@ -65,7 +65,7 @@
          \figure{ \image[width:100\%;height:auto]{../AlignByCoordinates/ProjectionDistortion.gif}}
       }
       {
-         \s{Geometric optical aberrations \label Aberrations}:
+         \s{Geometric optical aberrations}:
          The plate solving of astronomical images is usually done supposing that the optical system can be modeled by
          a \xref{http://en.wikipedia.org/wiki/Gnomonic_projection}{Gnomonic projection} \ref WikiProjection{.}
          However, many lenses or telescopes don't follow strictly this projection.
@@ -164,7 +164,7 @@
             all the tiles.
             Sometimes these can be very large so the script trunks them to 20000 pixels.
          }
-         {Calculate}
+         {Calculate \label Calculate}
          {
             This button calculates the values for the geometry fields set to automatic.
             It analyzes the tiles an calculates the best geometry for the mosaic.
@@ -176,6 +176,25 @@
    {
       \definition
       {
+         {Quality}
+         {
+            This option determines the quality of the output:
+            \list
+            {
+               {
+                  \s{Fast \label Fast}: This option calculates the alignment transformation for a few pixels
+                  and then approximates the transformation for the rest of pixels using splines.
+                  The quality of the transformation is usually good enough for most uses but it is not guaranteed that
+                  all the pixels are correct.
+               }
+               {
+                  \s{High quality \label HQ}: This option calculates the alignment transformation for all the pixels in
+                  the image.
+                  The quality of the result is the best possible but the process can be quite slow,
+                  up to several minutes for each image.
+               }
+            }
+         }
          {Pixel interpolation}
          {
             This option determines the algorithm for pixel interpolation.
@@ -277,7 +296,17 @@
    Merging the channels before executing MosaicByCoordinates allows to do a different color calibration for each tile. This is useful when the
    light pollution causes a different color drift in each tile.
 
-   \figure{ \image{MosaicExample1.gif} }
+   \figure {
+      \figtag \s {Mosaic example}
+      \imageselect[menupos:top] {
+         MosaicExample0.png      { Original Tiles }
+         MosaicExample4.png      { Aligned Tile 1 }
+         MosaicExample5.png      { Aligned Tile 2 }
+         MosaicExample6.png      { Aligned Tile 3 }
+         MosaicExample7.png      { Merged mosaic }
+         MosaicExample8.png      { Annotated mosaic }
+      }
+   }
 }
 
 \section{Tips}
@@ -285,15 +314,15 @@
    \list
    {
       {
-         Since AlignByCoordinates uses the coordinates of the image as the sole method for aligning the images,
+         Since MosaicByCoordinates uses the coordinates of the image as the sole method for aligning the images,
          the coordinates solution must be of very high precision.
          It should have residuals of less than one pixel.
          \vs
          For narrow field images taken with long focal lengths (usually more than 1000mm) and lenses of high optical quality,
-         the solution can be lineal (degree 1).
+         the solution usually doesn't need distortion correction.
          However, images taken with short focal lengths (<100mm) or lenses with strong aberrations (for example, Newton telescopes with coma),
-         the solution must use higher order polynomials in order to achieve the required precision.
-         These solutions can be found using both \sref{ImageSolver}{ImageSolver} and \sref{ManualImageSolver}{ManualImageSolver}.
+         the coordinates should be calculated using distortion correction in order to achieve the required precision.
+         These coordinates solutions can be calculated using both \sref{ImageSolver}{ImageSolver} and \sref{ManualImageSolver}{ManualImageSolver}.
       }
       {
          The automatic calculation of the geometry of the algorithm is usually valid.
@@ -305,10 +334,11 @@
          {
             {
                In narrow field images (at most a few degrees) all the projections give very similar results.
-               \e{Gnomonic} is recommended in this case because it is the fastest are more compatible projection.
+               \e{Gnomonic} is recommended in this case because it is the fastest and more compatible projection.
             }
             {For medium/wide field mosaics (5-120 degrees) you should use the \e{Stereographic} or \e{Mercator} projections.}
-            {For all-sky images the best projection is \e{Hammer-Aitoff}.}
+            {For mosaics that cover the visible sky Orthographic projection is a good fit.}
+            {\e{Hammer-Aitoff} allows to make mosaics of the full sky sphere.}
             {For images not covered by the previous cases you should try which projection is best for the image.}
          }
       }
@@ -318,6 +348,10 @@
          you can temporarily configure the resolution to a higher value in order to reduce the final size of the mosaic
          and accelerate the process.
          Multiplying the resolution by 2 makes the script 4 times faster.
+      }
+      {
+         The "\lref{Fast}{Fast}" quality is useful to optimize the settings of the mosaic,
+         however the "\lref{HQ}{High quality}" option usually is needed for the final image.
       }
    }
 }
@@ -352,4 +386,4 @@
 \relatedtool DynamicAlignment
 \relatedtool GradientMergeMosaic
 
-\make[noauthors]
+\make

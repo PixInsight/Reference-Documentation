@@ -42,7 +42,7 @@
    This section contains brief descriptions of the supported projections.
    For more in-depth information you should click in the links available for each projection
    or read the document with the specification of the representation of celestial coordinates
-   in FITS images \ref CalabrettaCelestial.
+   in FITS images \ref CalabrettaCelestial \ref GreisenWCS.
 
    Each projection has two examples with a representation of the projection centered in the equator
    and in one of the poles.
@@ -114,6 +114,15 @@
       The \xref{http://en.wikipedia.org/wiki/Hammer_projection}{Hammer-Aitoff} projection is an all-sky
       projection with the property of being equal-area.
    }
+   \subsection {Orthographic}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{Orthographic0.jpg}\image[width:49.5\%;height:auto]{Orthographic90.jpg}
+      }
+      The \xref{http://en.wikipedia.org/wiki/Orthographic_projection_\%28cartography\%29}{Orthographic} projection maps a hemisphere of the sky to a circle.
+      It can be used for modelling the projection of images taken with some fisheye lenses.
+   }
 }
 
 \reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
@@ -129,4 +138,4 @@
 \relatedscript MosaicByCoordinates
 \relatedscript AlignByCoordinates
 
-\make[noauthors]
+\make
