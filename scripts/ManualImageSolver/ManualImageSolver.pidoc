@@ -13,7 +13,7 @@
 }
 
 \copyright {
-   2013, Andrés del Pozo
+   2013-15, Andrés del Pozo
 }
 
 \brief {
@@ -51,7 +51,7 @@
    \subsection {Reference image \label ReferenceImage}
    {
       ManualImageSolver requires a reference image that covers completely the target image.
-      This image should be of good quality, it must have enough stars in the whole area
+      This image should be of good quality, it must have enough stars in the entire area
       of the target image and it must have a high quality coordinates solution.
       Although a real image can be used, the best results are achieved using a synthetic
       image generated using \sref{CatalogStarGenerator}{CatalogStarGenerator}.
@@ -61,6 +61,22 @@
 
       These are a few suggestions for generating the reference image:
       \list{
+         {
+            Use a resolution (or focal length) not too different to the target image.
+            A factor of 2 should be good enough.
+            i.e. if the target image has an estimated resolution of 2 sec/pix,
+            the reference image should have a resolution between 1 and 4.
+         }
+         {
+            The reference image must contain the entire target image.
+            It doesn't mind that the reference image is bigger than the target,
+            but the reference must cover the entire target.
+         }
+         {
+            Chose a suitable \dref{Projections}{projection} for the image.
+            For most images the Gnomonic projection is the best one.
+            For very short focal length images (i.e. all-sky cameras, fisheye lenses) Orthographic or Zenithal Equal Area could be better.
+         }
          {
             For wide field images the best catalog in CatalogStarGenerator is "BrightStars".
             This catalog contains most stars with magnitude up to 7.
@@ -101,9 +117,9 @@
             Find the position of the new control point in the target image and move it to the position of the star.
          }
       }
-      The first step (identifying the same star in both images) is perhaps the hardest part of the process.
-      Fortunately, \tref{DynamicAlignment}{DynamicAlignment} can predict the approximate position of the
-      control points in the target image after the two or three first control points have been set.
+      Identifying the same star in both images is perhaps the hardest part of the process.
+      Fortunately, after two or three control points have been set \tref{DynamicAlignment}{DynamicAlignment}
+      can predict the approximate position of the control points in the target image.
       Because of this, only the two first points are really difficult to match in both images.
       After them, the rest of points can be matched using the prediction of \tref{DynamicAlignment}{DynamicAlignment}
       and some common sense.
@@ -116,7 +132,7 @@
       These are a few suggestions for selecting the control points:
       \list{
          {
-            You should select control points covering the whole image.
+            You should select control points covering the entire image.
             There should be control points near the corners of the image.
          }
          {
@@ -169,26 +185,12 @@
          {
             This parameter shows a list of all the images open in PixInsight that have coordinates defined.
             You should select the image that was used for creating the control points icon or one with exactly the same
-            geometry.
-         }
-
-         { Polynomial degree \label degree}
-         {
-            This parameter configures the degree of the polynomials used for defining the solution.
-            When the image has no distortion or you only need an approximate solution you should use a value
-            of one (lineal solution).
-
-            Values greater than one can be used when the image has geometric distortions.
-            The best value can be found by trial and error.
-            The script shows in the console several statistics that can help to choose the correct value.
-            The \lref{residuals}{residuals image} can be helpful too.
-            For most common optical systems the polynomial degree can be 2 or 3, and very rarely values greater
-            than 5 are advisable.
+            geometry and coordinates.
          }
 
          { Generate residuals image \label residuals}
          {
-            When this option is selected after finding the solution the script generates an image which shows the residuals
+            When this option is selected the script generates an image which shows the residuals
             of the solution.
             The image shows as green crosses the predicted position of the control points using the calculated solution.
             Red lines from each control point join the predicted position to the actual position marked by the user.
@@ -198,34 +200,48 @@
             should have degenerated to points).
             When there is a control point with misplaced position its red arrow is much longer than
             the rest of control points.
-            When most red lines are long you should increase the value of the \lref{degree}{degree of the polynomial}.
          }
 
-         { Show distortion map }
+         { Distortion correction \label distortion}
+         {
+            This parameter activates the distortion correction using surface splines.
+            This option should be selected when the image deviates from an ideal projected image.
+            This usually happens in images taken with focal lengths shorter than 400mm.
+
+            When this option is active the script stores the solution in the properties of the image using a non-standard format.
+            In order to be able to use the solution in other applications,
+            the script also computes a lineal solution (without distortion correction)
+            and stores it in the keywords of the image in the WCS format.
+
+            The options \lref{DistortionMap}{Show distortion map} and \lref{residuals}{Generate residuals image} can help
+            to evaluate the quality of the distortion correction.
+         }
+
+         { Show distortion map \label DistortionMap}
          {
             When this option is activated the script creates a new window with a representation
             of the distortions in the image.
             The new image contains a grid with arrows at the center of each cell.
             The arrows point to the point where the center of the cells would be located if the image didn't have optical aberrations.
-            Since usually the aberrations are quite small, the arrows are exaggerated ten times.
 
-            This option is only enabled when the polynomial degree is greater than one.
+            This option is only enabled when the \lref{distortion}{distortion correction} is active.
             \figure{ \image[width:100\%;height:auto]{../ImageSolver/DistortionMap.png} }
          }
 
-         { Generate distortion model }
+         { Generate distortion model \label DistortionModel}
          {
-            This option is available when the polynomial degree is greater than one.
             The script generates a CSV archive with a distortion model that consists in a list of points and their
              displacement relative to an ideal image with no geometrical optical aberrations.
             The points used in the model are the control points, so the control points should cover the whole image for best results.
-
             The distortion model is compatible with \tref{StarAlignment}{StarAlignment} and \sref{ImageSolver}{ImageSolver}.
+
+            This option is only enabled when the \lref{distortion}{distortion correction} is active.
          }
       }
 
-      After running the script, the target image gets its coordinates solution and the console shows the values
+      When the script finishes successfully, stores the coordinates in the image and the console shows the values
       of this solution.
+
       The quality of the solution can be checked analyzing the value of the RMS error reported in the console,
       analyzing the residuals image and using AnnotationScript for drawing a grid and the position of the
       stars on the target image.
@@ -234,7 +250,7 @@
 
 \section{Advanced tasks}
 {
-   \subsection{Solution optimization \label optimization}
+   \subsection{Solution optimization}
    {
       \image[float:right;width:50\%;height:auto;margin-left:5px]{ImageSolverOptimize.png}
       Since the process of defining the control points for ManualImageSolver is quite slow and tedious,
@@ -244,13 +260,13 @@
       by \sref{ImageSolver}{ImageSolver} which can use several hundreds of samples.
 
       The solutions calculated by ManualImageSolver can be optimized using \sref{ImageSolver}{ImageSolver}.
-      Although \sref{ImageSolver}{ImageSolver} can not solve many images, when these images are already solved,
+      Although \sref{ImageSolver}{ImageSolver} can not solve some images starting from scratch, when these images are already solved,
       \sref{ImageSolver}{ImageSolver} can be used for further improving the solution.
 
       After solving the image using ManualImageSolver you can run \sref{ImageSolver}{ImageSolver} selecting the option
-      "Only apply optimization" which is available at the "Advanced parameters" section.
-      It is important to configure correctly the degree of the polynomials of the solution and the catalog filter in
-      order to extract enough (but not too many) stars.
+      "Only apply optimization" which is available at the "Image parameters" section.
+      It is important to activate the distortion correction and set good values in the catalog filter in order to extract enough
+      (but not too many) stars.
 
       The possibility of optimizing the solutions using \sref{ImageSolver}{ImageSolver} allows to
       use ManualImageSolver to get an approximate solution using only a few control points and then
@@ -261,6 +277,7 @@
    {
       The process of solving images using ManualImageSolver is quite tedious because the user has to define
       the control points one by one. When you want to solve many images, this get old fast.
+      This section assumes that the images have geometric distortions since ManualImageSolver is usually not necessary for undistorted images.
 
       There are several strategies than can be used for accelerating this process.
       The next sections explain them, from the fastest/easiest to the slowest.
@@ -292,13 +309,11 @@
                The center can be estimated using a star chart.
             }
             {
-               Configure the catalog, magnitude, star sensitivity and polynomial degree following the instructions of
+               Configure the catalog, magnitude, star sensitivity and distortion correction following the instructions of
                \sref{ImageSolver}{ImageSolver}.
             }
             {
                In the field \s{Distortion model} select the path of the distortion model.
-               This option is only active when "Only apply optimization"
-               is not selected.
             }
             {
                Press Ok for solving the image.
@@ -316,7 +331,7 @@
             }
             {
                You can also analyze the \e{residuals image}.
-               There should be detected stars (green crosses) across the whole image and the residuals must be
+               There should be detected stars (green crosses) across the entire image and the residuals must be
                small (very short red lines from the center of the green crosses).
                When the residuals are large (long red lines) or there are few detected stars the solution is probably
                wrong.
@@ -326,7 +341,7 @@
                position of known features on the image.
             }
          }
-         If an image can not be solved using this method you have to use the second method.
+         If an image can not be solved using this method you can use the second method.
       }
 
       \division{Method 2 - Distortion model and a few control points}
@@ -351,7 +366,7 @@
                find a solution.
             }
             {
-               Configure the rest of parameters (catalog magnitude, star sensitivity, polynomial degree) and
+               Configure the rest of parameters (catalog magnitude, star sensitivity, distortion correction) and
                \u{select the \e{distortion model}}.
             }
             {
@@ -374,18 +389,15 @@
             {
                Create a \tref{DynamicAlignment}{DynamicAlignment} icon with enough control points to get fair approximation to the solution.
                Usually you would need (depending on the distortions of the image) about 15-30 points.
-               With so few control points you should not use a high value for the polynomial degree.
-               A value of 2 or 3 should be enough.
             }
             {
                Launch \sref{ImageSolver}{ImageSolver} and select the option "Only apply optimization".
-               You can use (if necessary) a higher value for the polynomial degree.
             }
          }
 
-         Even if \sref{ImageSolver}{ImageSolver} still could not solve the image, the first step (ManualImageSolver) has calculated
-         a solution good enough for most purposes.
-         In this extreme case you should add more control points to ManualImageSolver for improving the solution.
+         Even if \sref{ImageSolver}{ImageSolver} still could not solve the image, the first step (ManualImageSolver)
+         has already calculated a solution good enough for most purposes.
+         In this extreme case you could add more control points to ManualImageSolver for improving the solution.
       }
    }
 }
@@ -406,16 +418,19 @@
          Now for each control point it has the celestial coordinates and the pixel coordinates in the target image.
       }
       {
-         The script computes an approximation to the celestial coordinates of the center of the image and creates a Gnomonic projection with origin at the center of the image.
+         The script computes an approximation to the celestial coordinates of the center of the image and creates a projection
+          with origin at the center of the image.
+          The projection used is of the same class (\dref{Projections}{Gnomonic, Orthographic, etc)} as the projection of the reference image.
       }
       {
-         Then it projects the celestial coordinates of the control points using the Gnomonic projection to a flat space (we can call it G).
+         Then it projects the celestial coordinates of the control points using the projection to a flat space (we can call it G).
       }
       {
-         Using a multiple linear regression it calculates the polynomials that transform the pixel coordinates of the control points to G.
+         If the distortion correction is active, it computes a pair of surface splines that transform the pixel coordinates of the control points to G.
+         If the distortion correction is not active, it computes a linear transformation matrix using multiple linear regression.
       }
       {
-         The projection and the polynomials define a solution.
+         The projection and the splines (or transformation matrix) define a solution.
          Since it used an approximation of the celestial coordinates of the center of the image, the solution is not optimal yet.
       }
       {
@@ -431,20 +446,15 @@
    \list
    {
       {
-         ManualImageSolver supposes that the image can be modelled by a Gnomonic projection.
-         This is true for images taken with most common optical systems:
-         optical telescopes, photographic lenses, etc.
-      }
-      {
          ManualImageSolver can not solve with precision images that are the result of
          the stitching of a mosaic if this has not be done preserving the geometric characteristics
          of the original images.
          Mosaics can have \e{jumps} result of a sloppy join of two tiles and usually
-         don't preserve the capability of be modelled by the Gnomonic projection.
+         don't preserve the capability of be modelled by any supported projection.
       }
       {
          The result is as good as the quality of the control points used in the process.
-         If the control points are misplaced or don't cover the whole image the result
+         If the control points are misplaced or don't cover the entire image the result
          won't be correct.
       }
    }
@@ -459,4 +469,4 @@
 \relatedscript CatalogStarGenerator
 \relatedtool DynamicAlignment
 
-\make[noauthors]
+\make

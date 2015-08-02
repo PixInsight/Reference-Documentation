@@ -126,10 +126,9 @@
             \list
             {
                {
-                  \s{Fast \label Fast}: This option calculates the alignment transformation for a few control points
-                  and then interpolates the transformation for the rest of values.
-                  The interpolations is done using \tref{DynamicAlignment}{DynamicAligment}.
-                  The quality of the transformation is usually good enough for some uses but it is not guaranteed that
+                  \s{Fast \label Fast}: This option calculates the alignment transformation for a few pixels
+                  and then approximates the transformation for the rest of pixels using splines.
+                  The quality of the transformation is usually good enough for most uses but it is not guaranteed that
                   all the pixels are correct.
                }
                {
@@ -190,14 +189,10 @@
          It should have residuals of less than one pixel.
          \vs
          For narrow field images taken with long focal lengths (usually more than 1000mm) and lenses of high optical quality,
-         the solution can be lineal (degree 1).
+         the solution usually doesn't need distortion correction.
          However, images taken with short focal lengths (<100mm) or lenses with strong aberrations (for example, Newton telescopes with coma),
-         the solution must use higher order polynomials in order to achieve the required precision.
-         These solutions can be found using both \sref{ImageSolver}{ImageSolver} and \sref{ManualImageSolver}{ManualImageSolver}.
-      }
-      {
-         The "\lref{Fast}{fast}" quality is useful to optimize the settings of the mosaic,
-         however the "\lref{HQ}{high quality}" option should be always used for the final image.
+         the coordinates should be calculated using distortion correction in order to achieve the required precision.
+         These coordinates solutions can be calculated using both \sref{ImageSolver}{ImageSolver} and \sref{ManualImageSolver}{ManualImageSolver}.
       }
    }
 }
@@ -226,4 +221,4 @@
 \relatedtool DynamicAlignment
 \relatedtool GradientMergeMosaic
 
-\make[noauthors]
+\make
