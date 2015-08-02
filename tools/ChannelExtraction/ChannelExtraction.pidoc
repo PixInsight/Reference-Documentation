@@ -1,0 +1,95 @@
+% ChannelExtraction tool
+
+\documentclass PIToolDoc
+
+\tool ChannelExtraction
+
+\module ColorSpaces
+
+\categories {
+   ColorSpaces, ChannelManagement
+}
+
+\keywords {
+   color spaces, pixel channels, color components, channel extraction, color component extraction
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Extracts one or more pixel channels or color space components from a RGB color image.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] ChannelExtraction.png
+
+   The ChannelExtraction tool allows you to obtain individual RGB pixel channels or color space components as newly generated grayscale images. ChannelExtraction does not modify the image to which it is applied, and it can only be applied to color images.\nf
+
+   ChannelExtraction supports the same color spaces as its cousin tool \tref ChannelCombination ChannelCombination:
+
+   \list[spaced] {
+      { The RGB color space. The red (R), green (G) and blue (B) pixel channels are always the first, second and third nominal channels of a RGB color image, respectively. }
+      { The CIE XYZ linear color space. CIE Y is the linear \e luminance, while CIE X and CIE Z are two linear chrominance components. }
+      { The \xref http://en.wikipedia.org/wiki/CIE_L*a*b* {CIE L*a*b*} color space. CIE L*, or \e lightness, is a nonlinear function of the luminance (or CIE Y), while CIE a* and CIE b* are two nonlinear chrominance components. The CIE *a component represents the ratio between red and green for each pixel, and CIE b* represents the ratio between yellow and blue. }
+      { The CIE L*c*h* color space. CIE L* is, as above, the \e lightness component. \xref http://en.wikipedia.org/wiki/Colorfulness {CIE *c}, or \e colorfulness, represents color saturation, and \xref http://en.wikipedia.org/wiki/Hue {CIE h*} is the color \e hue. }
+      { The HSV color ordering system, or \e hue, \e saturation and \e value. }
+      { The HSI color ordering system, or \e hue, \e saturation and \e intensity. }
+   }
+
+   Luminance/chrominance separations performed using the CIE XYZ, CIE L*a*b* and CIE L*c*h* color spaces are computed in the current \xref http://brucelindbloom.com/index.html?WorkingSpaceInfo.html {RGB working space} of the target image. RGB working spaces can be defined with the standard \tref RGBWorkingSpace RGBWorkingSpace tool.
+
+   In the HSV and HSI color ordering systems (they are not true color spaces in the colorimetric sense), note that the S component represents different color saturation functions, which we often denote as S\sub v and S\sub i, respectively, to differentiate them. For a formal description of the PixInsight implementation of HSV and HSI, see the documentation for the \tref ChannelCombination {ChannelCombination tool}.
+}
+
+\usage {
+
+   \subsection { Color Space } {
+
+      Select a color space to extract one or more channels or components. When you select a particular color space in this section, the names of the three \e {target images} (see the next section) are updated to reflect the corresponding channels or color components. By default, the RGB color space is selected.
+   }
+
+   \subsection { Channels / Target Images } {
+
+      This section provides three \e {target image} slots where you can specify the identifiers of the image(s) that will be generated with the extracted channels or components, according to the selected color space. Newly generated target images will be grayscale monochrome images with the same width and height in pixels as the image to which the process is applied. You normally will leave these fields with their default \e <Auto> value (actually, \e <Auto> is a special symbol used to signify an empty identifier).
+
+      You can disable one or two target images by simply unchecking the associated check boxes. In this way you can extract three, two or one channels or components. When a target image is enabled (checked) and left with its default \e <Auto> identifier, ChannelExtraction automatically assigns an identifier consisting of the identifier of the image to which the process is being applied plus a suffix corresponding to the selected channel or color space component. Employed suffixes are as follows:
+
+      \list {
+         { _R, _G, _B for target RGB channels. }
+         { _X, _Y, _Z for target CIE XYZ components. }
+         { _L, _a, _b for target CIE L*a*b* components. }
+         { _L, _c, _h for target CIE L*c*h* components. }
+         { _H, _Sv, _V for target HSV components. }
+         { _H, _Si, _I for target HSI components. }
+      }
+
+      Note that the applied suffixes are exactly the same that the \tref ChannelCombination {ChannelCombination tool} expects when its source images are also left with their default \e <Auto> identifiers. In this way channels and components can be easily extracted and combined using both tools.
+   }
+
+   \subsection { Sample Format } {
+
+      Select the default \e {Same as source} option to generate extracted channels and components as images with the same data type as the image to which the process is applied, or select one of the rest of options to cause ChannelExtraction to generate images with the specified data type:
+
+      \list {
+
+         {  8-bit unsigned integer (byte rage: \[0,255\]). }
+         {  16-bit unsigned integer (word rage: \[0,65535\]). }
+         {  32-bit unsigned integer  (double word rage: \[0,4294967295\]). }
+         {  32-bit \xref http://en.wikipedia.org/wiki/IEEE_754 {IEEE 754} floating point (single precision, approximately 10\sup 7 discrete values). }
+         {  64-bit IEEE 754 floating point (double precision, approximately 10\sup 15 discrete values). }
+      }
+   }
+}
+
+\relatedtools {
+   ChannelCombination, RGBWorkingSpace
+}
+
+\make[noauthors]

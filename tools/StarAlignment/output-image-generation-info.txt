@@ -1,0 +1,5 @@
+Generating registered image
+Homographic Projection / Bicubic Spline Interpolation, c=0.10: 100%
+Registration successful.
+Writing output file: /media/Pleiades001/test-images/m81m82L/registered/1/m81n-002L_c_r.fit
+Writing FITS image: 32-bit floating point, 1 channel(s), 2048x2048 pixels: 100%

@@ -1,0 +1,104 @@
+% GradientHDRCompression tool
+
+\documentclass PIToolDoc
+
+\tool GradientHDRCompression
+
+\module GradientDomain
+
+\categories {
+   GradientDomain, HDR
+}
+
+\keywords {
+   gradient domain, hdr, hdr compression, dynamic range, fine detail, HDRMultiscaleTransform
+}
+
+\author {
+   Georg Viehoever
+}
+
+\copyright {
+   2011 Georg Viehoever, published under LGPL 2.1. With contributions in terms of code, tests, ideas, etc. Carlos Milovic, Harry Page, and others.
+}
+
+\brief {
+   Implements a method that enhances fine contrast details. It can be applied to any image with large contrast differences, including HDR images.
+}
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] GradientHDRCompression_GUI.png
+
+   The GradientHDRCompression tool implements a reduction of strong contrasts (=gradients), thereby enhancing faint structures that are otherwise overwhelmed by high contrast structures in a image. At the same time, strong structures such as stars are reduced in brightness. The process can be applied to multi-channel images, where it changes the luminance, or to single channel images, where it just changes the single channel. The method can be applied to any high-contrast image, including HDR type images. The overall effect is quite different from \tref HDRMultiscaleTransform HDRMultiscaleTransform.
+
+   \center \image GradientHDRCompression_Effect.png
+
+   The image above shows the original HDR image on the left, and the compressed image on the right. Both images have only been processed with the Auto-STF functionality. Note the fine nebular structures that become visible, while stars as high contrast structures are suppressed. The resulting image usually does \e not have a natural look. It most likely needs combination with other images to achive a pleasant result.
+
+   GradientHDRCompression can be applied to both linear and nonlinear images. While regions with unchanged gradients will remain linear, the process in general will remove linearity from an image.
+
+} % description
+
+\usage {
+
+   \center \image GradientHDRCompression_GUI.png
+
+   The gradients in an image are defined by the difference between neighboring pixels. Because pixel values in PixInsight are always in the \[0,1\] range, gradients are always in the \[-1,+1\] range. GradientHDRCompression works by manipulating those gradients and restoring the image from the gradient information. For multi-channel images, only the luminance component is changed; for single channel images only the single channel is manipulated.
+
+   \subsection { Parameters } {
+
+       The GradientHDRCompression interface allows you to define the amount of processing applied to your image:
+
+      \definition {
+
+         { Max. log10(gradient) }
+         { \center \image GradientHDRCompression_Max.png
+
+            This parameter takes values in the \[-7,0\] range. It defines the maximum gradient in the image. Gradient values are replaced by \c {sign(gradient)*min(pow(10,value),abs(gradient))}. As a result, gradients that are stronger than \c {pow(10,value)} are reduced to \c {pow(10,value)}, preserving the gradient sign. In effect, strong gradients are reduced, making small contrasts more visible. The neutral value is zero (since \c {pow(10,0)=1}), smaller values are stronger. The image shows the effect for a value of -7, strongly reducing stars and enhancing fine nebular structures. }
+
+         { Min. log10(gradient) }
+         { \center \image GradientHDRCompression_Min.png
+
+            This parameter takes values in the \[-7,0\] range. It defines the minimum gradient in the image. Absolute gradient values smaller than \c {pow(10,value)} are replaced by 0. As a result, small gradients are suppressed, which can help in controlling image noise. Usually, however, this just leads to posterization. Handle with care! Setting it to -7 (neutral value) disables this filter. Larger values are stronger. The image shows the effect for a value of -4: Faint structures are almost completely gone. }
+
+	      { Exponent (gradient)}
+      	{ \center \image GradientHDRCompression_Exp.png
+
+            This parameter is defined in the \[0.001,1.1\] range. It defines how the gradient is transformed after filtering with max. and min. log10(gradient). The gradient is transformed using the formula \c {sign(gradient)*pow(abs(gradient),value)}. Values smaller than one move small gradients close to 1, increasing their importance. The effect can be similar to the max.log10(gradient) setting. The neutral value is 1; smaller values have stronger effects. The image shows the effect for a value of 0.19. }
+
+         { Rescale to \[0,1\] }
+         { When activated (default), the result image is rescaled to \[0,1\]; otherwise it is rescaled to its original range. }
+
+         { Preserve Color }
+         { \center \image GradientHDRCompression_Preserve.png
+
+            When activated (default), the color is preserved by using the original R:G:B ratios in the result image. If disabled, the result image just gets new luminance values, which typically leads to rather pale colors (especially in conjunction with Rescale to \[0,1\]). While Preserve Colors keeps as much of the color information as possible, the preserved colors can seem a little bit psychedelic. The screenshot shows the original and result images with Preserve Color on and off. Note the color on the blackboard. }
+      } % definition
+
+      Note: The process offers a realtime preview functionality (experimental) that tries to generate an approximation of the whole processed image.
+   } % subsection
+
+   \subsection { Usage Hints } {
+      \list {
+
+         { GradientHDRCompression is an experimental module. }
+
+         { Best results are probably achieved by using this filter to enhance faint structures, and combining the result with another image; see for example the tutorial in \ref peris. }
+
+         { If you have large scale gradients in the result, you may want to use the DynamicBackgroundExtraction (DBE) or AutomaticBackgroundExtractor (ABE) tools. }
+
+         {An alternative to Preserve Color is the use of the ColorSatutation tool. It will generally lead to more natural results, but can usually not restore the full color of faint structures. }
+	   } %list
+   } % subsection
+} %usage
+
+\relatedtools { HDRMultiscaleTransform, GradientMergeMosaic, ColorSaturation }
+
+\reference agrawal_raskar { \xref http://www.umiacs.umd.edu/~aagrawal/ICCV2007Course/index.html { Amit Agrawal and Ramesh Raskar, \e { Gradient Domain Manipulation Techniques in Vision and Graphics } } }
+
+\reference viehoever { \xref http://pixinsight.com/forum/index.php?topic=3295.0 { Georg Viehoever et. al., \e { Gradient Domain Operations } } }
+
+\reference peris { \xref http://pixinsight.com/tutorials/NGC7023-HDR/en.html { Vicent Peris, \e { Dynamic Range and Local Contrast } (tutorial) } }
+
+\make[noauthors]

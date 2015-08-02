@@ -1,0 +1,1889 @@
+\documentclass PIToolDoc
+
+\tool ImageIntegration
+
+\module ImageIntegration
+
+\categories {
+   ImageIntegration, Preprocessing
+}
+
+\keywords {
+   image integration, image combination, average combination, median combination, image normalization, image weighting, pixel rejection, noise estimators, scale estimators, robust statistics
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011-2013 Pleiades Astrophoto S.L.
+}
+
+\brief {
+   Combines images pixel-by-pixel for signal-to-noise ratio improvement and rejection of spurious image structures.
+}
+
+%\pragma[noequations]
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] ImageIntegration.png
+
+   Repeating measurements is a fundamental technique to analyze and reduce uncertainties in observations. By combining several measurements of the same quantity, random errors tend to cancel out and the observed value can thus be determined with less uncertainty. The image integration task does basically the same thing: combine a set of images of the same subject to improve the signal-to-noise ratio in the resulting image. The ImageIntegration tool allows you to perform this task with a large number of features and resources designed to help you get the best possible result out of your data. These resources include:
+
+   \list[spaced] {
+      { \s {Four pixel combination operations:} mean, median, maximum and minimum. }
+      { \s {Multiscale noise evaluation} for automatic image weighting and quality assessment. }
+      { \s {Additive and multiplicative image normalization} with optional scaling and seven user-selectable robust scale estimators. }
+      { \s {Seven pixel rejection algorithms:} min/max, percentile clipping, sigma clipping, Winsorized sigma clipping, averaged (Poisson based) sigma clipping, linear fit clipping and CCD noise model rejection. }
+      { \s {Asymmetric pixel rejection} where rejection limits can be defined independently for low and high pixel values. }
+      { \s {Range rejection} to exclude too dark and saturated pixels. }
+      { \s {Separate normalization} for the pixel rejection and pixel combination processes. }
+      { \s {Pixel rejection maps} automatically generated to facilitate evaluation of rejection parameters. }
+      { \s {Slope maps} that characterize the magnitude and spatial distribution of brightness variations in the integrated data set. }
+      { \s {Region of interest feature} to speed up the process of testing integration and rejection parameters. }
+      { \s {Built-in file cache system} for fast retrieval of image statistical data. }
+      { \s {Multithreaded execution} with optimized processor scalability. }
+   } \nf
+
+   \label image_combination
+   \subsection { Image Combination } {
+
+      In the image integration task we have a set \im {#: \{ f_0, \, \ldots, \, f_{N-1} \} :#} of images of the same region of the sky, which we have previously co-registered (for example, with the \tref StarAlignment StarAlignment tool). Each vector formed with the \im N pixels at the same \im (x,y) image coordinates,
+
+      \equation[numbered:eqn_pixel_stack] { #:
+         $$
+         \mathbf{f}_{xy} = \{ f_0(x,y), \, \ldots, \, f_{N-1}(x,y) \} \; ,
+         $$
+      :# }
+
+      is what we call a \e {pixel stack}. Since the images are mutually registered, each component of a pixel stack is an observation of the same pixel in the integrated image. Assuming that all components are \xref http://en.wikipedia.org/wiki/Independence_\%28probability_theory\%29 {independent measures} of a \xref http://en.wikipedia.org/wiki/Random_variable {random variable}, we can rewrite a pixel stack as
+
+      \equation[numbered:eqn_pixel_stack_as_sn] { #:
+         \begin{eqnarray*}
+         \mathbf{f}_{xy} = \{ \hspace{-1.5em} && S(x,y) + \epsilon_0(x,y) \\
+            && \vdots \\
+            && S(x,y) + \epsilon_{N-1}(x,y) \;\; \} \; ,
+         \end{eqnarray*}
+      :# }
+
+      where we have split each image \im f_i into the deterministic signal of interest \im S and an additive noise term \im {\\epsilon_i}. In the above equation, we assume that the \im N noise terms form a set of \e {zero-mean random errors:}
+
+      \equation[numbered:eqn_zero_mean_random_errors] { #:
+         $$
+         \lim_{N\to\infty} {\sum_{i=0}^{N-1} \epsilon_i(x,y)} = 0 \; .
+         $$
+      :# }
+
+      The noise materializes the uncertainty of the acquired data, which is inherent in any observational process. The equation above tells us that uncertainty cannot be removed from the data; we can reduce it by combining images, but there is no way to suppress it completely. In the image integration problem, we are representing uncertainty as the random errors in each pixel stack. There are many sources of random errors, such as instrumental limitations, unpredictable fluctuations and reading errors. The data also come altered by processes that are not representable as random variations at the pixel level, such as spurious data (cosmic ray impacts, plane trails), light pollution gradients and the effects of limited seeing. These problems require special procedures to be dealt with, such as \lref pixel_rejection {pixel rejection} and specific post-processing techniques.
+
+      The image integration process combines the components of each pixel stack into one pixel of an \e {integrated image}. Since our main goal is to improve the \xref http://en.wikipedia.org/wiki/Signal-to-noise_ratio {signal-to-noise ratio} (SNR) in the integrated result, we are interested in knowing the SNR increments that can be achieved with different pixel combination operations. The two operations relevant for this subject in the ImageIntegration tool are the mean (or average) and the median, which we'll discuss below.
+
+      \definition {
+         { \label average_combination Average Combination } {
+
+            When the average combination operation is applied, each pixel in the integrated image is calculated as the arithmetic mean of the components of the corresponding pixel stack, which we represent as \im {#: \left<\mathbf{f}_{xy}\right> :#}:
+
+            \equation[numbered:eqn_average_combination] { #:
+               $$
+               g_{avg}(x,y) = \left<\mathbf{f}_{xy}\right> = {1 \over N} {\sum_{i=0}^{N-1} f_i(x,y)} \; ,
+               $$
+            :# }
+
+            where we symbolize the average-integrated image as \im {#: g_{avg} :#}. If \im X_1 and \im X_2 are two \xref http://en.wikipedia.org/wiki/Uncorrelated {uncorrelated random variables}, a basic property of the \xref http://en.wikipedia.org/wiki/Variance variance is
+
+            \equation { #:
+               $$
+               \hbox{var}(aX_1 + bX_2) = a^{2}\hbox{var}(X_1) + b^{2}\hbox{var}(X_2) \; .
+               $$
+            :# }
+
+            The \xref http://en.wikipedia.org/wiki/Standard_error {standard error} of the mean can be easily derived from this property. Suppose we have a set \im {#: \{ X_1, \, \ldots, \, X_N \} :#} of \xref http://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables {independent and identically distributed} (iid) random variables. Since the variables are iid, all of them must have the same variance:
+
+            \equation { #:
+               $$
+               \hbox{var}(X_i) = \sigma^2 \quad \hbox{for} \;\, 1 \le i \le N \; ,
+               $$
+            :# }
+
+            where \im \\sigma is the \xref http://en.wikipedia.org/wiki/Standard_deviation {standard deviation} of the set. Therefore, the variance of the sum is
+
+            \equation { #:
+               $$
+               \hbox{var}(X_1 + X_2 + \dots + X_N) = N \sigma^2 \; ,
+               $$
+            :# }
+
+            and the variance of the mean is given by
+
+            \equation { #:
+               $$
+               \hbox{var} \left( \frac{X_1 + X_2 + \dots + X_N}{N} \right) =
+               \hbox{var} \left( \frac{1}{N} X_1 + \frac{1}{N} X_2 + \dots + \frac{1}{N} X_N \right) =
+               \frac{1}{N^2} N \sigma^2 = \frac{\sigma^2}{N} \; .
+               $$
+            :# }
+
+            Recall that we are working with co-registered images, so the assumption that all the components of any pixel stack are iid random variables looks plausible. Now we can deduce the standard deviation of the average-integrated image from the above equation. Since the operation is performed for all pixel stacks, assuming that all of the input images are \lref image_normalization normalized to equal variances,
+
+            \equation[numbered:eqn_stddev_of_average] { #:
+               $$
+               \sigma_{g_{avg}} = \frac{\sigma_{f_0}}{\sqrt{N}} \; .
+               $$
+            :# }
+
+            The increase in signal-to-noise ratio is proportional, assuming that all of the input images have equal SNR, to the square root of the number of integrated images:
+
+            \equation[numbered:eqn_snr_of_average] { #:
+               $$
+               \frac{\hbox{SNR}(g_{avg})}{\hbox{SNR}(f_0)} \propto \sqrt{N} \; .
+               $$
+            :# }
+
+            Note that the mean and the sum of a set of images are strictly equivalent in terms of SNR improvement. This becomes evident from Equation \eqnref eqn_zero_mean_random_errors: the sum of zero-mean random errors always tends to zero, and dividing it by a constant does not change anything. The mean is used in most implementations because it prevents saturation of pixels due to accumulated out-of-range values that cannot be represented within the available numeric range.
+         } % Average Combination
+
+         { \label median_combination Median Combination } {
+
+            The median of a \xref http://en.wikipedia.org/wiki/Probability_distribution {probability distribution} with \xref http://en.wikipedia.org/wiki/Probability_density_function {density function} \im f(x) is the value \im m for which smaller and greater values are equally probable:
+
+            \equation { #:
+               $$
+               \int_{-\infty}^{m}f(x)dx \, = \int_{m}^{+\infty}f(x)dx \, = \, {1 \over 2} \; .
+               $$
+            :# }
+
+            The \e{k}th \xref http://en.wikipedia.org/wiki/Order_statistic {order statistic} of a \xref http://en.wikipedia.org/wiki/Statistical_sample {statistical sample} is defined as its \e{k}th smallest sample value. For example, the minimum and maximum of a sample of size \e{N} are its 1st and \e{N}th order statistics, respectively. For a distribution sample \im {#: \{ f_0, \, \ldots, \, f_{N-1} \} :#} of odd length \im N, the median is the \im {N/2-th} order statistic. For even \im N, the median is defined conventionally as the mean of the two central smallest elements at \im {N/2} and \im {N/2 - 1}.
+
+            When the median combination operation is selected, the value of each pixel in the integrated image is the median of the components of the corresponding pixel stack:
+
+            \equation[numbered:eqn_median_combination] { #:
+               \begin{eqnarray*}
+               g_{med}(x,y) = \widetilde{\mathbf{f}}_{xy} = \left\{
+                \begin{array}{l l}
+                 f_{\lfloor N/2 \rfloor}(x, y) & \quad \mbox{for} \; N = 2k + 1 \\
+               \\
+                 \displaystyle\frac{f_{\lfloor N/2 \rfloor}(x,y) + f_{\lfloor N/2 \rfloor - 1}(x,y)}{2} & \quad \mbox{for} \; N = 2k
+                \end{array}
+                \right. , \\
+               \\
+               f_i(x,y) \le f_{i+1}(x,y), \; 0 \le i < N \; , &&
+               \end{eqnarray*}
+            :# }
+
+            where we represent the median-integrated image as \im {#: g_{med} :#}, and \im {#: \lfloor \cdot \rfloor :#} is the floor operator, or the largest integer less than or equal to the argument. From this definition, the easiest---and least efficient---way to compute the median is to sort the list of sample elements and take the value of the central element(s) to compute the median. Much better methods exist, based on quick selection algorithms \ref cormen_2009 \ref sedgewick_2011 and hard-coded selection networks \ref knuth_1973 \ref hillis_1992 \ref juille_1995 for small vector lengths, which we use intensively in our implementations.
+
+            To know the SNR improvement that can be expected from a median combination of images, we need to know the standard error of the median and compare it to the standard error of the mean. For a large sample of length N and \xref http://math.stackexchange.com/questions/173337/difference-between-population-sample-and-sample-value {population} median \im {m}, the \xref http://en.wikipedia.org/wiki/Median#Variance {asymptotic variance formula} gives the variance of the sample median \im {#: \hat{m} :#}:
+
+            \equation[numbered:eqn_asymptotic_variance] { #:
+               $$
+               \sigma^2_{\hat{m}} = \frac{1}{4Nf^{2}(m)} \; ,
+               $$
+            :# }
+
+            where \im {#: f(\cdot) :#} is the distribution's density function. For a \xref http://en.wikipedia.org/wiki/Normal_distribution#Standard_normal_distribution {standard normal distribution},
+
+            \equation[numbered:eqn_stderr_of_median] { #:
+               $$
+               \sigma_{\hat{m}} = \frac{\sqrt{2\pi}}{2\sqrt{N}} = \sqrt{\frac{\pi}{2N}} \; .
+               $$
+            :# }
+
+            Since the standard deviation of the sample mean is \im {#: 1/\sqrt{N} :#}, the standard deviation of the sample median is larger by a factor of \im {#: \sqrt{\pi/2} \simeq 1.253 :#}. From this value we can express the SNR increase for a median combination as
+
+            \equation[numbered:eqn_snr_of_median] { #:
+               $$
+               \frac{\hbox{SNR}(g_{med})}{\hbox{SNR}(f_0)} \propto \frac{\sqrt{N}}{1.253} \simeq 0.8 \sqrt{N} \; .
+               $$
+            :# }
+
+            By comparing equations \eqnnum eqn_snr_of_median and \eqnref eqn_snr_of_average, we see that the SNR achieved by a median combination is approximately a 20\% less than the SNR of the average combination of the same images (even less for small sets of images \ref mckean_1984). In terms of SNR improvement, average combination is \e always better, so what can a median combination be useful for? The answer leads to the subject of \xref http://en.wikipedia.org/wiki/Robust_estimator {robust estimation}. For a distribution with a strong \xref http://en.wikipedia.org/wiki/Central_tendency {central tendency}, the median is a robust estimator of the central value. This makes median combination an efficient method for image combination with implicit rejection of \e outliers, or pixels with too low or too high values due to spurious data. However, in our implementation we provide several pixel rejection algorithms that achieve similar outlier rejection efficiency and can be used with average combination without sacrificing so much signal.
+
+         } % Median Combination
+      }
+
+      \figure {
+
+         \figtag \s {A Bootstrap Estimation of the Standard Error of the Median}
+
+         In equations \eqnref eqn_asymptotic_variance and \eqnref eqn_stderr_of_median we have derived an analytical expression for the standard error of the median. To improve your understanding of how standard errors work with real sampled data, we'll show you a method to find the standard error of the median experimentally with the help of a script in PixInsight. In this method we generate a large number of observations from the same distribution, compute their medians and means, and compare the standard deviation of the set of medians with respect to the set of means. If the sample size and the number of observations are large enough, this method can be used to derive a good estimate of the standard error of the median---actually, of the standard error of virtually \e any statistical estimator with respect to any distribution. This procedure is similar to a \xref http://en.wikipedia.org/wiki/Bootstrapping_\%28statistics\%29 bootstrap estimation method, \ref wilcox_2012_3_1 but applied to a known distribution. The following script implements this powerful technique.
+
+         \code[import] stderr-median.js
+
+         The script generates sets of 2000 samples of 2000 random deviates from a standard normal distribution, stores their median and mean values as two vectors, and computes their standard deviations. After repeating this experiment 1000 times, the script gives an estimate of the ratio between the standard deviations of the median and the mean for a normal distribution. The average ratio tends to stabilize around 1.253 approximately. As expected, this is the same value we found analytically in Equation \eqnref eqn_stderr_of_median.
+
+         You can use this script as a starting point to perform interesting analyses. For example, you can reduce the value of the \c sampleSize macro to study the variation of the standard error of the median as a function of the sample size. With a little more work, you can transform the script to evaluate the error and efficiency of other estimators for different distributions.
+      }
+
+      \vs[length:2em]
+
+      \figure {
+
+         \figtag \s {An Image Integration Experiment}
+
+         \imageselect[menuPos:right] {
+            integration_original.png {Original image}
+            integration_noise.png    {A sample of uniform random noise}
+            integration_of_1.png     {Original image + noise}
+            integration_of_2.png     {Integration of    2 noisy images}
+            integration_of_4.png     {Integration of    4 noisy images}
+            integration_of_8.png     {Integration of    8 noisy images}
+            integration_of_16.png    {Integration of   16 noisy images}
+            integration_of_32.png    {Integration of   32 noisy images}
+            integration_of_64.png    {Integration of   64 noisy images}
+            integration_of_128.png   {Integration of  128 noisy images}
+            integration_of_256.png   {Integration of  256 noisy images}
+            integration_of_512.png   {Integration of  512 noisy images}
+            integration_of_1024.png  {Integration of 1024 noisy images}
+         }
+
+         \vs[length:0.5em]
+         \xref http://en.wikipedia.org/wiki/Uniform_distribution_\%28continuous\%29 {Uniformly distributed} random noise was added to 1024 duplicates of the original image, and 10 subsets of the noisy images were averaged following a dyadic sequence. The result can be seen on the comparison above. To carry out this experiment we used the following simple script in PixInsight. To run the script, you have to set the values of the BITMAP_FILE_PATH and OUTPUT_DIR macros to the file path of your original image (the TIFF, PNG, BMP, JPEG, GIF, PPM and XPM formats are supported) and the directory where output files (in PNG format) will be written, respectively.\nf
+
+         \vs[length:0.5em]
+         \code[import] noise-test.js
+      }
+
+      \vs[length:2em]
+
+      \figure {
+
+         \figtag \s {How many images?}
+
+         \image DeltaSNRGraph.svg
+         \vs
+         This graph plots the function
+
+         \equation[scale:0.7] { #:
+            $$
+            \Delta\mbox{SNR}(N) = \sqrt{N} - \sqrt{N-1} \; ,
+            $$
+         :# }
+
+         where \im[scale:0.8] N is the number of integrated images. This function represents the SNR improvement achieved by each new image added to an integration stack. The function decreases as more images are added, approaching zero asymptotically. The improvement remains significant up to about 30 images. Above 30 images, a considerable imaging effort is required to achieve a noticeable SNR increment. Beyond 50 frames, the task becomes impractical for long-exposure deep-sky images.
+      }
+   } % Image Combination
+
+   \vs
+   \label image_weighting
+   \subsection { Image Weighting } {
+
+      In the preceding section we have described average image combination on a simplified basis, assuming that all of the images contribute equally to the output integrated image. Actually this does not lead, in general, to an optimal combination in terms of SNR improvement. For example, suppose that one of the images being combined has more noise than the rest, or in other terms, its SNR is relatively low. If we simply combine the noisier image, it will degrade the result because the precondition assumed in Equation \eqnref eqn_pixel_stack_as_sn---that the signal has the same relative strength in all of the images---won't be true. As a result of this precondition violation, part of the noise in the faulty image will be treated as if it were signal, degrading the result.
+
+      To maximize SNR in the integrated image we assign a multiplicative weighting factor to each input image. Image weights should account as accurately as possible for the existing SNR differences in the original data set. The weighted average combination is therefore
+
+      \equation[numbered:eqn_weighted_average_combination] { #:
+         $$
+         g_{wavg}(x,y) = \frac {\sum_{i=0}^{N-1} w_i f_i(x,y)} {\sum_{i=0}^{N-1} w_i} \; ,
+         $$
+      :# }
+
+      where \im w_i is the weight assigned to the image \im {f_i}. We have implemented several methods to define image weights in a flexible fashion adapted to different imaging scenarios. The default image weighting method implemented in the ImageIntegration tool is \e {multiscale noise evaluation}, which we describe below.
+
+      \definition {
+         {\label noise_evaluation_weighting Noise Evaluation Weighting} {
+
+         In this method we compute robust noise estimates for each input image, and use them to minimize mean square error in the integrated result. This method has proven accurate and efficient, and works in a completely automatic way exclusively from existing image data, without requiring additional information such as exposure times or sensor parameters.
+
+         The implemented noise estimation algorithm is based on a multiscale data structure known as \e {multiresolution support} (MRS), and has been described in References \ref starck_1998 and \ref starck_2002. The original algorithm can fail to converge for images with very low noise levels, or images degraded at the one-pixel scale such as RAW DSLR frames demosaiced with bilinear interpolation. For improved robustness and accuracy, we iterate the MRS noise evaluation algorithm to find the highest wavelet layer where the algorithm converges for scales from 1 to 8 pixels. Finally, in the rare cases where MRS noise evaluation does not converge, we fall back to a k-sigma noise estimation scheme, which "cannot fail" to compute a less accurate but still robust and useful noise estimate. The following script summarizes these concepts.
+
+         \code[import] mrs-noise-evaluation.js
+
+         \vs[length:2em]
+
+         For a given function \im {f} and a set of measured function values \im {#: \hat{f} :#}, define \e {mean square error} as
+
+         \equation { #:
+            $$
+            e^2 = \hbox{E}\{ (f - \hat{f})^2 \} \; ,
+            $$
+         :# }
+
+         where \im {#: \hbox{E}(\cdot) :#} is the expected value of the argument. We define the signal-to-noise ratio function (SNR) as the ratio of the mean square sample value to the mean square error:
+
+         \equation[numbered:eqn_snr] { #:
+            $$
+            \hbox{SNR}(f,\hat{f}) = \frac{\hbox{E}(\hat{f}^2)}{\hbox{E}\{ (f - \hat{f})^2 \}} = \frac{\hbox{E}(\hat{f}^2)}{e^2} \; .
+            $$
+         :# }
+
+         Our goal in the noise evaluation weighting method is to minimize mean square error in the integrated image or, equivalently, maximize its signal-to-noise ratio. SNR, as defined by the above equation, suggests itself as an image weighting function: the mean square error can be approximated by the variance of the noise computed with the MRS algorithm, and calculating the mean square sample value is relatively trivial. Unfortunately, the SNR function has two main problems:
+
+         \list[spaced] {
+
+            { As a signal estimator, the numerator of the SNR equation (mean square sample) is not robust. In fact, its \xref http://en.wikipedia.org/wiki/Breakdown_point#Breakdown_point {breakdown point} is zero, which makes it extremely unstable. Attempts to use trimmed and Winsorized versions of the mean square fail in this case because the estimator becomes insufficient, and \xref http://en.wikipedia.org/wiki/Sufficient_statistic sufficiency is a crucial property here. To properly implement SNR as a weighting function, image weights should be computed after pixel rejection, which involves \im {O(N \\times n)} additional storage space requirements, \im N being the number of integrated images and \im n the number of pixels. Even after rejection and mormalization, the mean square sample is too sensitive to outliers, which degrades its accuracy as a signal estimator. }
+
+            { As a result of its lack of robustness, the SNR function is even more inaccurate in presence of sky gradients, which further limits its applicability. }
+         }
+
+         To overcome these problems we use a different, closely related but robust image weighting functional:
+
+         \equation[numbered:noise_evaluation_weighting_function] { #:
+            $$
+            w_i = \frac{1}{(k_i \cdot {\sigma_n}_i)^2} \; ,
+            $$
+         :# }
+
+         where \im {#: {\sigma_n}_i :#} is the standard deviation of the noise in the \im {#: i\hbox{th} :#} input image \im {f_i}, given by the MRS algorithm, and \im k_i is the scaling factor for \im {f_i}, given by Equation \eqnref eqn_scaling_factor.
+
+         The above weighting function is robust and efficient, and works well even when the images include relatively strong gradients. Equation \eqnnum noise_evaluation_weighting_function defines the weighting factor \im w_i that enters Equation \eqnref eqn_weighted_average_combination for weighted average combination. Our tests have shown that the efficiency of this weighting scheme is similar to the SNR function in terms of SNR maximization (inferior by only a 1\% - 3\%, depending on the quality of the data). The reliability and robustness of our weighting function more than compensate for a slightly worse performance.
+         }
+      }
+   } % Image Weighting
+
+   \label pixel_rejection
+   \subsection { Pixel Rejection } {
+
+      At the beginning of this document, we have said that the set of integrated images usually contains spurious data that cannot be characterized as random noise. Here we are interested in accidental phenomena such as plane or satellite trails and cosmic ray impacts on CCD and CMOS sensors, and also in instrumental defects such as hot or cold pixels and bad pixel rows and columns (with the necessary help of some dithering between subexposures!). All of these \e {bad data} form bright or dark artifacts at relatively small dimensional scales, which can be removed efficiently during the image integration task thanks to a family of statistical methods collectively known as \e {pixel rejection algorithms}.
+
+      The goal of a pixel rejection algorithm is to exclude \xref http://en.wikipedia.org/wiki/Outlier outliers from the set of pixels that are to be combined in each pixel stack. The differences between the rejection algorithms available lay basically in their sophistication and suitability to detect true outliers in small and large sets of images. In the following paragraphs we describe the rejection algorithms currently implemented in our ImageIntegration tool.
+
+      \label minmax_clipping
+      \definition {
+         { Min/Max Clipping } {
+
+            The simplest rejection algorithm is known as \e min/max. It simply excludes the \im {#: n_{low} :#} smallest and the \im {#: n_{high} :#} largest pixels from every pixel stack. While this is an efficient method for rejection of outliers---indeed it \e {cannot fail} to reject them---, it is quite poor in terms of signal preservation. For an \lref average_combination {average combination}, min/max rejection leads to a \e constant SNR loss proportional to the square root of the number of clipped pixels. For example, if you set \im {#: n_{low} = n_{high} = 1 :#}, then the result of min/max in SNR terms is the same as if you removed two images from your data set and used a better rejection algorithm such as sigma clipping.
+
+            Min/max clipping can be used as a counter-test to verify the efficiency of fine tuned rejection parameters for more efficient rejection algorithms. Other than these control tasks and some special cases, min/max should be avoided in production work.
+         }
+
+         { \label percentile_clipping Percentile Clipping } {
+
+            Percentile clipping is a one-step rejection algorithm where a pixel is excluded from a pixel stack if it falls outside a range defined in terms of the stack's \xref http://en.wikipedia.org/wiki/Central_tendency {central value}. The algorithm can be formalized as
+
+            \equation[numbered:eqn_percentile_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                  \mbox{PercentileClippingRejection}(\mathbf{x};p_{low},p_{high}) \; : \\
+                     \hspace{1em} m \leftarrow \mbox{median}(x_0, \, \dots, \, x_{N-1}) \\
+                     \hspace{1em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                        \hspace{2em} \mbox{if PercentileClipping}(x_i;m,p_{low},p_{high}) \\
+                           \hspace{3em} \mbox{reject} \; x_i \\
+                        \hspace{2em} \mbox{end} \\
+                     \hspace{1em} \mbox{end} \; , \\
+               \end{array}
+               $$
+            :# }
+
+            and the rejection function
+
+            \equation[numbered:eqn_percentile_clipping_rejection_function] { #:
+               $$
+               \mbox{PercentileClipping}(x;m,p_{low},p_{high}) \rightarrow \left\{
+                \begin{array}{l l}
+                 \mbox{true}& \hspace{1em} \mbox{for} \;\; \displaystyle{\frac{m - x}{m}} > p_{low} \\
+               \\
+                 \mbox{true}& \hspace{1em} \mbox{for} \;\; \displaystyle{\frac{x - m}{m}} > p_{high} \\
+               \\
+                 \mbox{false}& \hspace{1em} \mbox{otherwise}
+                \end{array}
+                \right. \; ,
+               $$
+            :# }
+
+            where \im x is the pixel value, \im m is the median of the pixel stack, and \im {#: p_{low} :#} and \im {#: p_{high} :#} are the low and high clipping point parameters, respectively, in the \[0,1\] range. Percentile clipping is a good choice only for small sets, say up to 6 images maximum. With just a few images, more sophisticated algorithms tend to fail because they are based on statistical moments higher than the mean (e.g., the standard deviation), which have little significance for very small samples.
+         }
+
+         { \label sigma_clipping Sigma Clipping } {
+
+            Sigma clipping is an iterative rejection algorithm. At each iteration, the central value and dispersion (or \e {sigma}) of the pixel stack are estimated, and all pixels whose distances from the central value are larger than a prescribed value in sigma units are rejected:
+
+            \equation[numbered:eqn_sigma_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                \mbox{SigmaClippingRejection}(\mathbf{x};s_{low},s_{high}) \; : \\
+                     \hspace{1em} \mbox{do} \\
+                        \hspace{2em} m \leftarrow \mbox{median}(x_0, \, \dots, \, x_{N-1}) \\
+                        \hspace{2em} \sigma \leftarrow \mbox{stddev}(x_0, \, \dots, \, x_{N-1}) \\
+                        \hspace{2em} n \leftarrow 0 \\
+                        \hspace{2em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} \mbox{if SigmaClipping}(x_i;m,\sigma,s_{low},s_{high}) \\
+                              \hspace{4em} \mbox{reject} \; x_i \\
+                              \hspace{4em} n \leftarrow n + 1 \\
+                           \hspace{3em} \mbox{end} \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} N \leftarrow N - n \\
+                     \hspace{1em} \mbox{while} \; n > 0 \; \mbox{and} \; N > 3 \; ,
+               \end{array}
+               $$
+            :# }
+
+            where \im {#: \mbox{SigmaClipping}(\cdot) :#} is defined as
+
+            \equation[numbered:eqn_sigma_clipping_function] { #:
+               $$
+               \mbox{SigmaClipping}(x;m,\sigma,s_{low},s_{high}) \rightarrow \left\{
+                \begin{array}{l l}
+                 \mbox{true}&	\hspace{1em} \mbox{for} \;\; \displaystyle{\frac{m - x}{\sigma}} > s_{low} \\
+               \\
+                 \mbox{true}&	\hspace{1em} \mbox{for} \;\; \displaystyle{\frac{x - m}{\sigma}} > s_{high} \\
+               \\
+                 \mbox{false}&	\hspace{1em} \mbox{otherwise}
+                \end{array}
+                \right. \; ,
+               $$
+            :# }
+
+            and \im x, \im m and \im \\sigma are the pixel value, the median and the standard deviation of the current stack, respectively. \im {#: s_{low} :#} and \im {#: s_{high} :#} are the clipping point parameters expressed in sigma units. The sigma clipping algorithm requires a minimum of 8 or 10 images. The more images the better, but for larger sets Winsorized sigma clipping and linear fit clipping tend to be more efficient.
+
+            \figure[numbered:fig_sigma_clipping] {
+
+               \figtag \s {Sigma Clipping Rejection}
+               \vs
+               \image SigmaClippingRejectionGraph.svg
+               \vs
+               The elements of a pixel stack have been sorted in ascending order and represented as circles on this graph. The red line labeled as \e m represents the median of the pixel stack. The two red lines above and below the median are the clipping points, \im {#: s_{high} :#} and \im {#: s_{low} :#} respectively in sigma units. All pixels falling outside the interval between the clipping points---represented as empty circles in the figure---will be rejected. However, are all of these rejected pixels true outliers? Compare with \lref linear_fit_clipping {linear fit clipping} rejection in Figure \figref {fig_linear_fit_clipping}.
+            }
+         }
+
+         { \label winsorized_sigma_clipping Winsorized Sigma Clipping } {
+
+            Winsorization,\ref tukey_1962 named after statistician Charles P. Winsor, is a process for robust estimation of sample parameters in presence of outliers. When a sample value falls outside the acceptable range, Winsorization does not simply reject it, but replaces it by the nearest valid neighbor in the sample. Winsorized estimates are usually more robust than estimates from simpler procedures such as trimming or truncation. To understand the Winsorization process, consider the following sorted set of 15 values:
+
+            \c { \s 9, 13, 15, 15, 17, 18, 18, 19, 21, 23, 24, 24, 25, \s 31, \s 33 } ,
+
+            where we can identify three outliers: 9 is suspiciously low, and 31 and 33 are clearly too high. Based on this intuition-driven rejection criterion, the Winsorized sample would be:
+
+            \c { \s 13, 13, 15, 15, 17, 18, 18, 19, 21, 23, 24, 24, 25, \s 25, \s 25 } ,
+
+            where the outliers have been replaced by their nearest valid neighbor values.
+
+            As implemented in our ImageIntegration tool, the Winsorized sigma clipping algorithm applies Winsorization to compute robust estimates of the central value and variability of each pixel stack. These estimates are called \e {Winsorized mean} and \e {Winsorized sigma}, respectively. The basic process has been described by Huber.\ref huber_2009 The implemented algorithm can be formalized as
+
+            \equation[numbered:eqn_winsorized_sigma_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                \mbox{WinsorizedSigmaClippingRejection}(\mathbf{x};s_{low},s_{high}) \; : \\
+                     \hspace{1em} \mbox{do} \\
+                        \hspace{2em} m \leftarrow \mbox{median}(x_0, \, \ldots, \, x_{N-1}) \\
+                        \hspace{2em} \sigma \leftarrow \mbox{stddev}(x_0, \, \ldots, \, x_{N-1}) \\
+                        \hspace{2em} \mathbf{t} \leftarrow \mathbf{x} \\
+                        \hspace{2em} \mbox{do} \\
+                           \hspace{3em} m_0  \leftarrow m - 1.5 \, \sigma \\
+                           \hspace{3em} m_1  \leftarrow m + 1.5 \, \sigma \\
+                           \hspace{3em} \mbox{Winsorize}(\mathbf{t};m_0,m_1) \\
+                           \hspace{3em} m \leftarrow \mbox{median}(t_0, \, \ldots, \, t_{N-1}) \\
+                           \hspace{3em} \sigma_0  \leftarrow \sigma \\
+                           \hspace{3em} \sigma \leftarrow 1.134 \times \mbox{stddev}(t_0, \, \ldots, \, t_{N-1}) \\
+                        \hspace{2em} \mbox{while} \; \displaystyle{\frac{|\sigma - \sigma_0|}{\sigma_0} > q} \\
+                        \hspace{2em} n \leftarrow 0 \\
+                        \hspace{2em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} \mbox{if SigmaClipping}(x_i;m,\sigma,s_{low},s_{high}) \\
+                              \hspace{4em} \mbox{reject} \; x_i \\
+                              \hspace{4em} n \leftarrow n + 1 \\
+                           \hspace{3em} \mbox{end} \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} N \leftarrow N - n \\
+                     \hspace{1em} \mbox{while} \; n > 0 \; \mbox{and} \; N > 3 \; ,
+               \end{array}
+               $$
+            :# }
+
+            where the constant \im q sets the iteration limit for Huber's loop (\im q = 0.0005 has been fixed in our implementation), the constant 1.134 is derived from the normal distribution for a sigma factor of 1.5 (as recommended in Huber's work), and the Winsorization function is defined as follows:
+
+            \equation[numbered:eqn_winsorization_function] { #:
+               $$
+               \begin{array}{l l}
+                  \mbox{Winsorize}(\mathbf{t};m_0,m_1) \; : \\
+                     \hspace{1em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                        \hspace{2em} t_i \leftarrow \left\{
+                        \begin{array}{l l}
+                           m_0 & \hspace{0.25em} \mbox{for} \;\; t_i < m_0 \\
+                           m_1 & \hspace{0.25em} \mbox{for} \;\; t_i > m_1 \\
+                           t_i & \hspace{0.25em} \mbox{otherwise}
+                        \end{array}
+                        \right. \\
+                     \hspace{1em} \mbox{end} \; .
+               \end{array}
+               $$
+            :# }
+
+            Winsorized sigma clipping is an excellent pixel rejection algorithm for relatively large sets of 15 or more images. For more than 20 images, this algorithm yields significantly better results than sigma clipping consistently in all of our tests.
+         }
+
+         { \label averaged_sigma_clipping Averaged Sigma Clipping } {
+
+            Our implementation of averaged sigma clipping is a variant of the similar algorithm (AVSIGCLIP) from the \xref http://iraf.noao.edu/scripts/irafhelp?imcombine {imcombine task of IRAF}. This algorithm works in two phases. In the first phase, the gain of an ideal detector with zero readout noise is estimated for each pixel stack. The second phase is an iterative sigma clipping procedure, where the estimated gains are used to compute the dispersion of each pixel stack around the median. Dispersion is calculated based on Poisson statistics, under the assumption that the noise in the images is proportional to the square root of the mean pixel values:
+
+            \equation[numbered:eqn_averaged_sigma_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                \mbox{AveragedSigmaClippingRejection}(\mathbf{x};s_{low},s_{high}) \; : \\
+                     \hspace{1em} m \leftarrow \mbox{median}(x_0, \, \ldots, \, x_{N-1}) \\
+                     \hspace{1em} s \leftarrow \sqrt{\displaystyle{\frac{\sum_{i = 0}^{N - 1} \frac{(x_i - m)^2}{m}}{N - 1}}} \\
+                     \hspace{1em} \mbox{do} \\
+                        \hspace{2em} m \leftarrow \mbox{median}(x_0, \, \ldots, \, x_{N-1}) \\
+                        \hspace{2em} \sigma \leftarrow s \cdot \sqrt{m} \\
+                        \hspace{2em} n \leftarrow 0 \\
+                        \hspace{2em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} \mbox{if SigmaClipping}(x_i;m,\sigma,s_{low},s_{high}) \\
+                              \hspace{4em} \mbox{reject} \; x_i \\
+                              \hspace{4em} n \leftarrow n + 1 \\
+                           \hspace{3em} \mbox{end} \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} N \leftarrow N - n \\
+                     \hspace{1em} \mbox{while} \; n > 0 \; \mbox{and} \; N > 3 \; .
+               \end{array}
+               $$
+            :# }
+
+            As we have implemented it, this algorithm works well for image sets of 10 or more images. The original implementation in IRAF works for smaller data sets because the proportionality between photons and pixel values, or the estimated sensor gain (the \im s variable in the algorithm above) is calculated for each row of pixels. In our implementation the sensor gain is estimated separately for each pixel stack, in order to avoid visible differences between adjacent rows in the output image.
+         }
+
+         { \label linear_fit_clipping Linear Fit Clipping } {
+
+            The linear fit clipping algorithm fits the best possible straight line to the set of pixel values in each pixel stack. Line fitting is performed with a twofold optimization criterion: minimize average absolute deviation and maximize inliers. All pixels whose vertical distances to the fitted line are larger than a user-defined value in absolute deviation units are rejected. This algorithm has been created by PTeam member and principal PixInsight developer Juan Conejero:
+
+            \equation[numbered:eqn_linear_fit_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                \mbox{LinearFitClippingRejection}(\mathbf{x};s_{low},s_{high}) \; : \\
+                     \hspace{1em} \mbox{do} \\
+                        \hspace{2em} \{x_0 \le \ldots \le x_{N-1} \} \leftarrow \hbox{sort}( \mathbf{x} ) \\
+                        \hspace{2em} \{a,b\} \leftarrow \mbox{FitLine}((0,x_0),(1,x_1), \, \ldots, \, (N-1,x_{N-1})) \\
+                        \hspace{2em} \sigma \leftarrow \displaystyle{{1 \over N} \sum_{i=0}^{N-1}|x_i - (ai + b)|} \\
+                        \hspace{2em} n \leftarrow 0 \\
+                        \hspace{2em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} \mbox{if LineClipping}(x_i;i,a,b,\sigma,s_{low},s_{high}) \\
+                              \hspace{4em} \mbox{reject} \; x_i \\
+                              \hspace{4em} n \leftarrow n + 1 \\
+                           \hspace{3em} \mbox{end} \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} N \leftarrow N - n \\
+                     \hspace{1em} \mbox{while} \; n > 0 \; \mbox{and} \; N > 3 \; .
+               \end{array}
+               $$
+            :# }
+
+            The FitLine function finds the two parameters of the line \im {y = ax + b} that minimizes average absolute deviation for an ordered set of points \im { #: \left[\{(0,x_0) ... (N-1,x_{N-1})\} \; : \; x_i \le x_{i+1}\right] :# }. In our implementation we have adapted a robust estimation algorithm from W. Press et al.,\ref press_2007 but other robust methods are equally applicable, such as a least squares fit based on eigenvector evaluation.\ref gorman_2009 The LineClipping function is defined as
+
+            \equation[numbered:eqn_line_clipping_function] { #:
+               $$
+               \mbox{LineClipping}(x;i,a,b,\sigma,s_{low},s_{high}) \rightarrow \left\{
+                \begin{array}{l l}
+                 \mbox{true}&	\hspace{1em} \mbox{for} \;\; \displaystyle{\frac{ai + b - x}{\sigma}} > s_{low} \\
+               \\
+                 \mbox{true}&	\hspace{1em} \mbox{for} \;\; \displaystyle{\frac{x - ai - b}{\sigma}} > s_{high} \\
+               \\
+                 \mbox{false}&	\hspace{1em} \mbox{otherwise}
+                \end{array}
+                \right. \; .
+               $$
+            :# }
+
+            Linear fit clipping is excellent for large sets of 25 or more images. The algorithm is robust both to outliers and to illumination differences among images of the integrated set, as happens in presence of sky gradients with differing spatial distributions and orientations. A byproduct of linear fit clipping is the slope of the fitted line for each pixel stack (the \im a variable in the above algorithms), which provides accurate estimates of the illumination differences among the images integrated for each pixel. In the ImageIntegration tool we generate \lref rejection_maps \e {slope map} images that gather this information.
+
+            \figure[numbered:fig_linear_fit_clipping] {
+
+               \figtag \s { Linear Fit Clipping Rejection }
+               \vs
+               \image LinearFitClippingRejectionGraph.svg
+               \vs
+               Linear fit clipping working for the same sorted set of data samples shown in Figure \figref fig_sigma_clipping for \lref sigma_clipping {sigma clipping rejection}. As before, empty circles represent rejected pixels. The algorithm adapts much better to variations caused by gradients with differing orientations and distributions throughout the set of integrated images. In this example, robust line fitting allows working with a more restrictive clipping interval to reject true outliers while preserving more significant data.
+            }
+         }
+
+         { \label ccd_noise_model_clipping CCD Noise Model Clipping } {
+
+            We implement the same CCDCLIP algorithm of the \xref http://iraf.noao.edu/scripts/irafhelp?imcombine {imcombine task of IRAF}. To apply this pixel rejection algorithm one has to know the precise gain and readout noise parameters of the CCD sensor used to acquire the images. In addition, the images must preserve the original relation between pixel values and photons or electrons. The noise model is \ref shaw_1992
+
+            \equation[numbered:eqn_ccd_noise_model] { #:
+               $$
+               \sigma = \sqrt{r^2 + {x \over G} + S^2x^2} \; ,
+               $$
+            :# }
+
+            where \im x is the pixel value in DN (DN stands for \e {data number}, or the value of a pixel stored in the raw CCD image), \im r is the readout noise in DN, \im G is the gain in DN/photon, and \im S is the \e {scale noise}, also known as \e {sensitivity noise}, a dimensionless factor representing multiplicative noise, e.g. noise introduced by flat fielding. Usually the scale noise is unknown and hence set to zero. The constant term in \im r represents additive noise, and the term proportional to the square root of the intensity value corresponds to \xref http://en.wikipedia.org/wiki/Poisson_distribution {Poisson noise}.
+
+            The algorithm is just a sigma clipping scheme where the CCD noise model is used to estimate the variability of the values in each pixel stack around the median:
+
+            \equation[numbered:eqn_ccd_noise_model_clipping_rejection] { #:
+               $$
+               \begin{array}{l l}
+                \mbox{CCDNoiseModelClippingRejection}(\mathbf{x};r,G,S,s_{low},s_{high}) \; : \\
+                     \hspace{1em} \mbox{do} \\
+                        \hspace{2em} m \leftarrow \mbox{median}(x_0, \, \ldots, \, x_{N-1}) \\
+                        \hspace{2em} \sigma \leftarrow \displaystyle{\sqrt{r^2 + {m \over G} + S^2m^2}} \\
+                        \hspace{2em} n \leftarrow 0 \\
+                        \hspace{2em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} \mbox{if SigmaClipping}(x_i;m,\sigma,s_{low},s_{high}) \\
+                              \hspace{4em} \mbox{reject} \; x_i \\
+                              \hspace{4em} n \leftarrow n + 1 \\
+                           \hspace{3em} \mbox{end} \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} N \leftarrow N - n \\
+                     \hspace{1em} \mbox{while} \; n > 0 \; \mbox{and} \; N > 3 \; .
+               \end{array}
+               $$
+            :# }
+         }
+      }
+   } % Pixel Rejection
+
+   \label image_normalization
+   \subsection { Image Normalization } {
+
+      The normalization process modifies the distribution of pixel values of each input image to make the whole data set \e {statistically compatible}. When a set of two or more images are normalized, statistical moments such as the mean and the variance are quantitatively comparable between any pair of images from the set. Put in simpler terms, normalization allows us to compare the histograms of all of the images, ruling out differences in signal strength and mean background values. Normalization is an absolutely necessary previous step to pixel rejection. If the images are not normalized, any pixel rejection scheme will yield meaningless results because it will work by comparing incongruent data samples (e.g., pixels from the background on an image could be compared with pixels from significant objects on another image). In the ImageIntegration tool we have implemented two separate and independent image normalization procedures for pixel rejection and image combination, as both tasks have different requirements in their statistical interpretation of the data.
+
+      \figure {
+
+         \figtag \s {Image Normalization Example}
+
+         \group[float,marginRight:10px,marginBottom:10px]{
+            \image NormalizationExampleImage1.png
+            \s a
+         }
+         \group{
+            \image NormalizationExampleImage1Histogram.png
+            \s b
+         }
+
+         \group[float,marginRight:10px,marginBottom:10px]{
+            \image NormalizationExampleImage2.png
+            \s c
+         }
+         \group{
+            \image NormalizationExampleImage2Histogram.png
+            \s d
+         }
+
+         \group[float,marginRight:10px,marginBottom:10px]{
+            \image NormalizationExampleImage2Normalized.png
+            \s e
+         }
+         \group{
+            \image NormalizationExampleImage2NormalizedHistogram.png
+            \s f
+         }
+
+         Two raw CCD images of the Cone nebula region, \s a and \s c, and their histograms \s b and \s d, respectively. Both original images are linear; they are represented here stretched nonlinearly to make them visible. For the same reason, the histograms have been enlarged 64:1 horizontally, so they cover a small initial section of 1/64 of the available numeric range. These images are not compatible statistically, as becomes evident by simply comparing the histograms: the positions and widths of both histogram peaks are very different. For example, mean background pixel values in the first image have values that are typical of bright nebulae in the second image. In \s e and \s f we have the second image (\s{c}) and its resulting histogram, respectively, after normalizing it to match the first image (\s{a}) by applying equations \eqnref eqn_scale_plus_zero_offset and \eqnref eqn_scaling_factor. Images courtesy of Oriol Lehmkuhl and Ivette Rodríguez.
+      }
+
+      \label scale_estimators
+      \division { Scale and Location Estimators }
+      {
+         Statistical estimates of \xref http://en.wikipedia.org/wiki/Central_tendency location (or central tendency) and \xref http://en.wikipedia.org/wiki/Statistical_dispersion scale (dispersion, or variability) play an essential role in the image integration task. For example, comparisons of unscaled noise estimates from different images are meaningless. Consider the two linear images, their histograms and noise estimates, shown in Figure \figref fig_scale_differences.
+
+         From the MRS Gaussian noise estimates,\ref starck_1998 the bottom image seems to be about three times less noisy than the top image, so it should be weighted much more than the top image for integration (about 11 times more in a mean square error minimization scheme). Doesn't this seem to be contradictory to the visual appearance of both images? In fact, the bottom image is just a duplicate of the top image, multiplied by 0.3. So \e {both images have exactly the same signal and noise components}, because other than the applied scaling operation, they are identical.
+
+         \figure[numbered:fig_scale_differences] {
+
+            \figtag \s {Different Scales, Different Images?}
+
+            \image[float,marginRight:10px] UnscaledNoiseExample1_img.jpg
+            \image UnscaledNoiseExample1_hist.png \n
+            \im[scale:0.8] {#: \sigma_n = 5.538 \times 10^{-5} :#} \nf
+            \vs
+            \image[float,marginRight:10px] UnscaledNoiseExample2_img.jpg
+            \image UnscaledNoiseExample2_hist.png \n
+            \im[scale:0.8] {#: \sigma_n = 1.661 \times 10^{-5} :#} \nf
+
+            Two registered images of the same region of the sky, shown with adaptive nonlinear stretch functions applied (\tref ScreenTransferFunction {STF AutoStretch} functions in PixInsight). Each image is accompanied by its histogram and MRS Gaussian noise estimate. The different image scales (in the statistical sense, not geometrical) are self-evident from the histogram, although not visually because of the applied adaptive stretch functions.
+         }
+
+         When integrating real images, similar situations to the one described above happen naturally due to different exposure times, sky conditions, sensor temperatures, and other acquisition factors. To compare noise estimates between different images, one has to take into account not only the noise values, but also the scaling factors that must be applied to make the noise estimates statistically compatible. Besides noise estimation (and its associated image weighting criterion), pixel rejection also depends critically on estimators of location and scale. For example, with the images shown above, a pixel pertaining to the sky background in the top image would be ranked the same as a pixel on a relatively bright area in the bottom image, probably pertaining to a moderately bright star (compare the histograms to understand why this would happen).
+
+         With the sole exception of the \lref ikss_estimator {IKSS estimator}, which we'll see below, the \xref http://en.wikipedia.org/wiki/Median median is used as an estimator of location in the current versions of the ImageIntegration tool. The median is a \xref http://cgm.cs.mcgill.ca/~athens/Geometric-Estimators/location.html {robust estimator of location} that works remarkably well for linear images because the typical distribution of linear pixel values has a very strong central tendency. In other words, the main histogram peak of a linear image is clearly unique and prominent. The choice of a scale estimator is more difficult, and can have an impact on the optimization of the whole image integration process. In its current versions, ImageIntegration implements seven estimators of scale that we'll describe summarily below.
+
+         \definition {
+
+            { \label avgdev_estimator Trimmed Average Absolute Deviation from the Median } {
+
+               The \xref https://en.wikipedia.org/wiki/Absolute_deviation {average absolute deviation} from the median has been the default scale estimator used in versions of the ImageIntegration tool released before mid-2013. For a sample \im {#: \{X_0, \, \ldots, \, X_{N-1}\} :#},
+
+               \equation[numbered:eqn_average_deviation] { #:
+                  $$
+                  \hbox{AvgDev}(\mathbf{X}) = {1 \over N} \sum_{i=0}^{N-1} |X_i - M| \; ,
+                  $$
+               :# }
+
+               where \im M is the sample median. As implemented in the ImageIntegration tool, the average absolute deviation is robustified by trimming all pixel samples outside the \[0.00002,0.99998\] range, which excludes cold and hot pixels, as well as most saturated pixels and bright spurious features (cosmics, etc). Yet this is a nonrobust estimator---its \xref http://en.wiktionary.org/wiki/breakdown_point {finite sample breakdown point} is zero---, so its use has to be questioned. The average absolute deviation has two important advantages though: its \xref http://en.wikipedia.org/wiki/Efficient_estimator efficiency is very high (88\% for a normal distribution), and it is also a rather \xref http://en.wikipedia.org/wiki/Sufficient_statistic {sufficient estimator}. Sufficiency of a statistical estimator refers to its ability to use all of the available sampled data to estimate its corresponding parameter. This explains why the average absolute deviation still works very well in some cases, and why it has been working reasonably well in general, until we have implemented the current set of robust scale estimators.
+            }
+
+            { \label mad_estimator Median Absolute Deviation from the Median (MAD) } {
+
+               The MAD estimator is the median of the set of absolute differences between the sample values and the sample median:
+
+               \equation[numbered:eqn_mad] { #:
+                  $$
+                  \hbox{MAD}(\mathbf{X}) = \hbox{median}( |X_0 - M|, \, \ldots, \, |X_{N-1} - M| ) \; .
+                  $$
+               :# }
+
+               MAD is a very robust estimator of scale. It has the best possible breakdown point (50\%), but its \xref http://en.wikipedia.org/wiki/Efficient_estimator efficiency for a normal distribution is rather low (37\%). MAD tends to work better for images with large background areas. Note that the word "background" here is being used with a purely statistical meaning; it can be the sky but also a dominant background nebula, for example. For more "busy" images, MAD tends to work worse because of its poor sufficiency.
+            }
+
+            { \label bwmv_estimator Biweight Midvariance } {
+
+               The square root of the biweight midvariance \ref wilcox_2012_3_12 is a robust estimator of scale with a 50\% breakdown point (the best one possible) and high efficiency with respect to several distributions (about 86\%). The biweight midvariance is calculated as follows. For each sample value \im X_i, let
+
+               \equation[numbered:eqn_bwmv_yi] { #:
+                  $$
+                  Y_i = \frac{X_i - M}{9 \times \hbox{MAD}(\mathbf{X})} \; ,
+                  $$
+               :# }
+
+               and let the \e {indicator function} be defined as
+
+               \equation { #:
+                  $$
+                  a_i = \left\{
+                   \begin{array}{l l}
+                    1& \mbox{if} \;\; |Y_i| < 1 \\
+                  \\
+                    0& \mbox{if} \;\; |Y_i| \ge 1 \\
+                   \end{array}
+                   \right.
+                  $$
+               :# }
+
+               for \im {0 \\le i < N}. The biweight midvariance is then given by
+
+               \equation[numbered:eqn_biweight_midvariance] { #:
+                  $$
+                  \hbox{BWMV}(\mathbf{X}) = N \, \frac{\sum {{a_i}(X_i -M)^{2}(1 - Y_i^2)^4}}{|\sum{a_i(1 - Y_i^2)(1 - 5Y_i^2)}|^2} \; ,
+                  $$
+               :# }
+
+               whose square root is a robust and efficient estimator of scale. For a detailed explanation of the reasons to use the constant 9 in equation \eqnref eqn_bwmv_yi, see Wilcox (2012). \ref wilcox_2012_3_12
+            }
+
+            {  \label pbmv_estimator Percentage Bend Midvariance } {
+
+               The square root of the percentage bend midvariance \ref wilcox_2012_3_12 is another robust estimator of scale. The percentage bend midvariance is interesting because it allows varying its efficiency and resistance properties, like a sort of \e programmable scale estimator in terms of efficiency/sufficiency versus robustness. Let
+
+               \equation { #:
+                  $$
+                  m = \lfloor (1-\beta)N + 1/2 \rfloor , \; 0 < \beta \le 1/2 \; .
+                  $$
+               :# }
+
+               Define the set \im {#: \mathbf{W} = \{|X_0 - M|, \, \ldots, \, |X_{N-1} - M|\} :#} of absolute differences from the sample median, and sort it in ascending order, so that we have \im {#: W_0 \le \ldots \le W_{N-1} :#}. Define
+
+               \equation { #:
+                  $$
+                  Y_i = \frac{X_i - M}{W_m} , 0 \le i < N \; ,
+                  $$
+               :# }
+
+               where the denominator is an estimate of the \im {1 - \\beta} quantile of the distribution of \im W. Now the percentage bend midvariance is given by
+
+               \equation[numbered:eqn_percentage_bend_midvariance] { #:
+                  $$
+                  \hbox{PBMV}(\mathbf{X}) = N \, \frac{W_m^2 \sum {[\Psi(Y_i)]^2}}{\left(\sum a_i\right)^2} \; ,
+                  $$
+               :# }
+
+               where \im a_i is the same indicator function defined above for the biweight midvariance, and
+
+               \equation { #:
+                  $$
+                  \Psi(x) = \hbox{max}[-1,\hbox{min}(1,x)] \; .
+                  $$
+               :# }
+
+               The \im \\beta parameter can be used to change the tradeoff between robustness and efficiency. The lower the value of \im \\beta, the higher the efficiency, at the cost of a lower resistance. For the image integration task we have fixed \im {\\beta = 0.2}, as recommended by Wilcox (2012) for a general purpose estimator. \ref wilcox_2012_3_12 With this value we have a Gaussian efficiency of about a 67\% and a breakdown point of 0.2.
+            }
+
+            { \label sn_and_qn_estimators Sn and Qn Estimators of Rousseeuw and Croux } {
+
+               The average deviation, MAD, biweight and bend midvariance estimators measure the variability of pixel sample values around the median. This makes sense for deep-sky images because the median closely represents the mean background of the image in most cases. However, these estimators work under the assumption that variations are symmetric with respect to the central value, which may not be quite true in many cases. The Sn and Qn scale estimators of Rousseeuw and Croux \ref rousseeuw_1993 don't measure dispersion around a central value. They evaluate dispersion based on differences between pairs of data points, which makes them robust to asymmetric and skewed distributions. Sn and Qn are as robust to outliers as MAD, but their Gaussian efficiencies are higher (58\% and 87\%, respectively). The drawback of these estimators is that they are computationally expensive, especially the Qn estimator.
+
+               The Sn estimator is defined as
+
+               \equation[numbered:eqn_sn] { #:
+                  $$
+                  \begin{array}{l l}
+                  \mbox{Sn}(\mathbf{X}) \; : \\
+                     \hspace{1em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                        \hspace{2em} \mbox{for} \; j \leftarrow 0 \; \mbox{to} \; N-1 \\
+                           \hspace{3em} d_j \leftarrow |X_i - X_j| \\
+                        \hspace{2em} \mbox{end} \\
+                        \hspace{2em} m_i \leftarrow \hbox{HighMedian}(d_0, \, \ldots, \, d_{N-1}) \\
+                     \hspace{1em} \mbox{end} \\
+                     \hspace{1em} \hbox{Sn} \rightarrow \hbox{LowMedian}(m_0, \, \ldots, \, m_{N-1}) \; .
+                  \end{array}
+                  $$
+               :# }
+
+               where \im {#: \hbox{LowMedian} :#} and \im {#: \hbox{HighMedian} :#} are the order statistics of rank \im {#: \lfloor (N+1)/2 \rfloor :#} and \im {#: \lfloor N/2 \rfloor + 1 :#}, respectively.
+
+               The Qn estimator can be defined as
+
+               \equation[numbered:eqn_qn] { #:
+               $$
+               \begin{array}{l l}
+               \mbox{Qn}(\mathbf{X}) \; : \\
+                  \hspace{1em} t \leftarrow 0 \\
+                  \hspace{1em} \mbox{for} \; i \leftarrow 0 \; \mbox{to} \; N-1 \\
+                     \hspace{2em} \mbox{for} \; j \leftarrow 0 \; \mbox{to} \; i-1 \\
+                        \hspace{3em} d_t \leftarrow |X_i - X_j| \\
+                        \hspace{3em} t \leftarrow t + 1 \\
+                     \hspace{2em} \mbox{end} \\
+                  \hspace{1em} \mbox{end} \\
+                  \hspace{1em} \hbox{Qn} \rightarrow \{d_0, \, \ldots, \, d_{{N \choose 2} - 1}\}_k \; ,
+               \end{array}
+               $$
+               :# }
+
+               where \im {#: k = {{\lfloor N/2 \rfloor + 1} \choose 2} :#}, and the expression \im {#: \{\cdot\}_k :#} represents the \im {#: k\hbox{th} :#} quantile of the set \im {#: \{\cdot\} :#}. In other words, Qn is an estimate of the \im {#: k\hbox{th} :#} order statistic of the set of \im {#: N \choose 2 :#} interpoint distances.
+
+               We must point out that the Sn and Qn estimators don't depend on any location estimate, as is the case for the rest of scale estimators (which use the sample median as an estimator of central tendency). Since Sn and Qn compute differences between data samples, they can provide more reliable results for skewed and asymmetric distributions.
+
+               By simple inspection of these algorithms it is clear that the complexity of a naive implementation is \im {O(N^2)}. Fortunately, alternative implementations exist with \im {O(N log N)} complexity. These variants, which we have adapted to the PixInsight/PCL platform, have been designed and implemented by the authors of the original algorithms. \ref rousseeuw_1993
+            }
+
+            { \label ikss_estimator Iterative K-sigma Estimator of Location and Scale (IKSS) } {
+
+               Given a data vector \im {#: \mathbf{X} = \{X_0, \, \ldots, \, X_{N-1}\} :#} with values in the \[0,1\] range, the IKSS algorithm can be formalized as follows:
+
+               \equation[numbered:eqn_ikss] { #:
+               $$
+               \begin{array}{l l}
+               \mbox{IKSS}(\mathbf{X};\varepsilon,\epsilon) \; : \\
+                  \hspace{1em} \{X_0 \le \ldots \le X_{N-1} \} \leftarrow \hbox{sort}( \mathbf{X} ) \\
+                  \hspace{1em} i \leftarrow 0 \\
+                  \hspace{1em} j \leftarrow N \\
+                  \hspace{1em} s_0 \leftarrow 1 \\
+                  \hspace{1em} \mbox{forever} \\
+                     \hspace{2em} \hbox{if} \; j - i < 1 \\
+                        \hspace{3em} \hbox{IKSS} \rightarrow \{0,0\} \\
+                     \hspace{2em} \hbox{end} \\
+                     \hspace{2em} m \leftarrow \mbox{median}(X_i, \, \ldots, \, X_{j-1}) \\
+                     \hspace{2em} s \leftarrow \sqrt{\mbox{BWMV}(X_i, \, \ldots, \, X_{j-1})} \\
+                     \hspace{2em} \hbox{if} \; s < \epsilon \\
+                        \hspace{3em} \hbox{IKSS} \rightarrow \{m,0\} \\
+                     \hspace{2em} \hbox{end} \\
+                     \hspace{2em} \hbox{if} \; \displaystyle{\frac{s_0 - s}{s}} < \varepsilon \\
+                        \hspace{3em} \hbox{IKSS} \rightarrow \{m, 0.991s\} \\
+                     \hspace{2em} \hbox{end} \\
+                     \hspace{2em} s_0 \leftarrow s \\
+                     \hspace{2em} x_{low} \leftarrow m - 4s \\
+                     \hspace{2em} x_{high} \leftarrow m + 4s \\
+                     \hspace{2em} \mbox{while} \; X_i  < x_{low} \\
+                     \hspace{3em} i \leftarrow i+1 \\
+                     \hspace{2em} \hbox{end} \\
+                     \hspace{2em} \mbox{while} \; X_{j-1}  > x_{high} \\
+                     \hspace{3em} j \leftarrow j-1 \\
+                     \hspace{2em} \hbox{end} \\
+                  \hspace{1em} \hbox{end} \; .
+               \end{array}
+               $$
+               :# }
+
+               The IKSS algorithm computes estimates of location and scale (the first and second elements, respectively, of the returned sets in the above algorithm) by evaluation of the biweight midvariance in an iterative k-sigma clipping scheme. The \im \\varepsilon parameter is the fractional accuracy of the desired scale estimate. In our implementation we set \im {#: \varepsilon = 10^{-6} :#}, which normally requires from 4 to 10 iterations, depending on the distribution of pixel values of the image. The \im \\epsilon parameter is a safeguard to guarantee numerical stability in degenerate cases; usually we set it to twice the machine epsilon for IEEE 754 32-bit floating point: \im {#: \epsilon = 2^{-23} :#}. Finally, the 0.991 constant makes the IKSS estimator consistent with the standard deviation of a normal distribution.
+
+               The IKSS estimator has a breakdown point of 0.5 and its Gaussian efficiency is 92\%. Its resistance to outliers is much better than any of the rest of implemented estimators. In simulations with real images contaminated with synthetic impulsional noise of varying amplitudes, IKSS can tolerate in excess of a 50\% of outliers without significant variations in the computed estimates. IKSS yields at least reasonably good results with the vast majority of deep-sky images, and therefore it is the default estimator of scale in the current versions of the ImageIntegration tool. When the IKSS estimator is selected, the IKSS estimate of location is also used instead of the median for all image normalization tasks.
+            }
+         }
+      }
+
+      \label rejection_normalization
+      \division { Rejection Normalization }
+      {
+         Rejection normalization is applied to each input image just before the pixel rejection task. If the rejection and output normalization methods differ, the \im {f'_i} image generated in equations \eqnref eqn_scale_plus_zero_offset and \eqnref eqn_equalize_fluxes is a temporary data structure used exclusively to decide which pixels are to be rejected as outliers; in such case it is disposed once the pixel rejection task has been completed.
+
+         \definition {
+            { \label scaling_plus_zero_offset Scaling + Zero Offset } {
+
+               This normalization method matches mean background values and dispersion for all of the input images before pixel rejection. This is the default rejection normalization, which should \e always be applied to integrate calibrated raw images with reasonably flat illumination profiles. The scaling + zero offset normalization algorithm can be expressed as
+
+               \equation[numbered:eqn_scale_plus_zero_offset] { #:
+                  $$
+                  {f'_i}_{k+} = k_i \cdot (f_i - m_i) + m_0; \;\; 0 \le i < N \; ,
+                  $$
+               :# }
+
+               where \im {#: {f'_i}_{k+} :#} is the working normalized image, \im k_i and \im m_i are, respectively, the scaling factor and the location estimate for the \im {#: i\hbox{th} :#} input image, and \im m_0 is the location estimate for the reference image. Conventionally, the first image in the input set, namely \im {f_0}, is taken as the reference image for normalization and image weighting tasks.
+
+               The median of all pixels in an image is always used as the estimator of location, except when the IKSS scale estimator is used, in which case \im m_i is the IKSS location estimate.
+
+               Scaling factors are computed by the expression
+
+               \equation[numbered:eqn_scaling_factor] { #:
+                  $$
+                  k_i = {s_0 \over s_i}; \;\; 0 \le i < N \; ,
+                  $$
+               :# }
+
+               where \im s_0 and \im s_i are, respectively, the scale estimates for the reference and the \im {#: i\hbox{th} :#} input images.
+            }
+
+            { \label flux_equalization Flux Equalization } {
+
+               This method simply matches the main histogram peaks of all images prior to pixel rejection. This is done by multiplication with the ratio of the reference location estimate to the location estimate of each integrated image:
+
+               \equation[numbered:eqn_equalize_fluxes] { #:
+                  $$
+                  {f'_i}_{flux} = f_i \cdot {m_0 \over m_i}; \;\; 0 \le i < N \; .
+                  $$
+               :# }
+
+               This is the method of choice for rejection with sky flat field frames, since in this case trying to match dispersion does not make sense because of the irregular illumination distribution. For the same reason, this method of rejection normalization can also be useful to integrate uncalibrated images, or images suffering from strong gradients due to vignetting or light pollution.
+            }
+         }
+      }
+
+      \label output_normalization
+      \division { Output Normalization } {
+
+         Output normalization is applied to all input images just before the image combination task, only to those pixels that have survived after the rejection task.
+
+         \definition {
+            { \label additive_output_normalization Additive Normalization } {
+
+               This normalization method matches mean background values among all images prior to the pixel combination task. The algorithm can be represented as
+
+               \equation[numbered:eqn_additive_normalization] { #:
+                  $$
+                  {g_i}_+ = f_i - m_i + m_0; \;\; 0 \le i < N \; ,
+                  $$
+               :# }
+
+               where \im {#: {g_i}_+ :#} symbolizes one of the images that will feed the image combination task, and \im f_i represents the corresponding input image.
+            }
+
+            { \label multiplicative_output_normalization Multiplicative Normalization } {
+
+               This method also matches backgrounds, but instead of additive operations, it applies a normalization by division:
+
+               \equation[numbered:eqn_multiplicative_normalization] { #:
+                  $$
+                  {g_i}_{\times} = f_i \cdot {m_0 \over m_i}; \;\; 0 \le i < N \; .
+                  $$
+               :# }
+
+               Additive and multiplicative normalizations lead to similar results in general. However, multiplicative normalization \e should be used to integrate images that are to be further combined or applied by multiplication or division. This is especially important for integration of flat frames, since a master flat frame should not contain any additive terms.
+            }
+
+            { \label output_scaling Scaling } {
+
+               Scaling matches dispersion among the images. This can be seen as a sort of \e {automatic weighting} correction to integrate images with differing overall illumination. The equations are
+
+               \equation[numbered:eqn_additive_plus_scaling_normalization] { #:
+                  $$
+                  {g_i}_{k+} = k_i \cdot (f_i - m_i) + m_0; \;\; 0 \le i < N
+                  $$
+               :# }
+
+               and
+
+               \equation[numbered:eqn_multiplicative_plus_scaling_normalization] { #:
+                  $$
+                  {g_i}_{k\times} = k_i \cdot f_i \cdot {m_0 \over m_i}; \;\; 0 \le i < N \; ,
+                  $$
+               :# }
+
+               respectively for additive and multiplicative normalization with scaling, where \im k_i is the scaling factor given by Equation \eqnref eqn_scaling_factor. Scaled output normalization is the recommended option for integration of light frames. In general, scaled normalization will lead to higher signal-to-noise ratios in the integrated result.
+            }
+         }
+      }
+
+      \division { Recommended Normalization Methods } {
+
+         The following table summarizes the recommended normalization methods for master calibration and light frames. The recommendations for light frames are generally valid in most cases. If there are \e {very strong} sky gradients or similar illumination variations, and their intensities vary considerably among the images being integrated, simple flux equalization may be a better option for rejection normalization.
+
+         \center \table[caption,header,width:100\%] {
+            { \tbltag Recommended Normalization Methods }
+            { \center { Frame type }  \center { Rejection Normalization } \center { Output Normalization } }
+            { { Master Bias } { No normalization }        { No normalization } }
+            { { Master Dark } { No normalization }        { No normalization } }
+            { { Master Flat } { Equalize Fluxes }         { Multiplicative } }
+            { { Light }       { Scale + Zero Offset }     { Additive with scaling } }
+         }
+      }
+   } % Image Normalization
+
+   \label quality_assessment
+   \subsection { Quality Assessment } {
+
+      When the \e {evaluate noise} option is selected, ImageIntegration performs a (scaled) noise evaluation task on the final integrated image, and compares the computed noise estimates with the original integrated frames in order to assess the quality of the integration. Without this final assessment, image integration is kind of a "faith-based" process, where one has no way to know if the achieved image is making justice to the data with the available resources. This is contrary to the general philosophy of PixInsight. Bear in mind that the result of integration is the very starting point of your image, so knowing how good is it is of crucial importance.
+
+      Previous versions of ImageIntegration (prior to versions released since mid-2013) attempted to provide estimates of the signal-to-noise ratio (SNR) improvement. We have seen that when we \lref average_combination average N images, we can expect an SNR improvement equal to the square root of N (Equation \eqnref eqn_snr_of_average). This is a theoretical upper limit, which we'll never achieve due to a number of adverse factors (we work with discrete signals, we reject some pixels, not all of the images have the same quality, etc). Unfortunately, estimating the relative SNR gain is not a trivial problem, and the routines implemented in previous versions of the ImageIntegration tool were not as accurate as desirable. In some cases we have seen reported improvements slightly greater than the theoretical limit, which doesn't contribute to the confidence on these reports. We definitely need more accuracy.
+
+      In the latest versions of ImageIntegration we no longer attempt to evaluate SNR increments. Instead, we provide accurate estimates of the \e {effective noise reduction function} (ENR):
+
+      \equation[numbered:eqn_enr_function] { #:
+         $$
+         \mbox{ENR}(f_0,g) = \frac {{\sigma_n}_{f_0}} {k_g \times {\sigma_n}_g} \; ,
+         $$
+      :# }
+
+      where \im f_0 and \im g are the reference and integrated images, respectively, \im \\sigma_n terms are noise estimates, and the scaling factor is given by
+
+      \equation[numbered:eqn_enr_scaling_factor] { #:
+         $$
+         k_g = \frac {s_0} {s_g} \; ,
+         $$
+      :# }
+
+      where \im s_0 and \im s_g are scale estimates for the reference and integrated images, respectively. As is customary in our implementation, we use the multiresolution support noise evaluation algorithm \ref starck_1998 and the \lref ikss_estimator {IKSS estimator of scale}, respectively for \im \\sigma_n and \im s estimates.
+
+      To understand how effective noise reduction works in practice, consider the images shown in Figure \figref {fig_effective_noise_reduction_1}.
+
+      \figure[numbered:fig_effective_noise_reduction_1] {
+
+         \figtag \s { SNR Improvement Example }
+         \vs
+         \image[float,marginRight:10px] EffectiveNoiseReductionExample_1a.jpg
+         \image[float] EffectiveNoiseReductionExample_1b.jpg \nf
+         \vs
+         A crop of a single reference frame (left) and of the result of the integration of 20 frames (right). Both linear images are being shown with adaptive screen stretch functions computed for the whole images (not for the crops shown).
+      }
+
+      The image to the left is a crop of the reference frame of an integration set of 20 images. The right hand image is the same crop on the integrated result. Both linear images (the \e whole images, not the crops) are being shown with automatic screen stretch functions applied (\tref ScreenTransferFunction STF AutoStretch). We know that we can expect a maximum SNR increment of 4.47 approximately (the square root of 20). The achieved improvement is self-evident by comparing the images: the integrated result is much smoother than the original, and the higher SNR is also evident from many features that are clearly visible after integration, but barely detectable or invisible on the original.
+
+This is a purely qualitative evaluation. Let's go a step forward in our analysis, and apply automatic screen stretch functions just to the cropped images---not to the whole images as before. As you know, the STF AutoStretch function is adaptive in the sense that it computes histogram transformation parameters based on statistical properties of the image. The result can be seen on Figure \figref {fig_effective_noise_reduction_2}.
+
+      \figure[numbered:fig_effective_noise_reduction_2] {
+
+         \figtag \s { Effective Noise Reduction }
+         \vs
+         \group[float,marginRight:10px] {
+            \image EffectiveNoiseReductionExample_2a.jpg \n
+            \s a
+         }
+         \group[float] {
+            \image EffectiveNoiseReductionExample_2b.jpg \n
+            \s b
+         } \nf
+         \vs
+         The same images shown in Figure \figref {fig_effective_noise_reduction_1}, but with adaptive screen stretch functions computed for the crops, instead of for the whole images.
+      }
+
+      Clearly not as 'nice' as before. The integrated image still shows many dim stars that are barely visible on the original, but the background noise levels are now quite similar: the illusion of a smooth result has evanesced. To explain why this happens we need some quantitative analysis. If we compute robust estimates of dispersion and noise for these cropped images, we get the following values:
+
+      \center \table[unnumbered,header,width:100\%] {
+         { \center Image \center { IKSS scale estimate }  \center { MRS noise estimate } }
+         { { Reference frame (Figure \fignum {fig_effective_noise_reduction_2}.a) }
+           { \im {#: s_a = 6.4834 \times 10^{-4} :#} }
+           { \im {#:{\sigma_n}_a = 6.3535 \times 10^{-4} :#} } }
+         { { Integrated frame (Figure \fignum {fig_effective_noise_reduction_2}.b) }
+           { \im {#:s_b = 1.5207 \times 10^{-4} :#} }
+           { \im {#:{\sigma_n}_b = 1.3118 \times 10^{-4} :#} } }
+      }
+
+      The first thing to note is that the standard deviations of the noise are quite similar to their corresponding scale estimates for each image (more similar in the original crop). This happens because these crops are dominated by the background of the image, where the noise also dominates over the signal. Now let's scale the integrated noise estimate with respect to the original. Applying Equation \eqnref eqn_enr_scaling_factor, the scaling factor of the integrated crop with respect to the original crop is
+
+      \equation { #:
+         $$
+         k = \frac {6.4834 \times 10^{-4}} {1.5207 \times 10^{-4}} = 4.2634 \; .
+         $$
+      :# }
+
+      Applying Equation \eqnref eqn_enr_function, we have:
+
+      \equation { #:
+         $$
+         \mbox{ENR} = \frac {6.3535 \times 10^{-4}} {k \times 1.3118 \times 10^{-4}} = \frac {6.3535 \times 10^{-4}} {4.2634 \times 1.3118 \times 10^{-4}} = 1.136 \; .
+         $$
+      :# }
+
+      This represents only about a 14\% noise reduction, which intuitively is in good agreement with the differences shown in Figure \figref fig_effective_noise_reduction_2. ImageIntegration has reported an effective noise reduction factor of 1.298 for the whole image in this case (integration of 20 images). Now you know why the noise in background areas is so difficult to remove, even after stacking a good bunch of images: as soon as you stretch the image, the noise comes back on low SNR areas. Now you know also why robust and accurate estimators of noise and scale are so important.
+
+      This is how the latest versions of ImageIntegration evaluate the quality of an integration process. Effective noise reduction evaluation is much more accurate and robust than the SNR increments reported by previous versions. Don't let the low figures discourage you: they don't represent the SNR improvement that your are achieving with your data, but the noise reduction achieved on low-signal regions, where noise estimates are very accurate and reliable as quality estimators. Your goal when integrating a set of light frames is to achieve the maximum possible noise reduction with the necessary rejection of outlier pixels.
+   } % Quality Assessment
+} % Description
+
+\usage {
+
+   \subsection { Input Images } {
+
+      \image InputImages.png
+
+      Use these controls to define and manage a list of image files to be integrated. For best performance and optimal resource usage, you should always work, as far as possible, with file formats able to perform \e {incremental reading} operations. Incremental reading consists of loading images by successive strips of pixel rows. As of writing this documentation, only the FITS format supports this functionality.
+
+      An important task that should always be carried out \e before image registration and integration is analysis and evaluation of the quality of the data. We strongly recommend you use the \sref SubframeSelector SubframeSelector script to perform all image grading and selection tasks with calibrated images as a batch process. This script allows you to qualify your images based on a variety of criteria, including noise estimates, FWHM and star eccentricity, among others, and arithmetic combinations of them. The \tref Blink Blink tool is also invaluable for visual inspection and statistical analysis of sets of images.
+
+      \definition {
+
+         { \label input_images_list Input images list } {
+
+            The largest control in this section is a list box with all the images currently selected for integration. The list will show full file paths or just file names, depending on the state of the \lref full_paths {Full Paths checkbox}. You must select at least three files. On this list you can:
+
+            \list {
+               { Double-click an item's file name or path to open it in PixInsight as a new image window. }
+               { Double-click a green checkmark icon to disable an item (double-click the red crossmark icon to enable it). Disabled files will not be integrated. }
+               { Mouse over an item to see its full file path as a tool tip window. }
+            }
+         }
+
+         { Add Files } {
+
+            Click this button to open a file dialog where you can select new image files that will be appended to the current list of files to be integrated. Only files located in the local filesystem can be selected; the tool does not currently support remote files located on network devices. As noted at the beginning of this section, only file formats with incremental reading capabilities should be selected (e.g., FITS) for performance reasons, although the tool supports any installed file format.
+         }
+
+         { Set Reference } {
+
+            The ImageIntegration tool uses a \e {reference image}. By convention, the first (enabled) file in the input list is the reference image. The reference image is used for:
+
+            \list[spaced] {
+               { \lref image_normalization {Image normalization}. All input images will be normalized (both pixel rejection normalization and output normalization) to be compatible with the statistical properties of the reference image. }
+               { \lref image_weighting {Image weighting}. All image weights will be computed relative to the reference image, which will be assigned unit weight by convention. }
+               { \lref quality_assessment {Quality assessment}. When the corresponding option is selected, effective noise reduction (ENR) estimates are computed relative to all integrated images, and the ENR estimate relative to the reference image, as well as the median ENR estimate, are provided. }
+            }
+
+            For optimum performance of the image weighting and pixel rejection tasks, the reference image should be chosen as one of the best frames in the integration set. As for image weighting, the choice of a reference image is theoretically irrelevant under ideal conditions, but given that we normally have to work under much-less-than-ideal conditions, these points can help you to select an optimal integration reference image:
+
+            \list[spaced] {
+
+               { If there are varying gradients in the data set, select the image with the least/weakest gradients. Gradients complicate calculation of fundamental statistical properties such as scale and location. }
+
+               { Try to select the best image in terms of SNR. In general, this corresponds to the image with the least noise estimate. }
+
+               { Avoid selecting a reference image with strong artifacts, such as plane and satellite trails, etc. }
+            }
+
+            As noted at the beginning of this section, we recommend the \sref SubframeSelector SubframeSelector script and the \tref Blink Blink tool for all image grading tasks.
+         }
+
+         { Select All } {
+
+            Click this button to select all the files in the current list of input images.
+         }
+
+         { Invert Selection } {
+
+            Click this button to invert the current selection in the list of input images.
+         }
+
+         { Toggle Selected } {
+
+            Click this button to enable/disable the files currently selected in the list of input images.
+         }
+
+         { Remove Selected } {
+
+            This button removes the selected files from the list of input images. This action cannot be undone.
+         }
+
+         { Clear } {
+
+            Click to empty the list of input images. This action cannot be undone.
+         }
+
+         {\label full_paths Full Paths} {
+
+            When this option is selected, the list of input files will show the full absolute file paths of all selected images. When this option is disabled (default state), only file names will be shown, which simplifies visual inspection, and full file paths are shown as tool tip messages.
+         }
+      }
+   } % Input Images
+
+   \label format_hints
+   \subsection { Format Hints } {
+
+      \image FormatHints.png
+
+      Format hints are small text strings that allow you to override global file format settings for image files used by specific processes. In the ImageIntegration tool, \e {input hints} change the way input images of some particular file formats are loaded during the integration process. There are no \e {output hints} in ImageIntegration, since this process does not write images to disk files.
+
+      Most standard file format modules support hints; each format supports a number of input and/or output hints that you can use for different purposes with tools that give you access to format hints. In the following tables we give you complete information on the input hints supported by the most important standard file formats in PixInsight.
+
+      \table[caption,header] {
+         { \tbltag FITS Input Hints }
+         { Hint Purpose }
+         { { \c \nowrap lower-range \e n }      { Specifies the lower bound of the floating point input range.\n Example: \c {lower-range 0.001} } }
+         { { \c \nowrap upper-range \e n }      { Specifies the upper bound of the floating point input range.\n Example: \c {upper-range 65535} } }
+         { { \c \nowrap rescale }               { Forces rescaling of out-of-range floating point images to the floating point input range. } }
+         { { \c \nowrap rescale-out-of-range }  { A more explicit synonym to \c rescale. } }
+         { { \c \nowrap truncate }              { Forces truncation of out-of-range floating point images to the floating point input range. } }
+         { { \c \nowrap truncate-out-of-range } { A more explicit synonym to \c truncate. } }
+         { { \c \nowrap ignore-out-of-range }   { Ignores out-of-range floating point pixel values. \s {Attention: platform stability is not guaranteed if out-of-range pixels propagate from processing tools.} } }
+         { { \c \nowrap bottom-up }             { Sets the coordinate origin at the bottom left corner of each pixel matrix. Horizontal coordinates grow from left to right. Vertical coordinates grow from bottom to top. } }
+         { { \c \nowrap up-bottom }             { The inverse option to \c bottom-up: Sets the coordinate origin at the top left corner of each pixel matrix. Horizontal coordinates grow from left to right. Vertical coordinates grow from top to bottom. } }
+         { { \c \nowrap signed-is-physical }    { Specifies that signed integer images store physical data in the positive range \[0,2\sup{n-1}-1\], where n is the number of bits per pixel. The negative part of the numeric range is not used, and the images are effectively represented with one bit less than the number of bits used to store each pixel in the image } }
+         { { \c \nowrap signed-is-logical }     { Specifies that signed integer images store logical data in the full range \[-2\sup{n-1},+2\sup{n-1}-1\]. } }
+      }
+
+      \table[caption,header] {
+         { \tbltag DSLR_RAW Input Hints }
+         { Hint Purpose }
+         { { \c \nowrap raw }                         { Enables a set of options to load pure raw images without interpolation, white balance or black pedestal subtraction. \c raw is equivalent to the following hints: \c {bayer-drizzle no-super-pixels no-cfa no-auto-white-balance no-camera-white-balance no-black-point-correction}. } }
+         { { \c \nowrap cfa }                         { Load raw Bayer CFA image (no interpolation, no de-Bayering, monochrome image). } }
+         { { \c \nowrap no-cfa }                      { Load raw Bayer RGB image (no interpolation, no de-Bayering, RGB image). } }
+         { { \c \nowrap bilinear }                    { Use bilinear de-Bayering interpolation. } }
+         { { \c \nowrap fast }                        { A synonym for \c bilinear. } }
+         { { \c \nowrap vng }                         { Use the Threshold-Based Variable Number of Gradients (VNG) interpolation algorithm. } }
+         { { \c \nowrap ppg }                         { Use the Patterned Pixel Grouping (PPG) interpolation algorithm. } }
+         { { \c \nowrap ahd }                         { Use the Adaptive Homogeneity-Directed (AHD) interpolation algorithm. } }
+         { { \c \nowrap interpolate-as-4-colors }     { Interpolate RGB as four colors. } }
+         { { \c \nowrap no-interpolate-as-4-colors }  { Interpolate RGB as three colors (two green pixels, one red and one blue). } }
+         { { \c \nowrap auto-white-balance }          { Compute and apply an automatic white balance. } }
+         { { \c \nowrap no-auto-white-balance }       { Do not apply an automatic white balance. } }
+         { { \c \nowrap camera-white-balance }        { Apply a camera-defined white balance, if available. } }
+         { { \c \nowrap no-camera-white-balance }     { Do not apply a camera-defined white balance. } }
+         { { \c \nowrap super-pixels }                { Create super-pixels from the raw Bayer matrix (no interpolation). } }
+         { { \c \nowrap no-super-pixels }             { Do not use the super-pixel de-Bayering method. } }
+         { { \c \nowrap bayer-drizzle }               { Do not interpolate the Bayer matrix. Load a RGB or CFA raw Bayer image. } }
+         { { \c \nowrap no-bayer-drizzle }            { Interpolate the Bayer matrix. Load an RGB color image. } }
+         { { \c \nowrap black-point-correction }      { Subtract \e {darkness level} pedestals. } }
+         { { \c \nowrap no-black-point-correction }   { Do not subtract black point pedestals. Load all images referred to a fixed zero black point value. } }
+      }
+
+      \table[caption,header] {
+         { \tbltag TIFF Input Hints }
+         { Hint Purpose }
+         { { \c \nowrap lower-range \e n }      { Specifies the lower bound of the floating point input range.\n Example: \c {lower-range 0.001} } }
+         { { \c \nowrap upper-range \e n }      { Specifies the upper bound of the floating point input range.\n Example: \c {upper-range 65535} } }
+         { { \c \nowrap rescale }               { Forces rescaling of out-of-range floating point images to the floating point input range. } }
+         { { \c \nowrap rescale-out-of-range }  { A more explicit synonym to \c rescale. } }
+         { { \c \nowrap truncate }              { Forces truncation of out-of-range floating point images to the floating point input range. } }
+         { { \c \nowrap truncate-out-of-range } { A more explicit synonym to \c truncate. } }
+         { { \c \nowrap ignore-out-of-range }   { Ignores out-of-range floating point pixel values. \s {Attention: platform stability is not guaranteed if out-of-range pixels propagate from processing tools.} } }
+         { { \c \nowrap strict }                { Be strict with TIFF tags, tag values and image properties. } }
+         { { \c \nowrap permissive }            { Be tolerant with slightly incorrect images and images that don't comply to strict TIFF format specifications. } }
+         { { \c \nowrap show-warnings }         { Show TIFF format warnings on the console and/or message boxes. } }
+         { { \c \nowrap no-show-warnings }      { Never show warning messages. } }
+      }
+
+      If multiple input hints are specified, they must be separated by spaces.
+   } % Format Hints
+
+   \subsection { Image Integration } {
+
+      \image ImageIntegrationParameters.png
+
+      This section allows you to control the image combination task.
+
+      \definition {
+
+         { Combination } {
+
+            This list box allows you to select the \lref image_combination {image combination} operation:
+
+            \list[spaced] {
+               { \s \lref average_combination Average. The output integrated image is the pixel-by-pixel mean of all input images. Provides the highest signal-to-noise ratio in the integrated result. }
+               { \s \lref median_combination Median. The output integrated image is the pixel-by-pixel median of all input images. Provides robust implicit rejection of outliers, but at the cost of about a 20\% signal loss. }
+               { \s Minimum. Each pixel of the output integrated image is the minimum value of the corresponding pixels from all input images. This mode is only useful for special purposes; it should not be used for normal image stacking operations. }
+               { \s Maximum. Each pixel of the output integrated image is the maximum value of the corresponding pixels from all input images. This mode is only useful for special purposes; it should not be used for normal image stacking operations. }
+            }
+         }
+
+         { Normalization } {
+
+            Selects the \lref output_normalization {output normalization} method used for the image combination task:
+
+            \list[spaced] {
+               { \s {No normalization.} If this option is selected, the images won't be normalized prior to combination. This is useful when there are \e pedestals in the input images that must be preserved, as happens when integrating master bias and master dark frames.\ref peris_2010 Normally this option should not be selected for integration of flat and light frames. }
+               { \s \lref additive_output_normalization Additive. Additive operations will be applied to match mean background values. }
+               { \s \lref multiplicative_output_normalization Multiplicative. Mean background values will be matched by division. This option \e must be used to integrate master flat frames. It can also be used to generate images that are to be further combined by multiplication or division. }
+               { \s \lref output_scaling {Additive + scaling.} Along with additive background matching, the images will be scaled to match dispersion. This is the default option, which should normally be used to integrate light frames. }
+               { \s {Multiplicative + scaling.} Along with background matching by division, the images will be scaled to match dispersion. This option can be used to generate images that are to be further combined by multiplication or division. }
+            }
+         }
+
+         { Weights } {
+
+            Selects an \lref image_weighting {image weighting} method:
+
+            \list[spaced] {
+
+               { \s {Don't care.} If this option is selected, no weighting will be applied and all input images will be combined directly. This mode should be selected to integrate master bias, dark and flat frames. For science frames, weighting should \e always be enabled. }
+               { \s {Exposure time.} Will weight the input images by their relative exposures. Exposure times will be retrieved from standard EXPTIME and EXPOSURE FITS keywords (in that order). }
+               { \s \lref noise_evaluation_weighting {Noise evaluation.} Uses multiscale noise evaluation techniques \ref starck_1998 \ref starck_2002 to optimize the integration for mean square error minimization. This is the most accurate and robust image weighting algorithm currently available in the ImageIntegration tool, and is therefore the default option. }
+               { \s {Average signal strength.} Estimates relative exposures from statistical properties of the images. This method will \e not work \e {at all} if some images have additive illumination variations, such as sky gradients. }
+               { \s {Median value.} Weights the input images by their median pixel sample values, relative to the reference image. }
+               { \s {Average value.} Weights the input images by their mean pixel sample values, relative to the reference image. }
+               { \s {FITS keyword.} Uses the values associated with a custom FITS keyword to retrieve image weights, which must be specified in the corresponding \e {weight keyword} input field (see below). The specified keyword must be present in all input images and its value must be of a numeric type. }
+            }
+         }
+
+         { Weight keyword } {
+
+            Custom FITS keyword to retrieve image weights. This is the name of a FITS keyword that will be used to retrieve image weights, if the \e {FITS keyword} option has been selected as the weighting criterion (see above).
+         }
+
+         { Scale estimator } {
+
+            Selects a statistical \lref scale_estimators {estimator of scale}:
+
+            \list[spaced] {
+
+               { \lref avgdev_estimator \s {Average absolute deviation from the median.} This has been the default scale estimator used in versions of the ImageIntegration tool released before mid-2013. It is robustified by trimming all pixel samples outside the \[0.00002,0.99998\] range, which excludes cold and hot pixels, as well as most saturated pixels and bright spurious features (cosmics, etc). Yet this is a nonrobust estimator (its breakdown point is zero), but on the other hand it is a very efficient and sufficient estimator. }
+               { \lref mad_estimator \s { Median absolute deviation from the median (MAD). } MAD is a very robust estimator of scale. Although it has the best possible breakdown point (50\%), its efficiency for a normal distribution is rather low (37\%). It tends to work better for images with large background areas---we are using the term background here with a purely statistical meaning; it can be the sky but also a dominant background nebula, for example. }
+               { \lref bwmv_estimator \s { Biweight midvariance. } The square root of the biweight midvariance is a robust estimator of scale with a 50\% breakdown point (as good as MAD) and high efficiency with respect to several distributions (about 86\%). }
+               { \lref pbmv_estimator \s { Percentage bend midvariance. } The square root of the percentage bend midvariance is another robust estimator of scale with high efficiency (67\%) and good resistance to outliers. }
+               { \lref sn_and_qn_estimators \s { Sn and Qn estimators of Rousseeuw and Croux. } The average deviation, MAD, biweight and bend midvariance estimators measure the variability of pixel sample values around the median. This makes sense for deep-sky images because the median closely represents the mean background of the image in most cases. However, these estimators work under the assumption that variations are symmetric with respect to the central value, which may not be quite true in many cases. The Sn and Qn scale estimators don't measure dispersion around a central value. They evaluate dispersion based on differences between pairs of data points, which makes them robust to asymmetric and skewed distributions. Sn and Qn are as robust to outliers as MAD, but their Gaussian efficiencies are higher (58\% and 87\%, respectively). The drawback of these estimators is that they are computationally expensive, especially the Qn estimator. }
+               { \lref ikss_estimator \s { Iterative k-sigma estimator of location and scale (IKSS). } This is a robust sigma-clipping routine based on the biweight midvariance. The idea is similar to M-estimators of location. From our tests, IKSS is as robust to outliers as MAD, and its Gaussian efficiency exceeds the 90\%. This is the default estimator of scale in current versions of the ImageIntegration tool. }
+            }
+
+            The selected scale estimator will be used in all subtasks requiring image scaling factors. This includes the noise evaluation image weighting routine, normalization in all pixel rejection algorithms, output normalization when a scaling option is selected, and the final quality assessment step.
+
+            In general, the default IKSS estimator of scale works almost optimally in most cases. If you really want to get the most out of your data, you should at least make some tries with IKSS, MAD and average absolute deviation. The goal is to maximize effective noise reduction while achieving a good outlier rejection.
+         }
+
+         { Ignore noise keywords } {
+
+            If this option is disabled (default state), ImageIntegration will retrieve noise estimates from NOISExx FITS keywords, when available. If this option is enabled, existing noise keywords will be ignored and noise estimates will be calculated or retrieved from cached data. Use this option if you don't trust noise estimates stored in FITS header keywords for some reason.
+
+            Note that the \tref ImageCalibration ImageCalibration and \tref Debayer Debayer tools compute noise estimates and store them as FITS keywords by default. In general, you should not need to enable this option under normal working conditions.
+         }
+
+         { Generate integrated image } {
+
+            When this option is selected, the result of the integration process will be generated in a new image window. This option should be enabled for normal use. If you disable it, the integrated image won't be generated at the end of the process. You can disable this option to save a relatively modest amount of computation time and resources while you are trying out rejection parameters, since to evaluate the suitability of pixel rejection, you normally are only interested in \lref console_statistics {rejection statistics} and/or \lref rejection_maps {rejection maps}. This option is enabled by default.
+         }
+
+         { Generate a 64-bit result image } {
+
+            If this is selected, ImageIntegration will generate the result image in \xref http://en.wikipedia.org/wiki/IEEE_754-2008 {IEEE 754} 64-bit floating point format (double precision). Otherwise the integration result will be generated in IEEE 754 32-bit floating point format (single precision), which is the default option. Even if the result is a single precision image, all intermediate calculations are performed using double precision internally.
+         }
+
+         { \label evaluate_noise Evaluate noise } {
+
+            This option enables the final \lref quality_assessment {quality assessment} task. ImageIntegration will compute estimates of noise and effective noise reduction at the end of the process. This is useful to compare the results of different integration procedures. For example, by comparing quality data you can know which image normalization and weighting criteria lead to the best result in terms of signal-to-noise ratio improvement. This option is enabled by default.
+         }
+
+         { Close previous images } {
+
+            Select this option to close existing integration and rejection map images before running a new integration process. This is useful to avoid accumulation of multiple results on the workspace, when the same integration is being tested repeatedly.
+         }
+
+         { \label buffer_size Buffer size } {
+
+            Size of a \e {pixel row buffer} in mebibytes (MiB). This parameter defines the size of the working buffers used to read pixel rows. There is an independent buffer per input image. A reasonably large buffer size will improve performance by minimizing disk reading operations. The default value of 16 MiB is usually quite appropriate. Decrease this parameter if you experience out-of-memory errors during integration. This may be necessary for integration of large image sets on systems with low memory resources, especially on 32-bit operating systems. The minimum value is zero, which will force ImageIntegration to use a single row of pixels per input image.
+         }
+
+         { Stack size } {
+
+            This is the size of the working integration stack structure in MiB. In general, the larger this parameter, the better the performance, especially on multiprocessor and multicore systems. The best performance is achieved when the whole set of integrated pixels can be loaded at once in the integration stack. For this to happen, the following conditions must hold:
+
+            \list[spaced] {
+               { \e {Buffer size} (see above) must be large enough as to allow loading an input file (in 32-bit floating point format) completely in a single file reading operation. }
+               { \e {Stack size} must be larger than or equal to W\times{}H\times{}(12\times{}N + 4), where W and H are the image width and height in pixels, respectively, and N is the number of integrated images. For linear fit clipping rejection, replace 4 with 8 in the above equation. Note that this may require a large amount of RAM available for relatively large image sets. As an example, the default stack size of 1024 (1 GiB) is sufficient to integrate 20 2048\times{}2048 monochrome images optimally with the default buffer size of 16 MiB. With a stack size of 4 GiB and a buffer size of 64 MiB you could integrate 20 4K\times{}4K monochrome images with optimum performance on a 64-bit version of PixInsight. }
+            }
+         }
+
+         { \label use_file_cache Use file cache } {
+
+            By default, ImageIntegration uses a dynamic cache of working image parameters, including pixel statistics and normalization data. This cache greatly improves performance when the same images are being integrated several times, for example to find optimal pixel rejection parameters. Disable this option if for some reason you don't want to use the cache. This will force recalculation of all statistical data required for normalization, which involves loading all integrated image files from disk. The file cache can also be \e persistent across PixInsight Core executions. The persistent cache and its options can be controlled with the \lref cache_management {Cache Preferences dialog}.
+         }
+      }
+   } % Image Integration
+
+   \subsection { Pixel Rejection (1) } {
+
+      \image PixelRejection1.png
+
+      In this section you can select general pixel rejection options:
+
+      \definition {
+
+         { Rejection algorithm } {
+
+            No rejection algorithm is selected by default in the ImageIntegration tool. This has been done intentionally to \e encourage the user to find the appropriate rejection method according to the number of input images and their conditions. The \lref pixel_rejection {available rejection algorithms} have already been described in detail; this is just a quick reference:
+
+            \list[spaced] {
+
+               { \lref minmax_clipping \s Min/max. This method can be used to ensure rejection of extreme values. Min/max performs an unconditional rejection of a fixed number of pixels from each stack, without any statistical basis. Rejection methods based on robust statistics, such as percentile, Winsorized sigma clipping, linear fitting and averaged sigma clipping are in general preferable. }
+
+               { \lref percentile_clipping \s {Percentile clipping} rejection is excellent to integrate reduced sets of images, such as 3 to 6 images. This is a single-pass algorithm that rejects pixels outside a fixed range of values relative to the median of each pixel stack. }
+
+               { \lref sigma_clipping \s {Sigma clipping} is usually a good option to integrate more than 8 or 10 images. Keep in mind that for sigma clipping to work, the standard deviation must be a good estimator of dispersion, which requires a sufficient number of pixels per stack (the more images the better). }
+
+               { \lref winsorized_sigma_clipping \s {Winsorized sigma clipping} is similar to the sigma clipping algorithm, but uses a special iterative procedure based on Huber's method of robust estimation of parameters through \e Winsorization. This algorithm can yield superior rejection of outliers with better preservation of significant data for large sets of images. }
+
+               { \lref averaged_sigma_clipping \s {Averaged sigma clipping} is also a good algorithm for moderate sets from 8 to 10 images. This algorithm tries to derive the gain of an ideal CCD detector from existing pixel data, assuming zero readout noise, then uses a Poisson noise model to perform rejection. For larger sets of images however, sigma clipping tends to be superior. }
+
+               { \lref linear_fit_clipping \s {Linear fit clipping} fits a straight line to the samples of each pixel stack using a robust line fitting algorithm. The linear fit is optimized in the twofold sense of minimizing average absolute deviation and maximizing inliers. This rejection algorithm is more robust than sigma clipping for large sets of images, especially in presence of additive sky gradients of varying intensity and spatial distribution. For the best performance, use this algorithm for large sets of at least 15 images; the more the better. Five images is the minimum required. }
+
+               { \lref ccd_noise_model_clipping \s {CCD noise model} requires knowing accurate sensor parameters. This rejection algorithm can be mostly useful to integrate master calibration frames: bias, dark and flat master frames. }
+            }
+         }
+
+         { Normalization } {
+
+            This is the \lref rejection_normalization {rejection normalization} method used exclusively for the pixel rejection task. Note that a different normalization is applied before image combination, which we call \lref output_normalization {output normalization}. Normalization is \e essential for a meaningful pixel rejection, since it ensures that the data from all the integrated images are statistically compatible in terms of mean background values and dispersion. Again, normalization methods have already been described in detail, so this is just a brief reference:
+
+            \list[spaced] {
+
+               { \s {No normalization.} This option \e disables rejection normalization. This is \e only recommended for integration of master bias and dark frames. }
+
+               { \lref scaling_plus_zero_offset \s {Scale + zero offset.} Matches mean background values and dispersion. This involves multiplicative and additive transformations. This is the default rejection normalization method that should be used to integrate calibrated light frames. }
+
+               { \lref flux_equalization \s {Equalize fluxes.} Matches the main histogram peaks of all images prior to pixel rejection. This is done by multiplication with the ratio of the reference median to the median of each integrated image. This is the method of choice to integrate sky flat fields, since in this case trying to match dispersion does not make sense, due to the irregular illumination distribution. For the same reason, this type of rejection normalization can also be useful to integrate uncalibrated images, or images suffering from \e strong gradients; however, in the latter case this method should only be selected as a last resort, when no pixel rejection algorithm is giving acceptable results. }
+            }
+         }
+
+         { Generate rejection maps } {
+
+            This option must be enabled to generate \lref rejection_maps {rejection maps}, which are special control images to evaluate the performance of pixel rejection procedures. This option is enabled by default.
+         }
+
+         { Clip low pixels } {
+
+            If this option is enabled, pixels below the reference value for each pixel stack (which is either the median or the fitted line in linear fit clipping rejection) will be rejected. Otherwise no pixels will be rejected below the reference values. This option is enabled by default. You can disable it to prevent rejecting any pixels on the background, although spurious dark image structures---such as dead or cold pixels for example---cannot be rejected if you do so.
+         }
+
+         { Clip high pixels } {
+
+            If this option is enabled, pixels above the reference value for each pixel stack (which is either the median or the fitted line in linear fit clipping rejection) will be rejected. Otherwise no pixels will be rejected above the reference values. This option is enabled by default, and unless you have a really good reason to do otherwise, disabling it is not recommended.
+         }
+
+         { \label clip_low_range Clip low range } {
+
+            Enable this option to reject all pixels with values less than or equal to the \lref range_low {range low} parameter. This is very useful to reject black (or very dark) image areas at the edges of the images, caused by partial coverage due to image registration, or empty areas in mosaic frames.
+         }
+
+         { \label clip_high_range Clip high range } {
+
+            Enable this option to reject all pixels with values greater than or equal to the \lref range_high {range high} parameter. This is useful to reject white (or very bright) pixels.
+         }
+      }
+   } % Pixel Rejection (1)
+
+   \subsection { Pixel Rejection (2) } {
+
+      \image PixelRejection2.png
+
+      This section provides controls to define the \e {clipping points} for all pixel rejection algorithms except CCD noise model clipping:
+
+      \definition {
+
+         { Min/Max low, Min/Max high } {
+
+            The \im n_\{low\} and \im n_\{high\} pixel counts, respectively, for the \lref minmax_clipping {min/max} rejection algorithm. From each pixel stack, the \im n_\{low\} smallest and \im n_\{high\} largest pixels will be rejected. The default value is one pixel for both parameters.
+         }
+
+         { Percentile low, Percentile high } {
+
+            The \im p_\{low\} and \im p_\{high\} parameters, respectively, of the \lref percentile_clipping {percentile clipping} rejection algorithm in units of the central value (median) of each pixel stack. The lower the value of one of these parameters, the more pixels will be rejected. The default values are 0.2 and 0.1, respectively.
+         }
+
+         { Sigma low, Sigma high } {
+
+            The \im s_\{low\} and \im s_\{high\} parameters, respectively, of the \lref sigma_clipping {sigma clipping}, \lref winsorized_sigma_clipping {Winsorized sigma clipping} and \lref averaged_sigma_clipping {averaged sigma clipping} rejection algorithms, in units of the dispersion (sigma) of each pixel stack. Efforts have been made to compatibilize the response of these three algorithms to both sigma parameters, but you may notice slight differences in performance for the same clipping points. The lower the value of one of these parameters, the more pixels will be rejected. The default values are 4 and 2, respectively.
+         }
+
+         { Linear fit low, Linear fit high } {
+
+            The \im s_\{low\} and \im s_\{high\} parameters, respectively, of the \lref linear_fit_clipping {linear fit clipping} rejection algorithm, in units of the mean absolute deviation of the set of samples in each pixel stack from the fitted line, plus a 'magic factor' used internally to compatibilize the response of the linear fit clipping algorithm with sigma clipping. The lower the value of one of these parameters, the more pixels will be rejected. The default values are 5.0 and 2.5, respectively.
+         }
+
+         { \label range_low \label range_high Range low, Range high } {
+
+            The low and high \e {range rejection limits}. When the \lref clip_low_range {clip low range} and/or \lref clip_high_range {clip high range} options are enabled, pixels with values less than or equal to \e {range low} and/or greater than or equal to \e {range high} will be rejected. Note that from this definition, pure black and/or white pixels will always be rejected when the corresponding options are selected. Range rejection always takes place before the selected pixel rejection algorithm is applied. The default values are 0 and 0.98, respectively.
+         }
+      }
+   } % Pixel Rejection (2)
+
+   \subsection { Pixel Rejection (3) } {
+
+      \image PixelRejection3.png
+
+      This section provides controls to define the parameters of the \lref ccd_noise_model_clipping {CCD noise model clipping} pixel rejection algorithm:
+
+      \definition {
+
+         { CCD gain } { CCD sensor gain in electrons per DN (data number), or e\sup{-}/ADU. The default value is one electron per DN. }
+
+         { CCD readout noise } { CCD readout noise in electrons. The default value is 10 e\sup{-}. }
+
+         { CCD scale noise } { Scale noise is also referred to as \e {sensitivity noise}. This is a dimensionless factor representing noise that is multiplicative in the integrated frames. Scale noise typically originates from flat fielding. This number is usually unknown, so the default value is zero. }
+      }
+   } % Pixel Rejection (3)
+
+   \label region_of_interest
+   \subsection { Region of Interest } {
+
+      \image RegionOfInterest.png
+
+      To optimize an image integration process, usually a large number of tests are necessary to fine tune the many intervening parameters, especially pixel rejection parameters. To speed up the process, a rectangular \e {region of interest} (ROI) can be defined to restrict the process to the pixels pertaining to the specified area.
+
+      \definition {
+
+         { Left, Top, Width, Height } { Define the position of the upper left corner and the dimensions of the rectangular ROI, in image pixel units. }
+
+         { From Preview } {
+
+            Click this button to open a dialog where an existing preview can be selected to copy its geometry to the ROI. In general, you'll want to implement the following sequence:
+
+            \list {
+               { Activate (double-click, or select and press Enter) one of the images in the \lref input_images_list {input list} to open it. }
+               { Apply an automatic screen stretch with the \tref ScreenTransferFunction ScreenTransferFunction tool. This step is necessary because the images to be integrated are (must be!) linear. }
+               { Define a preview covering a relatively small area of special interest. For example, you may want to include some bright nebular objects, stars, and some sky background. }
+               { Click the \e {From Preview} button and select the preview to copy its geometry to the ROI. }
+            }
+         }
+      }
+   } % Region of Interest
+
+   \label rejection_maps
+   \subsection { Rejection Maps } {
+
+      A rejection map is a special control image that provides information about the amount and location of rejected pixels. Each pixel in a rejection map has a real value in the \[0,1\] range, the value being proportional to the number of rejected pixels: if a rejection map pixel is zero, then no pixel has been rejected at the corresponding coordinates; contrarily, if a rejection map pixel has a value of one, it indicates that \e all pixels have been rejected at the corresponding location. Rejection maps are useful data structures to evaluate the performance of a pixel rejection task. The ImageIntegration tool provides two rejection maps for each pixel rejection algorithm: \e low and \e high rejection maps respectively for low and high rejected pixels.
+
+      In addition, the \lref linear_fit_clipping {linear fit clipping} algorithm generates \e {slope maps}, whose values are proportional to the slopes of the fitted lines for the integrated pixel stacks. In a slope map image, each pixel indicates the slope angle in the range from black=0\deg to white=90\deg. A slope map informs you about the magnitude and spatial distribution of brightness variations in your data set.
+
+      \vs
+      \figure {
+         \figtag \s { Rejection of Plane Trails }
+         \vs
+         \imageselect[menuPos:right] {
+            RejectionExampleHighMap.png      {High rejection map}
+            RejectionExampleLowMap.png       {Low rejection map}
+            RejectionExampleIntegrated.png   {Integrated image}
+            RejectionExampleMask.png         {Integrated, masked w/ high map}
+            RejectionExampleNoRejection.png  {Integrated image, no rejection}
+         }
+         \vs[length:0.5em]
+         Ten H\alpha images have been integrated with average combination and the Winsorized sigma clipping rejection algorithm. Rejection clipping points have been set to 4.3 and 3.2 sigma, respectively for low and high pixels. In the comparison above, you can see the rejection maps, the integrated image, the integrated image with the high rejection map selected as an inverted mask, and the result of the same integration without pixel rejection. The big rejected blob near the top left corner corresponds to a plane lights flash. Images courtesy of Oriol Lehmkuhl and Ivette Rodríguez.
+      }
+
+      \vs
+      \figure {
+         \figtag \s { Slope Maps }
+         \vs
+         \imageselect[menuPos:right] {
+            SlopeExampleImage1.png           {First image of series, gradient at bottom}
+            SlopeExampleImage2.png           {Last image of series, gradient at top}
+            SlopeExampleMap.png              {Slope map}
+         }
+         \vs[length:0.5em]
+         Twenty luminance images of the M81/M82 region have been integrated with average combination and the Linear fit clipping rejection algorithm. In this series of images, light-pollution sky gradients have reversed orientations, dividing the set of images into two well differentiated groups: one where the gradients grow toward the bottom of the image, and a second group with gradients in the opposite direction. These variations are caused by a change of orientation of the telescope. In the comparison above you can see how the slope map reproduces the combined gradients as the slopes of the fitted lines for all integrated pixels. Images courtesy of Oriol Lehmkuhl and Ivette Rodríguez.
+      }
+
+      \vs
+      \figure {
+         \figtag \s { Slope Map Variations }
+         \vs
+         \image[border] SlopeMapDetail.png
+         \vs
+         Slope maps are brighter for high SNR regions, denoting larger fluctuations on these areas throughout the set of integrated images. These fluctuations are a direct consequence of CCD pixel statistics: the expected value of a Poisson distribution is equal to its variance, hence the variations are stronger on brighter areas.
+
+         A good example is shown on this crop of the slope map generated for the M81/M82 integration performed in the previous figure. Interestingly, there seem to be delimiting regions around bright objects where these fluctuations decrease significantly for some reason that eludes us. This effect can be seen as dark rings around the stars projected over M81 in the image above. Note that despite the 'impressive' appearance of the stretched slope map image that we are representing here, actual pixel values range from 0.02 in the core of M81 to about 0.0001 on sky background areas. These values correspond to line slopes of 1.15 degrees and 20 arcseconds, respectively.
+      }
+   } % Rejection Maps
+
+   \label console_statistics
+   \subsection { Console Statistics } {
+
+      As is customary in PixInsight, the ImageIntegration tool provides extensive information about the ongoing processes and the achieved results on the processing console. The information generated is both quantitative and qualitative. You should understand and know how to evaluate this information in order to achieve the best possible result out of your data set.
+
+      \division { Information About Input Images } {
+
+         The first step in the ImageIntegration process is computing several statistical properties for each input image. If a valid \lref cache_management cache entry exists for an input file, statistical data are retrieved from the cache in negligible time. If no valid cache entry exists (e.g., because the file in question has never been integrated, because the required cache items are not available, because the cache has expired, or if the file's time stamp is newer than the version in the cache), then the whole image is loaded and the necessary data are computed. For large images and image sets, this process may take some time. Irrespective of the source of statistical data, the following information is provided for each input file:
+
+         \list {
+            { Full file path in the local filesystem. }
+            { Sample data format and geometry, provided by the underlying file format support module. }
+            { Scaling factors, relative to the reference image. }
+            { Zero offsets, relative to the reference image. }
+            { MRS noise estimates in sigma units. }
+            { Image weighting factors. }
+         }
+
+         The four last items are provided for each nominal channel. Scaling factors and image weights are relative to the reference image, that is, to the first input image. In the example below you can see a fragment of the information given for a typical image integration task.
+
+         \box \verbatim[import] input-images-info.txt
+      }
+
+      \division { Information About the Integration Process } {
+
+         Just before starting to integrate pixels, ImageIntegration writes a summary of parameters to the console. This can be useful to keep track of several executions of the tool for comparison of results. The box below shows a typical example.
+
+         \box \verbatim[import] integration-process-info.txt
+      }
+
+      \division { Pixel Rejection Counts } {
+
+         At the end of the integration process, a complete summary of pixel rejection results is written to the console. An example is shown in the box below.
+
+         \box \verbatim[import] pixel-rejection-info.txt
+
+         For each input image, the information given has the following format:
+
+         \verbatim{ <index> : <total-count> <total-pc>\% (<low-count> + <high-count> = <low-pc>\% + <high-pc>\%) }
+
+         where:
+
+         \list {
+            { \c{<index>} is the position of the image in the input list, from one to the number of images. }
+            { \c{<total-count>} is the total number of rejected pixels. }
+            { \c{<total-pc>} is the percentage of rejected pixels, with respect to the number of pixels in the image (width\times{}height). }
+            { \c{<low-count>} is the number of rejected pixels below their stack's central value, or \e {rejected low pixels}. }
+            { \c{<low-pc>} is the percentage of rejected low pixels, with respect to the number of pixels in the image. }
+            { \c{<high-count>} is the number of rejected pixels above their stack's central value, or \e {rejected high pixels}. }
+            { \c{<high-pc>} is the percentage of rejected high pixels, with respect to the number of pixels in the image. }
+         }
+
+         Finally, the same information is given for the whole process, where each item is the sum of the same data items for all the integrated images.
+      }
+
+      \division { Noise Evaluation Statistics } {
+
+         When the \lref evaluate_noise {Evaluate noise} option is selected, ImageIntegration performs a final \lref quality_assessment {quality assessment} step. Noise, scale and location estimates are computed for each nominal channel of the output integrated image with the \lref noise_evaluation_weighting {MRS noise evaluation} and \lref ikss_estimator IKSS algorithms. From these estimates, robust effective noise reduction function values are calculated (see Equation \eqnref eqn_enr_function). The following box shows an example.
+
+         \box \verbatim[import] quality-info.txt
+
+         The \e {reference noise reduction} value is relative to the reference image (the first input image), while the \e {median noise reduction} is the median of computed values for all images; this is the most significant value that should be maximized to achieve the best possible SNR increment. Finally, an \e approximate SNR value is computed using Equation \eqnref eqn_snr.
+      }
+   } % Console Statistics
+
+   \label cache_management
+   \subsection { Cache Management } {
+
+      The ImageIntegration tool uses a persistent file cache to store statistical properties of images. This includes noise estimates and estimates of location and scale such as the mean, median, MAD, IKSS, etc., among many other values, as required by the different integration processes that are executed. Storage of these precalculated properties greatly improves efficiency of the image integration process when repeated executions are necessary to fine tune pixel rejection and image normalization parameters. If a file has already been involved in an integration process, instead of recomputing the necessary data they are retrieved from the cache in insignificant time. In a similar way to development utilities such as \xref http://www.gnu.org/s/make/ make, ImageIntegration validates stored cache items by comparing file modification times. If a file has been modified since the corresponding data was stored in the cache, the data are recalculated and stored in the cache again.
+
+      The cache can be managed from ImageIntegration's preferences. To access these settings, click the Preferences button on ImageIntegration's control bar, as shown here.
+
+      \center \image PreferencesButton.png
+
+      This will open the Cache Preferences dialog, which provides the parameters described below.
+
+      \center \image CachePreferencesDialog.png
+
+      \definition {
+
+         { Persistent file cache } {
+
+            Enable this option to use a persistent file cache to store statistical data and noise estimates for all integrated images. A persistent cache is kept across PixInsight sessions. If you disable this option, the file cache will still be used, but only during the current session: as soon as you exit the PixInsight Core application, all the cached information will be lost. With the persistent cache option enabled, all cache items will be stored and will be available the next time you run PixInsight. This option is enabled by default.
+         }
+
+         { Cache duration } {
+
+            Persistent file cache items can be automatically removed after a specified period without accessing the corresponding files. Enter the desired period in days, or specify zero to disable this \e {automatic purge} feature, so that existing file cache items will never expire. The default cache duration is 30 days.
+         }
+
+         { Clear Memory Cache Now } {
+
+            Click this button to remove all cache items currently stored in volatile RAM.
+         }
+
+         { Purge Persistent Cache Now } {
+
+            Click this button to remove all stored persistent cache items. \s {Warning: This action cannot be undone.}
+         }
+      }
+   }
+
+   \subsection { Scripting and Automation } {
+
+      The ImageIntegration process can be easily automated via scripting with the PixInsight JavaScript Runtime (PJSR). This allows you to use ImageIntegration in the context of more complex systems, such as preprocessing pipelines.
+
+      To automate ImageIntegration execution, a script must invoke the \c executeGlobal method of an ImageIntegration instance. By setting appropriate process parameters before this call, the script can specify a list of input images and all the required operating parameters. After successful execution, the ImageIntegration instance will provide a number of read-only properties with complete information about the integration process performed. The following tables describe all ImageIntegration parameters and properties available for scripting:
+
+      \table[caption,header,width:100\%] {
+
+         { \tbltag ImageIntegration Parameters } { { Parameter } {Data Type} { Description } }
+
+         { \nowrap{ \s\c bufferSizeMB } { Int32 } { Integration buffer size in mebibytes (MiB). } }
+         { \nowrap{ \s\c ccdGain } { Float } { CCD gain in electrons per DN. } }
+         { \nowrap{ \s\c ccdReadNoise } { Float } { CCD readout noise in electrons. } }
+         { \nowrap{ \s\c ccdScaleNoise } { Float } { CCD scale noise (dimensionless) } }
+         { \nowrap{ \s\c clipHigh } { Boolean } { Enable high pixel clipping. } }
+         { \nowrap{ \s\c clipLow } { Boolean } { Enable low pixel clipping. } }
+         { \nowrap{ \s\c closePreviousImages } { Boolean } { Close image windows generated by a previous instance. } }
+         { \nowrap{ \s\c combination } { Int32 } { Image combination operation. One of:
+
+            ImageIntegration.prototype.Average\n
+            ImageIntegration.prototype.Median\n
+            ImageIntegration.prototype.Minimum\n
+            ImageIntegration.prototype.Maximum
+         } }
+         { \nowrap{ \s\c evaluateNoise } { Boolean } { Perform a final quality assessment step. } }
+         { \nowrap{ \s\c generate64BitResult } { Boolean } { Generate the integrated result as a 64-bit floating point image (32-bit floating point otherwise). } }
+         { \nowrap{ \s\c generateIntegratedImage } { Boolean } { Enable generation of the output integrated image. } }
+         { \nowrap{ \s\c generateRejectionMaps } { Boolean } { Enable generation of rejection map images. } }
+         { \nowrap{ \s\c ignoreNoiseKeywords } { Boolean } { Do not retrieve noise estimates from NOISExx FITS header keywords; either recalculate noise estimates or read them from existing cache items. } }
+         { \nowrap{ \s\c images } { Table } { Input images. This table has two column parameters:
+            \table[unnumbered,width:100\%,marginTop:1em] {
+               { \nowrap{ \s\c enabled } { Boolean } { Enabled state. Disabled input files are not integrated. } }
+               { \nowrap{ \s\c path } { String } { Full path of this input file. } }
+            }
+         } }
+         { \nowrap{ \s\c inputHints } { String } { Input hints string. Multiple hints as well as hint parameters must be separated by spaces. } }
+         { \nowrap{ \s\c linearFitHigh } { Float } { High clipping point (in average absolute deviation units) for linear fit clipping rejection. } }
+         { \nowrap{ \s\c linearFitLow } { Float } { Low clipping point (in average absolute deviation units) for linear fit clipping rejection. } }
+         { \nowrap{ \s\c minMaxHigh } { Int32 } { Number of clipped high pixels, min/max rejection algorithm. } }
+         { \nowrap{ \s\c minMaxLow } { Int32 } { Number of clipped low pixels, min/max rejection algorithm. } }
+         { \nowrap{ \s\c mrsMinDataFraction } { Float } { Minimum fraction of pixels in a valid MRS noise estimate. } }
+         { \nowrap{ \s\c noGUIMessages } { Boolean } { Do not use GUI resources (such as message boxes) to provide information to the user; use console output exclusively. } }
+         { \nowrap{ \s\c normalization } { Enumeration } { Output image normalization method. One of:
+
+            ImageIntegration.prototype.DontCare\n
+            ImageIntegration.prototype.ExposureTime\n
+            ImageIntegration.prototype.NoiseEvaluation\n
+            ImageIntegration.prototype.SignalWeight\n
+            ImageIntegration.prototype.MedianWeight\n
+            ImageIntegration.prototype.AverageWeight\n
+            ImageIntegration.prototype.KeywordWeight
+         } }
+         { \nowrap{ \s\c pcClipHigh } { Float } { High clipping point (relative to the median) for the percentile clipping rejection algorithm. } }
+         { \nowrap{ \s\c pcClipLow } { Float } { Low clipping point (relative to the median) for the percentile clipping rejection algorithm. } }
+         { \nowrap{ \s\c rangeClipHigh } { Boolean } { Enable high range rejection. } }
+         { \nowrap{ \s\c rangeClipLow } { Boolean } { Enable low range rejection. } }
+         { \nowrap{ \s\c rangeHigh } { Float } { High range rejection point in the \[0,1\] range. } }
+         { \nowrap{ \s\c rangeLow } { Float } { Low range rejection point in the \[0,1\] range. } }
+         { \nowrap{ \s\c rejection } { Enumeration } { Pixel rejection algorithm. One of:
+
+            ImageIntegration.prototype.NoRejection\n
+            ImageIntegration.prototype.MinMax\n
+            ImageIntegration.prototype.PercentileClip\n
+            ImageIntegration.prototype.SigmaClip\n
+            ImageIntegration.prototype.WinsorizedSigmaClip\n
+            ImageIntegration.prototype.AveragedSigmaClip\n
+            ImageIntegration.prototype.LinearFit\n
+            ImageIntegration.prototype.CCDClip
+         } }
+         { \nowrap{ \s\c rejectionNormalization } { Enumeration } { Image normalization method (rejection normalization). One of:
+
+            ImageIntegration.prototype.NoRejectionNormalization\n
+            ImageIntegration.prototype.Scale\n
+            ImageIntegration.prototype.EqualizeFluxes
+         } }
+         { \nowrap{ \s\c roiX0 } { Int32 } { ROI rectangle, left pixel coordinate. } }
+         { \nowrap{ \s\c roiX1 } { Int32 } { ROI rectangle, right pixel coordinate (excluded, ROI width = roiX1 - roiX0). } }
+         { \nowrap{ \s\c roiY0 } { Int32 } { ROI rectangle, top pixel coordinate. } }
+         { \nowrap{ \s\c roiY1 } { Int32 } { ROI rectangle, bottom pixel coordinate (excluded, ROI height = roiY1 - roiY0). } }
+         { \nowrap{ \s\c sigmaHigh } { Float } { High clipping point (in sigma units) for the sigma clipping, averaged sigma clipping and Winsorized sigma clipping rejection algorithms. } }
+         { \nowrap{ \s\c sigmaLow } { Float } { Low clipping point (in sigma units) for the sigma clipping, averaged sigma clipping and Winsorized sigma clipping rejection algorithms. } }
+         { \nowrap{ \s\c stackSizeMB } { Int32 } { Integration stack size in mebibytes (MiB). } }
+         { \nowrap{ \s\c useCache } { Boolean } { Enable the persistent file cache. } }
+         { \nowrap{ \s\c useROI } { Boolean } { Enable the region of interest (ROI). } }
+         { \nowrap{ \s\c weightKeyword } { String } { The name of a FITS header keyword to retrieve image weights, only if normalization = KeywordWeight. } }
+         { \nowrap{ \s\c weightMode } { Enumeration } { Image weighting method. One of:
+
+            ImageIntegration.prototype.NoNormalization\n
+            ImageIntegration.prototype.Additive\n
+            ImageIntegration.prototype.Multiplicative\n
+            ImageIntegration.prototype.AdditiveWithScaling\n
+            ImageIntegration.prototype.MultiplicativeWithScaling
+         } }
+         { \nowrap{ \s\c weightScale } { Enumeration } { Statistical estimator of scale. One of:
+
+            ImageIntegration.WeightScale_AvgDev\n
+            ImageIntegration.WeightScale_BWMV\n
+            ImageIntegration.WeightScale_IKSS\n
+            ImageIntegration.WeightScale_MAD\n
+            ImageIntegration.WeightScale_PBMV\n
+            ImageIntegration.WeightScale_Qn\n
+            ImageIntegration.WeightScale_Sn
+         } }
+      }
+
+      \table[caption,header,width:100\%] {
+
+         { \tbltag ImageIntegration Output Properties }  { { Property } {Data Type} { Description } }
+
+         { \nowrap{ \s\c finalLocationEstimateB } { Double } { IKSS location estimate for the output integrated image, blue channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalLocationEstimateG } { Double } { IKSS location estimate for the output integrated image, green channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalLocationEstimateRK } { Double } { IKSS location estimate for the output integrated image, red or gray channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalNoiseEstimateB } { Double } { MRS Gaussian noise estimate for the output integrated image, blue channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalNoiseEstimateG } { Double } { MRS Gaussian noise estimate for the output integrated image, green channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalNoiseEstimateRK } { Double } { MRS Gaussian noise estimate for the output integrated image, red or gray channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalScaleEstimateB } { Double } { IKSS scale estimate for the output integrated image, blue channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalScaleEstimateG } { Double } { IKSS scale estimate for the output integrated image, green channel. Zero if not calculated } }
+         { \nowrap{ \s\c finalScaleEstimateRK } { Double } { IKSS scale estimate for the output integrated image, red or gray channel. Zero if not calculated } }
+         { \nowrap{ \s\c highRejectionMapImageId } { String } { Identifier of the high rejection map image, or an empty string if no high rejection map has been generated. } }
+         { \nowrap{ \s\c imageData } { Table } { Data about the integrated images. Each row in this table provides information on the corresponding image in the input list. Disabled input images are not included in this table.
+            \table[unnumbered,width:100\%,marginTop:1em] {
+               { \nowrap{ \s\c weightB } { Float } { Image weight relative to the reference image, blue channel. } }
+               { \nowrap{ \s\c weightG } { Float } { Image weight relative to the reference image, green channel. } }
+               { \nowrap{ \s\c weightRK } { Float } { Image weight relative to the reference image, red or gray channel. } }
+               { \nowrap{ \s\c rejectedLowB } { UInt64 } { Number of rejected low pixels, blue channel. } }
+               { \nowrap{ \s\c rejectedLowG } { UInt64 } { Number of rejected low pixels, green channel. } }
+               { \nowrap{ \s\c rejectedLowRK } { UInt64 } { Number of rejected low pixels, red or gray channel. } }
+               { \nowrap{ \s\c rejectedHighB } { UInt64 } { Number of rejected high pixels, blue channel. } }
+               { \nowrap{ \s\c rejectedHighG } { UInt64 } { Number of rejected high pixels, green channel. } }
+               { \nowrap{ \s\c rejectedHighRK } { UInt64 } { Number of rejected high pixels, red or gray channel. } }
+            }
+         } }
+         { \nowrap{ \s\c integrationImageId } { String } { Identifier of the output integrated image, or an empty string if no integrated image has been generated. } }
+         { \nowrap{ \s\c lowRejectionMapImageId } { String } { Identifier of the low rejection map image, or an empty string if no low rejection map has been generated. } }
+         { \nowrap{ \s\c medianNoiseReductionB } { Float } { Median effective noise reduction, blue channel. Zero if not calculated. } }
+         { \nowrap{ \s\c medianNoiseReductionG } { Float } { Median effective noise reduction, green channel. Zero if not calculated. } }
+         { \nowrap{ \s\c medianNoiseReductionRK } { Float } { Median effective noise reduction, red or gray channel. Zero if not calculated. } }
+         { \nowrap{ \s\c numberOfChannels } { Int32 } { Number of channels in the integrated image. } }
+         { \nowrap{ \s\c numberOfPixels } { UInt64 } { Area of the integrated image in square pixels. } }
+         { \nowrap{ \s\c referenceNoiseReductionB } { Float } { Effective noise reduction with respect to the reference image, blue channel. Zero if not calculated. } }
+         { \nowrap{ \s\c referenceNoiseReductionG } { Float } { Effective noise reduction with respect to the reference image, green channel. Zero if not calculated. } }
+         { \nowrap{ \s\c referenceNoiseReductionRK } { Float } { Effective noise reduction with respect to the reference image, red or gray channel. Zero if not calculated. } }
+         { \nowrap{ \s\c referenceSNRIncrementB } { Float } { Deprecated - should be ignored. } }
+         { \nowrap{ \s\c referenceSNRIncrementG } { Float } { Deprecated - should be ignored. } }
+         { \nowrap{ \s\c referenceSNRIncrementRK } { Float } { Deprecated - should be ignored. } }
+         { \nowrap{ \s\c slopeMapImageId } { String } { Identifier of the slope map image, or an empty string if no slope map has been generated. } }
+         { \nowrap{ \s\c totalPixels } { UInt64 } { Total integrated pixels, or the volume of the total pixel stack in cubic pixels: numberOfPixels\times{}numberOfFiles. } }
+         { \nowrap{ \s\c totalRejectedHighB } { UInt64 } { Number of rejected high pixels, blue channel. } }
+         { \nowrap{ \s\c totalRejectedHighG } { UInt64 } { Number of rejected high pixels, green channel. } }
+         { \nowrap{ \s\c totalRejectedHighRK } { UInt64 } { Number of rejected high pixels, red or gray channel. } }
+         { \nowrap{ \s\c totalRejectedLowB } { UInt64 } { Number of rejected low pixels, blue channel. } }
+         { \nowrap{ \s\c totalRejectedLowG } { UInt64 } { Number of rejected low pixels, green channel. } }
+         { \nowrap{ \s\c totalRejectedLowRK } { UInt64 } { Number of rejected low pixels, red or gray channel. } }
+      }
+   }
+
+   \subsection { Usage Hints } {
+
+      \list[spaced] {
+
+         { Use the \sref SubframeSelector SubframeSelector script and the \tref Blink Blink tool to analyze your data and grade your images, both quantitatively and qualitatively by visual inspection. }
+
+         { Don't use the \sref BatchPreprocessing BatchPreprocessing script to integrate your light frames. In most cases, BatchPreprocessing does a fine job for generation of master calibration frames, image calibration and registration. However, integration of light frames is a critical process requiring manual intervention to fine tune pixel rejection and image combination parameters. The integrated output of BatchPreprocessing can be used as a \e {quick preview} of the image that can be achieved, but it is not the optimal image by any means, and many times you're quite likely to get a grossly wrong result (e.g., invalid rejection of plane and satellite trails, etc.). }
+
+         { Refine your pixel rejection parameters to achieve the highest possible effective noise reduction with appropriate rejection of spurious data (plane and satellite trails, cosmic ray impacts, CCD defective pixels, etc.). We strongly recommend you read an excellent presentation by Jordi Gallego, \ref gallego_2010 where he describes this task with detailed practical examples and real-world tests. Although this presentation describes an old version of the ImageIntegration tool, the fundamental concepts exposed remain equally valid. }
+
+         { Experiment with different \lref scale_estimators {scale estimators} to discover which ones provide the best results for your data. We suggest you compare the results achieved with the IKSS, MAD and average absolute deviation estimators as a starting point. }
+
+         { Unless you have a strong reason to do otherwise, use the noise evaluation \lref image_weighting {weighting method}. In all of our tests this method consistently leads to the highest SNR improvement in the integrated images. }
+
+         { Never use \lref median_combination {median combination} for production work. As we have explained in this document, median combination will lead to a 20\% loss of signal with respect to average combination (or more for small image sets). Always use \lref average_combination {average combination} and the appropriate \lref pixel_rejection {pixel rejection algorithm}. Use median combination exclusively as a counter-test to evaluate rejection performance. }
+
+         { Never use \lref minmax_clipping {min/max rejection} for production work. The min/max method rejects a fixed number of samples from each pixel stack without any statistical basis. It will lead to a constant loss of signal proportional to the square root of the number of clipped pixels. While the importance of this loss is inversely proportional to the number of integrated images, better results can \e always be achieved with more sophisticated rejection algorithms. Use min/max exclusively as a counter-test to evaluate the performance of other algorithms. }
+
+         { For integration of master bias and master dark frames, you may want to disable the \lref evaluate_noise {Evaluate noise} option to accelerate the process, since a quality assessment is normaly not necessary in these cases. }
+
+         { Use \lref region_of_interest {regions of interest} to accelerate repeated tests for the same data set. }
+
+         { If you have to integrate images generated by other applications, use \lref format_hints {input hints} to adapt the alien data to the PixInsight platform. In particular, you probably will have to use the \c {"upper-range 65535"} input hint for the FITS format. A much better solution is: stop using those applications and calibrate and register your images with PixInsight. }
+
+         { If you are using a 32-bit version of PixInsight, you may easily get out-of-memory errors for relatively small data sets. The only good solution to this problem is running a 64-bit version of PixInsight on a 64-bit operating system (preferably FreeBSD or Linux; Mac OS X and Windows also seem to work :)), on a machine with abundant RAM. A workaround for 32-bit systems is decreasing the \lref buffer_size {buffer size} parameter. }
+      }
+   } % Usage Hints
+} % Usage
+
+\relatedtools {
+   ImageCalibration, StarAlignment, HDRComposition, Blink
+}
+
+\relatedscripts {
+   SubframeSelector, BatchPreprocessing
+}
+
+\reference starck_1998 { Jean-Luc Starck and Fionn Murtagh (1998), \e { Automatic Noise Estimation from the Multiresolution Support }, Publications of the Royal Astronomical Society of the Pacific, vol. 110, pp. 193--199 }
+
+\reference starck_2002 { Jean-Luc Starck and Fionn Murtagh (2002), \e { Astronomical Image and Data Analysis }, Springer, pp. 36--39 }
+
+\reference tukey_1962 { John W. Tukey (1962), \e { The Future of Data Analysis }, The Annals of Mathematical Statistics, Vol. 33, No. 1, pp. 17--19 }
+
+\reference huber_2009 { Peter J. Huber and E. Ronchetti (2009), \e { Robust Statistics }, 2nd Ed., Wiley }
+
+\reference press_2007 { William H. Press et al. (2007), \e { Numerical Recipes, The Art of Scientific Computing }, 3rd Ed., Cambridge University Press, \sect 15.7.3, pp. 822--824 }
+
+\reference gorman_2009 { Lawrence O'Gorman et al. (2009), \e { Practical Algorithms for Image Analysis }, 2nd Ed., Cambridge University Press, \sect 5.5.2, pp. 214--215 }
+
+\reference shaw_1992 { R. A. Shaw, K. Horne (1992), \e { Noise Model-Based Cosmic Ray Rejection for WF/PC Images }, Astronomical Data Analysis Software and Systems I, A.S.P. Conference Series, Vol. 25, pp. 311--315 }
+
+\reference cormen_2009 { Thomas H. Cormen et al. (2009), \e { Introduction to Algorithms }, 3rd Ed., MIT Press, \sect 9.3, pp. 220--222 }
+
+\reference sedgewick_2011 { Robert Sedgewick, Kevin Wayne (2011), \e { Algorithms }, 4th Ed., Addison-Wesley Professional, pp. 345--347 }
+
+\reference knuth_1973 { Donald E. Knuth (1973), \e { The Art of Computer Programming, Volume 3: Sorting and Searching }, Addison Wesley. }
+
+\reference hillis_1992 { W. D. Hillis (1992), \e { Co-evolving parasites improve simulated evolution as an optimization procedure }, Langton, C. et al. (Eds.), Artificial Life II. Addison Wesley. }
+
+\reference juille_1995 { Hugues Juillé (1995), \e { Evolution of Non-Deterministic Incremental Algorithms as a New Approach for Search in State Spaces } }
+
+\reference wilcox_2012_3_1 { Rand R. Wilcox (2012), \e { Introduction to Robust Estimation and Hypothesis Testing, 3rd Edition }, Elsevier Inc., \sect 3.1. }
+
+\reference wilcox_2012_3_12 { Rand R. Wilcox (2012), \e { Introduction to Robust Estimation and Hypothesis Testing, 3rd Edition }, Elsevier Inc., \sect 3.12. }
+
+\reference rousseeuw_1993 { P.J. Rousseeuw and C. Croux (1993), \e { Alternatives to the Median Absolute Deviation }, Journal of the American Statistical Association, Vol. 88, pp. 1273--1283 }
+
+\reference mckean_1984 { J. W. McKean, R. M. Schrader (1984), \e { A Comparison of Methods for Studentizing the Sample Median }, Communications in Statistics -- Simulation and Computation, 13, pp. 751--773 }
+
+\reference peris_2010 { Vicent Peris (2010), \xref http://pixinsight.com/tutorials/master-frames/en.html \e { Master Calibration Frames: Acquisition and Processing }, tutorial. }
+
+\reference gallego_2010 { Jordi Gallego (2010), \xref http://astrosurf.com/jordigallego/articles/Image_integration_JGallego.ppt \e { Image integration techniques: Increasing SNR and outlier rejection with PixInsight }, slides for a presentation given at the \e { VI Seminario de Astrofotografía de Cielo Profundo }, Madrid, November 20th, 2010. }
+
+\make[noauthors]

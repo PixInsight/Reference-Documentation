@@ -1,0 +1,133 @@
+% ScreenTransferFunction tool
+
+\documentclass PIToolDoc
+
+\tool ScreenTransferFunction
+
+\module IntensityTransformations
+
+\category IntensityTransformations
+
+\keywords { screen stretch, automatic screen stretch, screen transfer function }
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Defines a set of histogram transformations applied to the screen rendition of an image, without modifying its pixel data.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] ScreenTransferFunction.png
+
+   A \e {screen transfer function} (STF) in PixInsight is used to improve the visibility of an image as it is represented on the screen, but without altering its pixel data in any way. This is useful to work with processes applied to linear, unstretched data. Such processes may include color calibration, deconvolution, wavelet transforms, and some noise reduction procedures, among many others. Unstretched raw images are often poorly represented on the screen. This is because most of their data are concentrated in small portions of the available dynamic range. This can be easily identified as a narrow peak near the left side of the histogram.
+
+   A STF is a histogram transformation that PixInsight applies to the bitmap generated to render an image on the screen. STF parameters include per-channel midtones balance, shadows and highlights clipping values, just as any histogram transformation does. STF includes also dynamic range expansion parameters, but these are only available through the command-line and scripting interfaces of the ScreenTransferFunction process, not on its graphical interface.
+
+   In PixInsight, each view can have its own STF, which can be adjusted independently for the red/gray, green and blue nominal channels, plus an additional \e {luminance STF} that applies only when the CIE L* and CIE Y* components are being rendered on the screen, in the corresponding display modes. This allows for very precise and fine-tuned adaptations of screen renditions to raw data. ScreenTransferFunction allows you to work with linear images, just as if they were nonlinear, in an easy and completely transparent way.
+}
+
+\usage {
+
+   \subsection { Working Modes } {
+
+      \center \image ScreenTransferFunctionAnnotated.png
+
+      \definition {
+
+         { Edit STF }
+         { Select this mode to modify the shadows clipping, midtones balance and highlights clipping parameters of the different channels by clicking and dragging on the STF editing area. If you hold the \k Shift key wile dragging, image screen updates will be blocked until the \k Shift key is released, which can be useful to improve performance whith very big color images. }
+
+         { \label zoom_in_mode Zoom In }
+         { Once selected, clicking on an editing area will duplicate its width. This is useful to perform more detailed adjustments. When the \lref link_rgb_channels {Link RGB channels} option is enabled, the zoom in action is applied equally to the three RGB channels. Note that you can also increase or decrease magnification of the editing areas with the mouse wheel, irrespective of the current working mode, when the mouse cursor is over them. }
+
+         { \label zoom_out_mode Zoom Out }
+         { Once selected, clicking on an editing area will reduce its width by a factor of two. This is the inverse operation to clicking in Zoom In mode. }
+
+         Scroll
+         { Select this mode to pan around the editing area. Only useful if you have previously zoomed-in. You can also pan the editing areas by clicking with the middle mouse button and dragging. }
+      }
+   }
+
+   \subsection { Functions } {
+
+      Besides editing screen stretch transformations, ScreenTransferFunction implements additional features available by clicking several tool buttons which we describe below.
+
+      \center \image LeftSideButtons.png
+
+      \definition {
+
+         { \label link_rgb_channels Link RGB channels }
+         { Enabling this option will cause that any change in any of the RGB channels will affect equally all three RGB channels. When disabled, you can modify each channel separately. Along with that, when the \e{Link RGB channels} option is disabled, automatic screen stretch STFs will be computed separately for each individual RGB channel. This is useful to improve the color balance of screen representations. }
+
+         { Zoom 1:1 }
+         { Resets the zoom to 1:1. You can increase or decrease the zoom level by clicking on the editing area in either \lref zoom_in_mode {Zoom In} or \lref zoom_out_mode {Zoom Out} working modes. }
+
+         { Auto Stretch }
+         { Click this button to perform an \e{automatic screen stretch}. \k Ctrl-click this button to open the STF Auto Stretch dialog. On this dialog, you can modify the two parameters that control calculation of automatic STFs:
+
+            \definition {
+               { Shadows clipping }
+               { This controls the shadows clipping point of the computed STF. This parameter is expressed in sigma units, measured from the median of the target image. Recall that the median identifies the main histogram peak in deep sky images where the sky background strongly dominates their pixel value distributions. Hence, this parameter will normally have negative values, since we want to clip at the left side of the main histogram peak. The default value is \minus{1.25}. }
+
+               { Target background }
+               { This is the desired mean background value in the normalized \[0,1\] range. ScreenTransferFunction will compute the required nonlinear midtones balance transformations to achieve this mean background level in the screen representation of the target image. The default value is 0.25. }
+            }
+
+         Automatic STFs are computed separately for individual RGB channels when the \lref link_rgb_channels {Link RGB channels} option is disabled; otherwise a unique STF is applied to the three RGB channels. By default, the Link RGB channels option is enabled. Separate STFs are useful to compensate for color balancing problems in raw data in most cases; however, always take into account that when separate STFs are being applied, you are not seeing, in general, a screen representation of the \e actual RGB color image that you have.
+         }
+
+         { Edit STF Parameters }
+         { Click this button to open a dialog box where you can define STF parameters manually for the RGB and L channels. }
+      }
+
+      \center \image[marginTop:1em] RightSideButtons.png
+
+      \definition {
+
+         { Reset Channel Parameters }
+         { Click to bring the corresponding STF parameters to their default values: the shadows clipping point, midtones balance and highlights clipping point parameters are set to 0, 0.5 and 1, respectively, for the channel where the reset button has been clicked. }
+
+         { \label black_point_readout Black Point Readout }
+         { STF readouts work by clicking on any view (main view or preview) of an image window in any of the readout modes (black, midtones, white point) to set the STF parameters accordingly. In this mode, while the mouse button is held down on an image, readout values are calculated for the cursor coordinates according to \tref ReadoutOptions {global readout options}, and sent to the STF interface window. In other words, after clicking on this icon, hover over an image and click on it --- the black point of all channels will be set to the readout values computed from the pixels where you just clicked. }
+
+         { Midtones Readout }
+         { Same as \lref black_point_readout {Black Point Readout} but to set the midtones balance parameters. }
+
+         { White Point Readout }
+         { Same as \lref black_point_readout {Black Point Readout} but to set the highlights clipping point parameters. }
+
+         { Enable/Disable STF }
+         { This allows you to quickly tell the STF engine whether to apply the STF to the target image or not. When hovered, this tool button shows a tool tip text that informs you about the current enabled/disabled state and how it will change if you click the button. Note that the icon shown on this button is either a green check mark to indicate the enabled state, or a red cross mark when disabled. Note also that you can enable and disable the STF for the active view by selecting \m {Image > Screen Transfer Functions > Enable}, also available from the view context menu. Finally, you can press \k F12 to enable or disable the STF for the active view. }
+      }
+   } % Functions
+
+   \subsection { Interoperability with HistogramTransformation } {
+
+      The standard ScreenTransferFunction and \tref HistogramTransformation HistogramTransformation processes can share instances. This is possible because both tools actually work with very similar parameters: histogram transformations defined by two clipping points (shadows and highlights) and a midtones balance value.
+
+      You can drag a STF instance to the control bar of the HistogramTransformation tool window, and the HistogramTransformation tool will import its histogram parameters from the STF instance. When the STF instance defines the same parameters for the three RGB channels, HistogramTransformation will import them in its RGB/K combined transformation. Otherwise each set of STF parameters is imported in its corresponding channel-specific transformation of HistogramTransformation. The reverse operation, that is importing a HistogramTransformation instance in ScreenTransferFunction, is also possible and works in a similar way.
+   }
+
+   \subsection { Common Pitfalls } {
+
+      \list[spaced] {
+
+         { Use the \s {Track View} function of the ScreenTransferFunction interface to synchronize STF parameters with the active view. When Track View is enabled, any changes made on the STF interface will be visible in the active image. When disabled, the active image will \e not display any adjustments you make. Note that if you have already made changes to the STF, disabling Track View will \e not reset or disable the STF used by the image. }
+
+         { To \s {reset the STF} of a given image, you must actually \e reset the STF, not just disable it. The reset button is the button on the bottom right corner of the STF window. }
+
+         { Always bear in mind that a STF modifies \e exclusively the screen representation of an image, but \s {STF does not change actual pixel values} in any way. So don't be surprised if after saving to disk a nice-looking image to which you have applied an automatic STF, it is nearly black when you load it again: what you saved is the unchanged raw linear image, since STF didn't modify it. }
+      }
+   }
+} % Usage
+
+\relatedtool HistogramTransformation
+
+\make[noauthors]

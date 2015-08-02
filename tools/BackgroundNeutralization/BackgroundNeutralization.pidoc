@@ -1,0 +1,89 @@
+% BackgroundNeutralization tool
+
+\documentclass PIToolDoc
+
+\tool BackgroundNeutralization
+
+\module ColorCalibration
+
+\category ColorCalibration
+
+\keywords {
+   background neutralization, color calibration
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Neutralizes the sky background of a color deep-sky image.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] BackgroundNeutralization.png
+
+   The background neutralization task equalizes the average red, green and blue components of a color deep sky image to yield a \e {neutral gray} rendition of the sky background. Neutralization is carried out by applying per-channel linear transformations computed from a set of pixels sampled on a \e {background reference image}.\nf
+
+   A neutral background is a necessary precondition to perform a correct color calibration. The BackgroundNeutralization tool can be applied prior to \tref ColorCalibration ColorCalibration or other color calibration tools and procedures.
+
+   BackgroundNeutralization requires a good background reference. A good background reference includes mainly data that actually represents the sky background in the target image.
+}
+
+\parameter { \label reference_image Reference image } {
+
+   BackgroundNeutralization will use pixels read from this image to compute an initial mean background level for each color channel. If you leave this field blank ---or with its default \e {<target image>} value---, the target image will be also the background reference image during the neutralization process.
+
+   You should specify a view that represents the true background of the image. In most cases this means that you must select a view whose histograms are strongly dominated by the sky background, as it is being represented on the target image. A typical example involves defining a small preview over a free sky area of the target image, and selecting it here as the background reference image. Even better than selecting a background preview as a reference image is using a \lref region_of_interest {region of interest} (ROI), as we describe later in this document.
+}
+
+\parameter {Lower limit} {
+
+   Lower bound of the set of background pixels. Background reference pixels with values less than or equal to this value will be rejected for calculation of mean background levels. Note that since the minimum allowed value for this parameter is zero, black pixels are never taken into account.
+}
+
+\parameter {Upper limit} {
+
+   Upper bound of the set of background pixels. Background reference pixels above this value will be rejected for calculation of mean background levels.
+}
+
+\parameter {Working mode} {
+
+   Use this parameter to select a background neutralization mode:
+
+   \definition {
+
+      { \label target_background_mode Target background }
+      { In this mode BackgroundNeutralization will force the target image to have the specified mean background value (see the \lref target_background_param {\e {Target background} parameter} below) for the three RGB channels. In this mode, any resulting out-of-range values after neutralization will be truncated. There can be some (usually negligible) data clipping, but only additive transformations are applied to the data. }
+
+      { Rescale }
+      { The target image will always be rescaled after neutralization. 'Rescaled' here means that all pixel values are recalculated so they all stay within the native numeric range of the image, that is, no clipping can occur. In this mode, besides no data clipping, the neutralized image maximizes dynamic range usage. However, in this mode you have no control over the resulting mean background value, and the rescaling operation is a multiplicative transformation that redistributes all pixel values throughout the native numeric range of the image. }
+
+      { Rescale as needed }
+      { Similar to \e rescale, but the target image is only rescaled if there are out-of-range values after neutralization. This is the default working mode. }
+
+      { Truncate }
+      { All resulting out-of-range pixels after neutralization will be truncated, which usually results in severely clipped data. This mode is useful to perform a background subtraction to a working image used for an intermediate analysis or processing step. }
+   }
+}
+
+\parameter { \label target_background_param Target background } {
+
+   In the \lref target_background_mode {target background working mode}, this is the final mean background level that will be imposed to the three RGB channels of the target image. In the other working modes (\e rescale, \e {rescale as needed} and \e truncate) this parameter is not used.
+}
+
+\parameter { \label region_of_interest Region of Interest } {
+
+   When the whole image cannot be used to sample the background appropriately, a usual way to restrict sampling to background pixels is defining a preview and selecting it as the \lref reference_image {reference image}. In these cases a much better solution is using a \e {region of interest} (ROI). In BackgroundNeutralization, the ROI defines a rectangular area of the reference image that will be sampled to acquire mean background levels. The ROI is specified by four values expressed in pixels: the coordinates of its top left corner and its width and height. More convenient than entering these values directly is acquiring them from an existing preview by clicking the \e {From Preview} button.
+
+   To enable the ROI section, you have to check the \e {Region of Interest} group title checkbox. When using a ROI, you usually will leave the reference image with its default blank value (indicated as \e {<target image>} on the BackgroundNeutralization interface). This has the advantage that the process instance so defined is \e reusable: it can be applied to any image without requiring existence of specific previews. This is especially important to integrate BackgroundNeutralization instances with \xref ProcessContainer ProcessContainer. The \xref ColorCalibration ColorCalibration tool also has a similar ROI functionality.
+}
+
+\relatedtools { ColorCalibration, LinearFit }
+
+\make[noauthors]

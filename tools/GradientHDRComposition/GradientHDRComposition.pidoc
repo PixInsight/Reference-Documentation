@@ -1,0 +1,130 @@
+% GradientHDRComposition tool
+
+\documentclass PIToolDoc
+
+\tool GradientHDRComposition
+
+\module GradientDomain
+
+\categories {
+   GradientDomain, HDR
+}
+
+\keywords {
+   HDR, gradient domain
+}
+
+\author {
+   Georg Viehoever
+}
+
+\copyright {
+   2011 Georg Viehoever, published under LGPL 2.1. With contributions in terms of code, tests, ideas, etc. by Carlos Milovic, Harry Page, Alejandro Tombolini, and others.
+}
+
+\brief {
+   Implements a High Dynamic Range (HDR) composition of images with different exposures. Uses a gradient domain method.
+}
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] GradientHDRComposition_GUI.png
+
+   The GradientHDRComposition tool implements the combination of several registered images with different exposure lengths. It uses the information from those images that provide the most information for a specific pixel, thus composing an image that never uses data from over- or underexposed regions of the contributing images. The purpose of the tool is similar to the \tref HDRComposition HDRComposition tool, but the method used is entirely different.\ref wang
+
+   \center \image GradientHDRComposition_Result.png
+
+   The image above shows the result of a HDR composition of M42 (top left), and 3 of the 4 contributing images. Apart from doing the composition, we only applied STFs.
+
+   Input images need to be aligned, and are expected to be linear, or more exactly: The gradients are supposed to be linear. The tool can handle images that have a bias/pedastal where all image pixels have a fixed constant added. Pixels with value 0 on all channels are always considered transparent background. The exposure time or f value of the images is not important. Input images can be combined in any order.
+
+   If GradientHDRComposition is provided with linear input (after subtracting the bias), and the Keep Log Scale checkbox is unchecked, the result image is linear. The result image is rescaled to the \[0,1\] range.
+
+} % description
+
+\usage {
+
+   \center \image GradientHDRComposition_GUI.png
+
+   The GradientHdrComposition interface allows for selection of the contributing files and for tuning certain parameters.
+
+   \subsection { File Selection } {
+
+      \definition {
+
+         { Add Files... }
+         { Use the Add Files.. button to add one or more files to the file list. It is possible to add several files in one step. Each file may contain several images (this is possible for example for FITS files). }
+
+         { Select All, Invert Selection, Toggle Selected, Remove Selected, Clear }
+         { These permit to manipulate the list of files. }
+
+         { Full Paths }
+         { Toggle to see the full file path names instead of only the last component. }
+
+         { File List }
+         { Displays the list of image files. You may double click on a file name to open the file. Double clicking on the check mark/cross allows to deactivate/activate a file without removing it from the list. }
+      }
+   } % subsection
+
+   \subsection { Parameters } {
+
+      The parameters allow to tune the operation of GradientHdrComposition.
+
+   \definition {
+
+         { Log10 Bias }
+	      { \center \image GradientHDRComposition_Bias.png
+
+            If the images have a constant pedestal (i.e. black value > 0), you can adjust the bias here. The value is scaled using log10(): For instance, a value of -3 means a bias of 0.001. Value -7 disables bias correction. A correct value also supports the linearity of the result image. Note: The correct value is \e not really critical.
+
+	         If the images have a bias, the combined image tends have too much contrast. However, if you use a bias value that is too large, the image looses faint details and ultimately shows strong artefacts. The data for the example shown above has a bias of 0.0001 (i.e. log10 bias of -4.0). From left to right and top to bottom,  the screenshot shows HDR compositions with log10 bias -7 (=off), -5, -4, -3 without application of any STF. While the images show less contrast without loosing details until -4, faint details disappear at -3. }
+
+	      { Keep in Log Scale }
+         { \center \image GradientHDRComposition_KeepLog.png
+
+            When checked (default), the result is not converted into linear scale, but instead stays in a logarithmic scale. For the visualization of HDR image this is helpful. If you want to have images that a linear (useful for further processing), uncheck this.
+
+            The screenshot above shows the result with checked (left) and unchecked value. The image for the unchecked values has a strong STF applied.
+
+            Note: Linearizing is sometimes unreliable and considered experimental. }
+
+         { Generate Mask }
+         { \center \image GradientHDRComposition_Mask.png
+
+            Toggle to get a visualization of the different image regions. Two images are displayed, one for the x-gradient, and one for the y-gradient. Each pixel in the images identifies the image from which the corresponding gradient was chosen. Images are numbered from 1, 0 means "no image". The mask images are rescaled for visualization (i.e. if you have 2 images, pixel value 0.5 stands for image 1, and value 1.0 stands for image 2).
+
+	         The screenshot above shows that information for the core of M42 is mostly taken from image 2, while image 1 is chosen for the fainter regions of the nebula. }
+
+	      { Negative Bias }
+	      { \center \image GradientHDRComposition_NegBias.png
+
+            Check this to apply a negative bias. Usally not necessary. Results with negative bias get more contrast
+
+	         The screenshot above shows from left to right the results with negative log10 bias -1, no bias and positive log10 bias -3. }
+      } % definition
+   } % subsection
+
+   \subsection { Usage Hints } {
+
+	   GradientHDRComposition usually works well with its default settings. If you experience any issues, consider the hints below:
+
+	   \definition {
+
+         { Look for nonlinear gradients }
+         { \center \image GradientHDRComposition_Seams.png
+
+	         Nonlinear gradients, such as those shown in the example, cause seams. This is because the algorithm cannot distinguish between gradients caused by real objects and gradients that are artifacts. It will use both. Workaround: Crop your images as necessary. The example shows the composition and the contributing image that is causing the seam. }
+
+	   } % definition
+   } % subsection
+} %usage
+
+\relatedtools { HDRComposition }
+
+\reference agrawal_raskar { \xref http://www.umiacs.umd.edu/~aagrawal/ICCV2007Course/index.html { Amit Agrawal and Ramesh Raskar, \e { Gradient Domain Manipulation Techniques in Vision and Graphics } } }
+
+\reference viehoever { \xref http://pixinsight.com/forum/index.php?topic=3295.0 { Georg Viehoever et. al., \e { Gradient Domain Operations } } }
+
+\reference wang { \xref http://zurich.disneyresearch.com/~owang/data/gradienthdr-sig11poster.pdf { Oliver Wang et. al., \e { Gradient Domain HDR Compositing } } }
+
+\make[noauthors]

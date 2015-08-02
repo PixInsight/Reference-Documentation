@@ -1,0 +1,99 @@
+\documentclass PIToolDoc
+
+\tool AssistedColorCalibration
+
+\module AssistedColorCalibration
+
+\categories { ColorCalibration }
+
+\keywords { color calibration, white balance, preview }
+
+\author { Zbynek Vrastil }
+
+\copyright { 2011, Zbynek Vrastil }
+
+\brief {
+   Performs a manual color calibration procedure with previewing of background correction, histogram stretching and color saturation transformations.
+}
+
+\description {
+
+   \image BeforeAndAfter.jpg
+
+   \vs
+   The AssistedColorCalibration process is used to do a \e manual color calibration (white balance) on the image. The color calibration should be done before further processing, even before the background (sky glow, light pollution) is subtracted. This makes manual color calibration difficult because it is not easy to evaluate the effect on a not-yet-processed image. It should be used if you either do not know white balance coefficients for your camera, or if you have them but you are not satisfied with the result.
+
+   This process helps you find out (or just check) the correct white balance coefficients by computing an approximation of the final processed image. This is done by applying selected white balance coefficients, subtracting a provided background reference (also calibrated), applying a histogram transformation and a color saturation enhancement. Although this is definitely a very simple processing, it should give you an image reasonably close to final result---at least good enough to evaluate the current white balance coefficients.
+
+   Please note that these further steps (background subtraction, histogram transformation, saturation enhancement) are only applied to \e previews. Only the white balance cofficients are applied to the target image. This process is only designed to do the white balance---not to substitute the post-processing.
+}
+
+\section { White Balance } {
+
+   \image[float:right,marginLeft:1.25em] AssistedColorCalibration.png
+
+   There are three white balance coefficients, one for each channel. Each channel in the image will be multipled by the corresponding coefficient. A value of 1.0 means that the corresponding channel won't be affected at all. Lower values weaken the corresponding color in the image. Higher values strengthen the color. The \e Reset button located to the right of the Blue coefficient slider resets all three coefficients to 1.0.
+
+   These three coefficients are the \e only parameters applied to the target image. The other parameters are only applied to previews.
+
+   \note { Note--- In theory it is better to have all three coefficients less or equal to 1.0. This prevents any clipping and thus loosing any information in the image. However, for me it is easier to tune up the coefficients by strengthening the color I'm missing rather than by weakening the other two colors. In any case when you found correct coefficients you can compute their \le 1.0 equivalents by dividing all coefficients by the maximum of their actual values. This affects the brightness of your image but not color calibration. }
+} % White balance
+
+\section { Preview Parameters } {
+
+   The parameters in this section do the "basic post-processing" of the calibrated preview. Their purpose is to give you a chance to evaluate an effect of the white balance coefficients. Minimal post-processing should involve at least the following steps:
+
+   \list {
+      { Subtracting the background to remove sky glow, light pollution, etc. }
+      { Nonlinear histogram stretch to reveal faint details. }
+      { Color saturation enhancement to reveal image colors. }
+   }
+
+   Of course post-processing usually involves much more sophisticated methods for noise reduction, mutliscale or HDR processing, using masks. etc. Still, the three essential steps noted above should give you a decent approximation of what you get in the end; at least good enough to evaluate actual white balance coefficients.
+
+   \note { Important--- These parameters are \e only applied to \e previews. If you apply the process to a main view, none of the parameters in this section is taken into account. The typical process is to tune the white balance coefficients on previews and then apply them to the original image, then continue with post-processing. }
+
+   \subsection { Background Correction } {
+
+      Here you can (and should) select a view containing a valid background reference for your image. This means that the view should be strongly dominated by sky background pixels. There should not be any large nebulosity or galaxy. Typically, you'll define an extra preview on your image to serve as background reference. If possible, this background reference preview should be close to the preview on which you do the color calibration. This will eliminate the effect of possible background gradients (which often come from light pollution).
+
+      The background reference is computed as the median of each channel. When the process is applied to the preview, this reference is also calibrated with the white balance coefficients and subtracted from the processed image. After these two operations (applying white balance and subtracting background reference) you should get a neutral background color.
+   }
+
+   \subsection { Histogram Transformation } {
+
+      Applying a histogram transformation stretch is essential to reveal faint parts of your image and to evaluate actual white balance coefficients. There are three parameters known from the \tref HistogramTransformation HistogramTransformation tool:
+
+      \list {
+         { \e { Shadows Clipping } --- the black point, position of the leftmost triangular handle on the histogram scale. Pixels with equal or lower intensity in the original image are black after the transformation. }
+         { \e { Highlights Clipping } --- the white point, position of the rightmost triangular handle on the histogram scale. Pixels with equal or higher intensity in the original image are white after the transformation. }
+         { \e { Midtones Balance } --- the nonlinear stretch of the histogram. A value below 0.5 brightens the image; a value above 0.5 darkens the image. }
+       }
+
+      You can either set those parameters manually using three numeric editors, or by dragging three triangular handles on the scale below the black MTF (midtones transfer function) plot. The plot shows the actual shape of the MTF curve. The histogram itself is not rendered here. There is also a Reset button in the bottom right corner. This button resets the histogram transformation parameters.
+   }
+
+   \subsection { Saturation Enhancement } {
+
+      Color saturation in astronomical images is typically very low (with the exception of emission nebulae). In order to evaluate white balance coefficients precisely, it is necessary to boost the color saturation of the preview. Color saturation is multiplied by the coefficient that is specified by using the \e Saturation slider.
+
+      Feel free to boost saturation by a factor of 3 or 4. Oversaturated image helps you verify current white balance coefficients very precisely.
+   }
+} % Preview Parameters
+
+\usage {
+
+   Use this process on still linear, non-stretched images. First, define at least two previews on the image you want to calibrate. One preview should contain an object suitable to evaluate color calibration, like a spiral galaxy or a multi-color nebula. The second preview will serve as background reference and should contain mostly empty space.
+
+   Now open the first preview and launch the AssistedColorCalibration process. Select the second preview as background reference. Set up a histogram transformation so you can see the object clearly (apply to a preview to see the result). Boost color saturation to be able to precisely evaluate colors.
+
+   You should now play with the red, green and blue coefficients. After each change, apply the process to the preview to see the effect. If is helpful to have an image of the same object (for example from the Internet) to compare your result with it.
+
+   Once you're satisfied with the colors, apply the process to your original image. Continue with post-processing. To end with the result you expect, this post-processing should include background subtraction, histogram stretch and color saturation enhancement.
+
+   You can find a tutorial to this process \xref http://astrofoto.euweb.cz/pixinsight/ACC/ACC_Tutorial.html here.
+}
+
+\relatedtools { ColorCalibration, BackgroundNeutralization, HistogramTransformation, ColorSaturation }
+
+\make[noauthors]

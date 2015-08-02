@@ -1,0 +1,535 @@
+\documentclass PIScriptDoc
+
+\script {
+   ImageSolver
+}
+
+\keywords {
+   coordinates, annotation
+}
+
+\author {
+   Andrés del Pozo
+}
+
+\copyright {
+   2012-13, Andrés del Pozo
+}
+
+\brief {
+   Script for solving the coordinates of astronomical images
+}
+
+\introduction
+{
+   The ImageSolver script analyzes the geometry of an astronomical image and calculates the transformations
+   necessary for converting pixel coordinates in celestial coordinates.
+   The result is written in keywords of the FITS files so it can be used by other scripts like \sref{AnnotateImage}{AnnotateImage}
+   or \sref{MosaicByCoordinates}{MosaicByCoordinates}.
+
+   The coordinates are stored in the image following the specifications at \xref {http://fits.gsfc.nasa.gov/fits_wcs.html}{fits.gsfc.nasa.gov/fits_wcs.html} \ref GreisenWCS \ref CalabrettaCelestial{.}
+   This makes them compatible with other applications.
+
+   \s{This is not a "blind solver"}:
+   The script requires to know in advance an approximation to the resolution and coordinates of the center of the image.
+   Usually it is enough that the starting coordinates are inside of the image and that the resolution has an error less that 50\%.
+   The algorithm works comparing the image with the position of the stars extracted from a catalog.
+   Then calculates a transformation matrix that converts from pixel coordinates to celestial coordinates.
+   Since the script is designed for solving optical images it uses the \dref{Projections}{Gnomonic projection} that
+   models how most optical systems generate the images.
+
+   The script can solve distorted images using non-lineal polynomials and/or distortion models.
+   The distortion models are compatible with \tref{StarAlignment}{StarAlignment} and can be generated using \sref{ManualImageSolver}{ManualImageSolver}.
+
+   Some images can be difficult to solve because of the noise or low SNR, lack of enough stars or heavy distortions.
+   In these cases \sref{ManualImageSolver}{ManualImageSolver} should be able to solve the image.
+   }
+
+\usage {
+   \center{ \image{Dialog.png}}
+   \subsection { Target Images }
+   {
+      The target images are the images that the script will solver.
+      \definition
+      {
+         {Active window}
+         {
+            When this option is selected the script will solve the active image in PixInsight.
+            This option is enabled only when there is at least one image open in the application.
+            The solution will be stored as new keyword in the active image.
+         }
+         {List of files \label ListFiles}
+         {
+            When this option is selected the script will solve a list of files.
+            The results will be saved to the same directory as the original images and
+            a file name composed of the original file name and a suffix.
+            \vs
+            The list can be managed with the buttons \s{Add files}, \s{Remove files} and \s{Clear files}.
+         }
+
+         {Output file suffix}
+         {
+            This suffix is added to the file name of the output files in order to differentiate them from the original files.
+            This option is only available when the option \lref{ListFiles}{List of files} is checked.
+         }
+      }
+   }
+
+   \subsection { Image Parameters }
+   {
+      \definition
+      {
+         {Coordinates \label Coordinates}
+         {
+            The \s{Right ascension} and \s{Declination} fields define the starting point for the algorithm.
+            The coordinates have to be equatorial coordinates using the standard equinox J2000.
+            These coordinates must be inside the image, and it is better that they as near to the center of the image as possible.
+
+            If the image has the keywords \s{OBJCTRA} and \s{OBJCTDEC} the script initializes the coordinates to
+            the values of these keywords.
+            Most capture programs have the capability of reading the position of the telescope and fill these keywords.
+            Since having a good starting position is very important to configure the capture program to
+            fill \s{OBJCTRA} and \s{OBJCTDEC} if possible.
+         }
+
+         {Search}
+         {
+            This button opens a dialog that allows to search the name of astronomical objects in an online search engine
+            (\xref{http://cds.u-strasbg.fr/cgi-bin/Sesame}{Sesame}).
+            The search can be done by name or identifier: "Rossete nebula", "Altair", "M31", "TYC 1058-3399-1".
+            The coordinates of the selected object are copied to the \lref{Coordinates}{Coordinates} fields.
+         }
+
+         {Epoch}
+         {
+            This fields defines the date when the image was taken.
+            It is necessary for calculating the position of the stars using their \xref{http://en.wikipedia.org/wiki/Proper_motion}{proper motion}.
+
+            If the image has a valid \s{DATE-OBS} keyword the script initializes this field to the date in this keyword.
+         }
+
+         {Image Scale \label ImageScale}
+         {
+            The scale of the image can be defined using the fields \s{Resolution} or \s{Focal length}.
+            These parameters don't need to be exact since the script is able to find its exact value.
+            However the initial value should be as precise as possible since this increases the probability of the image being solved.
+
+            The parameter \s{Focal Length} can only be used when \lref{PixelSize}{Pixel size} has a value greater than zero.
+            The focal length must be the effective focal length after taking in account focal reducers, Barlows or any effect
+             that modifies the focal length.
+            Some telescopes, like many amateur Schmidt–Cassegrain, the focusing is done moving the main mirror and this
+            modifies the focal length of the system.
+
+            The parameter \s{Focal Length} is initialized automatically if the image has the keywords \s{FOCALLEN} and \s{XPIXSZ}.
+         }
+
+         {Pixel size \label PixelSize}
+         {
+            This parameter defines the size in micrometers of the pixels of the image sensor.
+            This parameter is optional, but if it is not filled, you can not use the focal length for defining the \lref{ImageScale}{image scale}.
+            If you do use this parameter you must set the exact value since the script can not optimize it.
+
+            The parameter \s{PixelSize} is initialized automatically if the image has the keyword \s{XPIXSZ}.
+         }
+      }
+   }
+
+
+   \subsection { Model Parameters }
+   {
+      The script solves the image comparing it against stars extracted from a star catalog.
+      This section describes how to configure the catalog.
+
+      \definition
+      {
+         {Local catalog \label Catalog}
+         {
+            If this option is selected the script uses a catalog stored locally.
+            In this case you have to configure the path where the catalog is stored.
+
+            You can use the PPMX star catalog that can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
+            The file PPMX.bin has to be saved somewhere in your computer and then set its path in the script.
+            This catalog has stars of magnitude less than 12.8.
+         }
+         {VizieR star catalog}
+         {
+            \xref{http://vizier.u-strasbg.fr/}{VizieR} is an online catalog server that provides information of many catalogs.
+              From the many catalog available the script allows to use a subset:
+              \list{
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/315}{UCAC3}: This catalog contains stars of magnitudes between 8 and 16.}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/317}{PPMXL}: This catalog contains stars of magnitude up to 20.}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/259}{TYCHO-2}: This catalog is the result of the Hipparcos space telescope and
+               contains the 2.5 million brightest stars (magnitude<13). }
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?V/50}{BrightStars}: This catalog contains the 9100 brightest stars (magnitude<8)}
+              }
+              You have to select the catalog best suited for your image.
+              For example for very wide field images (focal length<25mm) you should use the catalog \e{BrightStars} since it has enough
+              stars and the queries are fast for big fields.
+              \e{PPMXL} and \e{UCAC-3} are useful for very deep images since they have very dim stars.
+              However the queries in these two catalogs are very slow for big fields.
+
+              VizieR has several mirror servers that provide the same data.
+              You have to select the best server for you, usually the nearest.
+         }
+         {Limit magnitude \label Magnitude}
+         {
+            This parameter limits the number of stars extracted from the catalog to those with magnitude less than this value.
+            This magnitude should be similar to the magnitude of the dimmest stars in the image.
+            If the value is too low the script won't have enough stars to compare, but if it is too high the script will try to match
+            stars of the image to stars that aren't visible.
+            This will slow the process and it could confuse the algorithm and prevent finding a solution or worse: it could find a bad solution.
+         }
+      }
+   }
+
+   \subsection { Advanced Parameters }
+   {
+      \center{ \image{AdvancedParams.png}}
+      \definition
+      {
+         {Align algorithm}
+         {
+            The first step for solving an image consists in aligning the image with \tref{StarAlignment}{StarAlignment}
+            using the catalog stars as reference.
+            This parameter defines which algorithm StarAlignment uses during the alignment.
+
+            There are two options:
+            \list{
+               {
+                  \s{Triangles}:
+                  Uses a triangle similarity algorithm which is fast,
+                  works in most images but have problems in images with strong distortions.
+               }
+               {
+                  \s{Polygons}:
+                  Uses an algorithm based on the comparison of polygons which is more tolerant to distortions and scale differences,
+                  but \e{\u{it doesn't work with mirrored images}}.
+               }
+            }
+            You should use \s{Polygons} when you are sure that the image is not mirrored and \s{Triangles} in the other cases.
+         }
+         {Star sensitivity \label StarSensitivity}
+         {
+            This parameter configures the sensitivity of the star detection.
+            Increase the value to detect less stars.
+
+            It is important to set a good value for this parameter so the script detects all the stars of the image and
+            it doesn't mistake noise by stars.
+            The default value of -1 is usually good for lineal images.
+            Stretched images usually require a higher value (0-1).
+
+            You can use the option \lref{ShowStars}{Show stars} for knowing which stars are being detected.
+         }
+
+         {Show stars \label ShowStars}
+         {
+            When this option is active the script generates a new image with marks on the position of the detected stars in the original image.
+            It is useful for finding a good value for the \lref{StarSensitivity}{Star sensitivity} parameter.
+         }
+
+         {Polynomial degree \label Degree}
+         {
+            This parameter defines the degree of the polynomial used for translating coordinates.
+
+            The WCS standard only supports degree 1 polynomials.
+            When a larger value is used, ImageSolver stores the polynomial coefficients in nonstandard keywords.
+            For compatibility reasons, a degree 1 (linear) polynomial is also calculated and stored in the WCS keywords.
+
+            You should use the value 1 when the image has not geometric distortions.
+            This is usually true for images taken with focal lengths of 400mm or higher.
+            For images with short focal lengths you have to use a higher degree (up to 5).
+
+            The options \lref{DistortionMap}{Show distortion map} and \lref{Residuals}{Generate residuals image} can help
+            choosing the correct value for this parameter.
+         }
+
+         {Show distortion map \label DistortionMap}
+         {
+            When this option is activated the script creates a new window with a representation
+            of the distortions in the image.
+            The new image contains a grid with arrows at the center of each cell.
+            The arrows point to the point where the center of the cells would be located if the image didn't have optical aberrations.
+            Since usually the aberrations are quite small, the arrows are exaggerated ten times.
+
+            This option is only enabled when the polynomial degree is greater than one.
+            \figure{ \image[width:100\%;height:auto]{DistortionMap.png} }
+         }
+
+         {Generate distortion model \label CreateDistortionModel}
+         {
+            When this option is active the script generates a distortion model.
+            This model can be used by \tref{StarAlignment}{StarAlignment} or by
+            \lref{DistortionModel}{ImageSolver} for solving other images.
+
+            The model is save as a text file in the same directory as the image and with the same name and the extension .CSV.
+            This option is only enabled when the polynomial degree is greater than one.
+         }
+
+         {Distortion model \label DistortionModel}
+         {
+            When the image has strong geometric distortions a distortion model helps to solve the image.
+            The distortion models used by ImageSolver are compatible with the distortion models of StarAligment.
+            The section \lref{DistortionModelHowTo}{Creation of a distortion model} explains how to create a distortion model.
+
+            When using distortion models usually is necessary to set the \lref{Degree}{degree of the polynomials}
+             to a value between 3 and 5.
+         }
+
+         {Generate residuals image \label Residuals}
+         {
+            When this option is selected the script generates an image which shows the residuals
+            of the solution.
+            The image shows as green crosses the predicted position of the control points using the calculated solution.
+            Red lines from each control point join the predicted position to the actual position marked by the user.
+
+            This image can be used to analyze the errors of the solution.
+            In a good solution all the red lines should be very short (in a perfect solution the lines
+            should have degenerated to points).
+            When most red lines are long the solution is not good.
+            In this case you can try to increase the value of the \lref{Degree}{degree of the polynomial}.
+
+            \figure{ \image[width:100\%;height:auto]{Residuals.png} }
+         }
+
+         {Only apply optimization \label Optimization}
+         {
+            This option requires that the image is already solved.
+            The script doesn't apply the initial alignment algorithm but only tries to optimize the solution.
+
+            This option is useful when the image has a rough solution and we need to improve it.
+            For example, after solving the image with ManualImageSolver using very few control points,
+            \e{Only apply optimization} allows to get a more precise solution.
+            This option is usefull to test the effect of different values of the \lref{Degree}{degree of the polynomials}.
+         }
+      }
+   }
+}
+
+\section{What to do when the script doesn't solve an image}
+{
+   \subsection{General tips}
+   {
+      \list
+      {
+         {
+            Activate the option \lref{ShowStars}{Show stars} and check if the script detects at least 100 stars
+            and that there aren't many false positives.
+            If there are few stars, decrease the value of the \lref{StarSensitivity}{Star sensitivity}.
+            If there are many false positives increase the value of the \lref{StarSensitivity}{Star sensitivity}.
+         }
+         {
+            The script works better when the \lref{Coordinates}{starting coordinates} or the \lref{ImageScale}{image scale} have a good starting value.
+            If both are far from the real value the script could have problems for finding a solution.
+
+            For finding a better starting value for the coordinates and the resolution
+            you can search in a planetarium program o celestial chart the coordinates of a star near the
+            center of the image.
+            The coordinates must be in the equinox J2000.
+
+            For finding an approximation to the resolution of the image is necessary to know the optical system
+             used for taking the image and what geometric transformations have been done to it.
+         }
+         {
+            The \lref{Magnitude}{limit of the magnitude} of the stars of the \lref{Catalog}{catalog} has to be matched to the stars visible in the image.
+            You can know the number of stars extracted finding a line in the console like this:
+            \code{Catalog PPMXL size: 154 objects inside the image}
+            This number should be more than 100 and it should be in the same order of magnitude as the
+            \lref{ShowStars}{detected stars}.
+
+            Remember to select a \lref{Catalog}{catalog} suitable for your image.
+         }
+      }
+   }
+   \subsection{Stretched images}
+   {
+      The histogram stretch is one of the fundamental steps processing an image.
+      However it can interfere with ImageSolver: when the image is stretched the noise is also magnified and
+      it can make noise to be confused with stars.
+      Also the brightest stars get saturated and sometimes are not identified as stars.
+      This situation can be detected activating the option \lref{ShowStars}{Show stars}.
+
+      Fortunately this problem is not very frequent but when it occurs you can solve it "un-stretching" the image:
+      \list
+      {
+         {Clone the image}
+         {
+           Convert the clone to a 32 bits pixel format using \tref{SampleFormatConversion}{SampleFormatConversion}.
+         }
+         {
+            Blur the clone using any of the available tools. For example, \tref{Convolution}{Convolution}, \tref{ATrousWaveletTransform}{ATrousWaveletTransform}
+            or \tref{MultiscaleMedianTransform}{MultiscaleMedianTransform}.
+            In the last two you should remove the smallest 2-3 scales.
+            The amount of blurring should be enough to reduce the noise, but it should be still possible to see the stars.
+         }
+         {
+            Apply an HistogramTransformation with a midtones value greater that 0.5.
+            This is what un-stretches the image.
+         }
+         {
+            Solve the clone.
+            If ImageSolver is successful copy the coordinates of the clone to the original image using one of the methods
+            in the section \lref{CopyWCS}{How to copy the coordinates between images}.
+         }
+      }
+   }
+   \subsection{Wide field images}
+   {
+      In this context wide field images are those with a focal length of less than 100mm.
+      These images usually are taken with lenses that have serious geometric distortions that can make quite difficult to solve them.
+      There are a couple of strategies for solving these images:
+      \list
+      {
+         {\s{Distortion model}:
+         The best method for solving wide field images is using a distortion model.
+         The distortion model allows the script to remove the distortion and simplify the process.
+          The distortion model can be created following the instructions at \lref{DistortionModelHowTo}{Creation of a distortion model}.
+
+          You can use the distortion model setting its path in the field \lref{DistortionModel}{Distortion model}.
+         }
+
+         {\s{Rough solution with \sref{ManualImageSolver}{ManualImageSolver}}:
+         Sometimes the problem is too hard for ImageSolver.
+         In this case you can use \sref{ManualImageSolver}{ManualImageSolver} for getting a rough solution that can
+           be used as a starting point for ImageSolver.
+           A solution with only a few well distributed control points (5-10) is usually enough.
+           The rough solution can be improved executing ImageSolver with the option \lref{Optimization}{Only apply optimization}.
+         }
+      }
+
+      If neither of these methods works, you can always use \sref{ManualImageSolver}{ManualImageSolver} for solving the image.
+   }
+}
+
+
+\section{Creation of a distortion model \label DistortionModelHowTo}
+{
+   The distortion models define how the pixels of an image are displaced from its theoretical position if the
+    image were taken by an ideal optical system.
+   The distortion models are usually only necessary for short focal lenses (less than 100-200mm) and
+    most telescopes don't need them.
+    The models have to be calculated for each lens and focal length (for variable focal lenses).
+
+   Although creating a distortion model can be quite involved, it only has to be done once for each focal length of each lens.
+   Since most of the people uses only a few lenses for astronomical images this usually is not a problem.
+
+   For creating a distortion model you have to follow these steps:
+   \list{
+      {
+          First you have to choose a reference image.
+          This image has to be completely covered by stars; it must not touch the horizon or have any part covered by
+           clouds or foreground objects.
+          It is necessary that this image is of a known part of the sky where you are able to identify some of the
+           stars.
+
+          The best way to get this image is to take a separate shot of a known part of the sky near the zenith.
+          Since the distortion model only depends of the lens and focal length,
+          the resulting model can be used for other images taken with the same optical configuration.
+      }
+      {
+         Using \sref{ManualImageSolver}{ManualImageSolver} generate a solution for the reference image.
+         You have to set control points at least at the four corners of the image and the center.
+          20 well distributed control points should be enough since this solution doesn't need to be very precise.
+          It is necessary only as an starting point for the next step.
+          \vs
+          You should set a suitable degree for the polynomials, usually between 3 and 5.
+          }
+      {
+         Optimize the solution using ImageSolver.
+         This is done checking the option \lref{Optimization}{"Only apply optimization"}.
+         Before optimizing the image activate also the option \lref{CreateDistortionModel}{"Generate distortion model"}.
+         For best results, you should use polynomials of degree 4 or 5.
+      }
+      {
+         Check the solution analyzing the residuals images and an annotated version.
+      }
+      {
+         When you are sure that the solution is the best possible, the distortion model is
+         available at the same directory of the image with the extension .CSV.
+
+         It is useful to keep the distortion map that \sref{ImageSolver}{ImageSolver} generates when the option \lref{DistortionMap}{"Show distortion map"}.
+         This map can be used for validating the solutions of the rest of the images.
+      }
+   }
+}
+
+\section{How to copy the coordinates between images \label CopyWCS}
+{
+   There are two methods for copying the coordinates from one image to another:
+   \list
+   {
+      {\tref{FITSHeader}{FITSHeader}.}
+      {Script \s{CopyCoordinates}.}
+   }
+
+   \subsection{FITSHeader}
+   {
+      The first method can be used when both images have exactly the same geometry: same dimensions and the stars in the
+       same exact position.
+      This is usually the case when you extract one of the channels of the image or between the original
+      unprocessed image and the final image if there are not crops nor resizings.
+
+      In this case you can follow this instructions:
+      \list
+      {
+         {Select in the workspace the image with the coordinates.}
+         {Open the tool \tref{FITSHeader}{FITSHeader}.}
+         {Activate the \e{Track view} mode in FITSHeader.
+         It is the button with the check mark at the right of the lower tool bar.}
+         {Create an icon with the state of FITSHeader: drag to the workspace the triangle at the left of the lower tool bar.}
+         {Drag the icon to the target image for the coordinates.}
+      }
+
+      Beware that this copies \u{all} the keywords of the source image to the target image.
+   }
+
+   \subsection{CopyCoordinates}
+   {
+      The second method is useful when you have a solved image and you want to crop and/or resize it without having to
+      solve it again. It can be used when the geometry of the two images is not the same but
+      there is a linear transformation between both images.
+      \list{
+         {Select in the workspace the target image for the coordinates.}
+         {Open the script \s{CopyCoordinates}.}
+         {Select the image with the coordinates in the field \e{Source image}.}
+         {Clicking \e{OK} the script finds a linear transformation between the images and adapts the source coordinates
+          to the target image.}
+      }
+   }
+}
+
+\section{Limitations}
+{
+   \list
+   {
+      {
+         ImageSolver is designed for solving deep sky images where enough stars can be detected and matched to a catalog.
+         It can not solve images with none or very few stars.
+      }
+      {
+         ImageSolver is not a \e{blind solver} which could solve any image knowing nothing about it.
+         You need to know a approximation to the resolution of the image and to the coordinates of the center.
+      }
+      {
+         ImageSolver can not solve images with discontinuities.
+         This is usually the case of mosaics where the tiles have been joined in a sloppy way.
+      }
+      {
+         ImageSolver assumes that the images are taken with an optical system which can be modelled by the \dref{Projections}{Gnomonic} projection.
+         Fortunately this is the case of most telescopes and cameras although badly stitched mosaics can lose this property.
+      }
+   }
+}
+
+\reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
+
+\reference CalabrettaCelestial {  M. R. Calabretta, E. W. Greisen (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of Celestial Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1077-1122}
+
+\reference WikiProjection {  Wikipedia contributors, \e{ \xref{http://en.wikipedia.org/wiki/Gnomonic_projection}{Gnomonic projection}}, Wikipedia, The Free Encyclopedia}
+
+\relatedscript ImageSolver
+\relatedscript ManualImageSolver
+\relatedtool StarAlignment
+\relatedtool DynamicAlignment
+\relatedtool GradientMergeMosaic
+
+\make[noauthors]

@@ -1,0 +1,19 @@
+Opening files:
+/home/juan/tmp/18/registered/Blue/M81-M82-B-001-crop2K_c_r.fit
+* Retrieved data from file cache.
+Scale factors   :   1.00000
+Zero offset     :  +0.000000e+00
+Noise estimates :  2.4060e-04
+Weight          :     1.00000
+/home/juan/tmp/18/registered/Blue/M81-M82-B-002-crop2K_c_r.fit
+* Retrieved data from file cache.
+Scale factors   :   0.98579
+Zero offset     :  -3.890576e-05
+Noise estimates :  2.4150e-04
+Weight          :     1.02138
+/home/juan/tmp/18/registered/Blue/M81-M82-B-003-crop2K_c_r.fit
+* Retrieved data from file cache.
+Scale factors   :   0.98003
+Zero offset     :  -1.989279e-04
+Noise estimates :  2.4500e-04
+Weight          :     1.00411

@@ -1,0 +1,4 @@
+Matching stars ...
+* Reference image: Limiting to 2000 brightest stars.
+* Target image: Limiting to 2000 brightest stars.
+1389 putative star pair matches.

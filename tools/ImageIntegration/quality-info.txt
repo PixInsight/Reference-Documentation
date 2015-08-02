@@ -1,0 +1,10 @@
+MRS noise evaluation: done
+SNR evaluation: done
+Computing noise scaling factors: done
+
+Gaussian noise estimates  : 5.5914e-05
+Scale estimates           : 7.5562e-05
+Location estimates        : 3.9906e-03
+SNR estimates             : 2.1721e+04
+Reference noise reduction : 1.4261
+Median noise reduction    : 1.4214

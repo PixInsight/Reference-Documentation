@@ -1,0 +1,120 @@
+% Resample tool
+
+\documentclass PIToolDoc
+
+\tool Resample
+\module Geometry
+
+\category Geometry
+
+\keywords {
+   resample, resize, pixel interpolation
+}
+
+\author {
+   Javier Sanchis Muñoz, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Changes the dimensions of an image by interpolation of new pixel values from original pixel data.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] Resample.png
+
+   The Resample process is a basic geometric tool that allows resizing a target image using several pixel interpolation algorithms. As in the case of \tref Crop Crop, this tool allows the user to work either with absolute dimensions in pixels, centimeters or inches, or with relative dimensions. It also allows modifying the target image's resolution in pixels per inch or pixels per centimeter.
+
+   Unlike Crop and \tref FastRotation FastRotation, which only copy or exchange existing pixel values to different locations on the target image, Resample generates output pixel values by interpolation from source pixels. This is an important difference because pixel interpolation is a \e {destructive operation}, in the sense that it cannot be undone to recover the original data. With non-interpolating tools such as Crop and FastRotation, on the other hand, you could apply an unlimited number of operations and, as long as no pixels were cropped, the original pixel values wouldn't be modified. }
+
+\usage {
+
+   The first element in the Resample interface is the \e {view selector}, which can be used to copy geometric properties from an existing image to the \lref dimensions_section Dimensions section of the interface. Selecting a view is optional and has no effect at all on the selected view. The process can be applied to the active view by clicking the \e Apply button (or equivalently, by pressing F5), or by direct application of an instance of the process to a view, as part of the usual procedures to execute a process in PixInsight.
+
+   \figure {
+      \group [marginBottom:8px] {
+         \image[float:left,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] DimensionsDefault.png
+         \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] DimensionsFromView.png
+      }
+      The picture to the left shows the default \lref dimensions_section Dimensions section. In the right image the Dimensions section has acquired the geometric properties of the image specified by the view selector. Note the disabled \e {Original px Width} and \e Heigth edit boxes. When a view is selected, both fields are no longer modifiable since the \e {Original px} dimensions correspond to those of the selected view. }
+
+   \subsection { \label dimensions_section Dimensions } {
+
+      \image[border] Dimensions.png
+
+      In this section you can specify the new dimensions of the target image directly by entering new width and height values, either in pixels, as a percentage of the original image, in centimeters, or in inches. The \e cm and \e inch fields depend on the resolution of the image, which can be changed in the \lref resolution_section Resolution section. The text area below the edit fields provides information on the dimensions of the resulting image. The final dimensions are calculated from the current dimensions in \e {Original px}. When no view is selected in the view selector, a default 32-bit format is considered for calculation of new dimensions.
+
+      It is important to note that this tool performs a resizing operation on the target image, and not only a redimensioning of its \e canvas (for this purpose refer to the \tref Crop Crop or \tref DynamicCrop DynamicCrop tools).
+
+      Resizing or resampling an image requires the use of pixel interpolations. For detailed information on interpolation algorithms, refer to the \dref InterpolationAlgorithms {Interpolation Algorithms documentation}.
+
+      \definition {
+         { Preserve Aspect Ratio }
+         { This mode preserves the \e {aspect ratio} of the target image after the resampling operation. The aspect ratio is que quotient between image dimensions. When this mode is active and the width(height) is changed, the height(width) is automatically recalculated to ensure that the width:height quotient is as close as possible to the original. Bear in mind that the discrete representation of digital images can lead to slight differences due to roundoff errors. These differences are obviously less important for large images. }
+      }
+   } % Dimensions
+
+   \subsection { \label interpolation_section Interpolation } {
+
+      \image[border] Interpolation.png
+
+      The Rescale process uses pixel interpolation to compute output image pixels. For each pixel in the rescaled image, \e {inverse interpolation} is applied to compute an output pixel value from a set of source input pixels. For detailed information on interpolation algorithms, refer to the \dref InterpolationAlgorithms {Interpolation Algorithms documentation}.
+   } % Interpolation
+
+   \subsection { \label resolution_section Resolution } {
+
+      \image[border] Resolution.png
+
+      The resolution of an image is used to specify its final dimensions, in inches or centimeters, when the image is to be \e printed. The resolution is relevant when the image is imported in a page layout application, such as a word processor or a desktop edition application. It is important to point out that \e {changing the resolution of an image does not change its dimensions in pixels}. It is just \e {the dimensions of a printed pixel} what image resolution specifies. A default resolution of 72x72 pixels/inch is predefined.
+
+      \definition {
+         { Horizontal and Vertical }
+         { The user can specify the horizontal and vertical resolution either in centimeters or inches. The physical width and heigth of the pinted image depend on the resolution and the dimensions in pixels; for instance, a 1000x1000 pixels image with a resolution of 100 pixels per inch in both axes would be printed over a square of 10x10 inches. }
+
+         { Force resolution }
+         { When this checkbox is checked the resolution of the target image is effectively modified when the process is executed. Otherwise, when this chekbox is unchecked, resolution values are used \e {for informative purposes exclusively}, but they won't change the current resolution of the target image. In both cases, the specified horizontal and vertical resolutions are used to calculate the \e cm and \e inch fields of the \lref dimensions_section Dimensions section. }
+      } % definition
+   } % Resolution
+
+   \subsection { \label process_mode_section Process Mode } {
+
+      \image[border] ProcessMode.png
+
+      The resize of a target image can be carried out mainly in three different ways: \e relative, \e absolute or \e {force area} mode. Regardless of the working mode, the modification of any parameter in the \e Dimensions section will affect the other parameters in the same row (corresponding to Width or Heigth) or even in both rows (respectively Heigth or Width) if the \e {Preserve Aspect Ratio} option is selected.
+
+     \definition {
+         { Relative resize }
+         { In this mode, resizing is carried out by specifying a percentage of the width and heigth of the original image (the relevant parameters of the \e Dimensions section are then the \e percents of width and heigth). Applying the same instance to a different image will perform the same operation but using the dimensions of the new target image. To get updated information about the target image in the rest of the \e Dimensions section fields, the \e {Original px} edit boxes must be filled with its original dimensions either manually or by selecting the corresponding view with the view selector.
+
+         This mode can be used along with the \e {Preserve Aspect Ratio} checkbox to ensure preservation of the proportions of the target image after the resize operation. }
+
+         { Absolute dimensions in pixels, centimeters or inches }
+         { By selecting this mode, the user can specify the exact dimensions of the resulting image either in pixels, centimeters or inches. When working in \e {Absolute dimensions in pixels} mode, the dimensions of the resulting image in centimeters or inches will depend on its resolution. Upon execution of the process, the resolution values are taken automatically from the target image, or if they are being forced by enabling the \e {Force Resolution} option, from the values specified in the \lref resolution_section {Resolution section}. When working in \e {Absolute dimensions in centimeters} or \e inches, the dimensions in pixels of the resulting image will depend on the resolution (either forced or read from the target image). The three variants of \e {Absolute dimensions} can work in the following three sub-modes:
+
+            \definition {
+
+               { Force width and heigth }
+               { Using this mode you can force the width and heigth of the resulting image. In this mode the \e {Preserve Aspect Ratio} checkbox remains unchecked and disabled. }
+
+               { Force width, keep aspect ratio }
+               { In this mode you can specify only the \e width of the target image. The heigth will be automatically calculated in order to preserve the existing aspect ratio in the target image. In this mode the \e {Preserve Aspect Ratio} checkbox remains checked and disabled. }
+
+               { Force height, keep aspect ratio }
+               { This mode is complementary to the preceding one. You can specify only the \e heigth of the target image; the width will be calculated automatically to preserve the existing aspect ratio in the target image. In this mode the \e {Preserve Aspect Ratio} checkbox remains checked and disabled. }
+            }
+         }
+
+         { Force area in pixels, keep aspect ratio }
+         { Use this mode to force an area in square pixels, regardless of the original dimensions. }
+      } % definition
+   } % Process Mode
+} % Usage
+
+\relatedtools { IntegerResample, Crop, DynamicCrop, FastRotation, Rotation }
+\relateddocument InterpolationAlgorithms { Interpolation Algorithms in PixInsight }
+
+\make[noauthors]

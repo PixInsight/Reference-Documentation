@@ -1,0 +1,66 @@
+% FastRotation tool
+
+\documentclass PIToolDoc
+
+\tool FastRotation
+
+\module Geometry
+
+\category Geometry
+
+\keywords { image rotation, image mirroring, fast rotations }
+
+\author {
+   Javier Sanchis Muñoz, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Rotates images by integer multiples of 90 degrees, or mirrors images horizontally or vertically.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] FastRotation.png
+
+   \vs[length:2em]
+   The FastRotation process implements orthogonal and specular geometric transformations: rotate 180 degrees, rotate 90 degrees clockwise, rotate 90 degrees counter-clockwise, horizontal mirror and vertical mirror. These operations are collectively knwown as \e { fast rotations } on the PixInsight/PCL platform.\nf
+
+   The most important feature of all fast rotations is that these transformations don't interpolate pixel values; they copy and exchange pixels exclusively to generate the rotated or mirrored output image, and hence apply \e lossless transformations (also knwon as \e {nondestructive transformations}). As far as no pixel is cropped (which never happens with the FastRotation tool), you could apply an unlimited number of fast rotations to an image, and the original pixel values would be preserved in the final image (they would only change their positions with respect to the original).
+}
+
+\usage {
+
+   \subsection { Rotation mode } {
+
+      The table below exemplifies the three rotations available in the FastRotation tool.
+
+      \center \table[caption,header,width:100\%] {
+         { Rotation Operation }
+         { \center {Original Image} \center {Rotated Image} \center Rotation }
+         { \image RotationExample_01.png \image RotationExample_02.png \image RotationExample_03.png }
+         { \image RotationExample_01.png \image RotationExample_04.png \image RotationExample_05.png }
+         { \image RotationExample_01.png \image RotationExample_06.png \image RotationExample_07.png }
+      }
+   }
+
+   \subsection { Mirror mode } {
+
+      The following table shows the two mirroring operations available in the FastRotation tool.
+
+      \center \table[caption,header,width:100\%] {
+         { Mirroring Operation }
+         { \center {Original Image} \center {Mirrored Image} \center Rotation }
+         { \image RotationExample_01.png \image RotationExample_08.png \image RotationExample_09.png }
+         { \image RotationExample_01.png \image RotationExample_10.png \image RotationExample_11.png }
+      }
+   }
+} % Usage
+
+\relatedtool Rotation
+\relatedtool DynamicCrop
+
+\make[noauthors]

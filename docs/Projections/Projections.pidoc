@@ -1,0 +1,132 @@
+\documentclass PIGenericDoc
+
+\document {Projections}
+\title {Projections}
+
+\keywords {
+   coordinates, annotation
+}
+
+\author {
+   Andrés del Pozo
+}
+
+\copyright {
+   2013, Andrés del Pozo
+}
+
+\brief {
+   Description of the projections supported by the WCS scripts.
+}
+
+\introduction{
+   From the Wikipedia \ref WikiProjection :
+   \cite{
+      A map projection is a systematic transformation of the latitudes and longitudes of locations on the surface of a sphere or an ellipsoid into locations on a plane.
+      Map projections are necessary for creating maps.
+      All map projections distort the surface in some fashion.
+      Depending on the purpose of the map, some distortions are acceptable and others are not;
+      therefore different map projections exist in order to preserve some properties of the sphere-like body at the expense of other properties.
+      There is no limit to the number of possible map projections.
+   }
+
+   The scripts \sref{AnnotateImage}{AnnotateImage},
+   \sref{CatalogStarGenerator}{CatalogStarGenerator},
+   \sref{MosaicByCoordinates}{MosaicByCoordinates} and
+   \sref{AlignByCoordinates}{AlignByCoordinates} support several projections with characteristics
+   suitable for different kinds of images.
+}
+
+\section{Projections}
+{
+   This section contains brief descriptions of the supported projections.
+   For more in-depth information you should click in the links available for each projection
+   or read the document with the specification of the representation of celestial coordinates
+   in FITS images \ref CalabrettaCelestial.
+
+   Each projection has two examples with a representation of the projection centered in the equator
+   and in one of the poles.
+   The parameters of these images are the same for all projections so they can be compared.
+   \subsection {Gnomonic}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{Gnomonic0.jpg}\image[width:49.5\%;height:auto]{Gnomonic90.jpg}
+      }
+      The \xref{http://en.wikipedia.org/wiki/Gnomonic_projection}{Gnomonic} projection is a variation of the Zenithal projection and
+      it is the most commonly used projection since it can approximate how
+      most optical systems project the images.
+
+      This projection diverges for points more than 90 degree from the center of the projection and
+      it heavily distorts the areas more than 10-20 degrees from the center.
+      It should only be used for small areas.
+   }
+   \subsection {Stereographic}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{Stereographic0.jpg}\image[width:49.5\%;height:auto]{Stereographic90.jpg}
+      }
+      The \xref{http://en.wikipedia.org/wiki/Stereographic_projection}{Stereographic} projection is another variation of the Zenithal projection.
+      It can be used for bigger areas than Gnomonic.
+      It also diverges although only for the opposite point to the center of the projection.
+   }
+   \subsection {Zenithal Equal Area}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{ZenithalEA0.jpg}\image[width:49.5\%;height:auto]{ZenithalEA90.jpg}
+      }
+      \xref{http://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection}{Zenithal Equal Area} is a variation of the Zenithal projection.
+      It can represent the whole sky.
+   }
+   \subsection {Mercator}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{Mercator0.jpg}\image[width:49.5\%;height:auto]{Mercator90.jpg}
+      }
+      \xref{http://en.wikipedia.org/wiki/Mercator_projection}{Mercator} is a classical cylindrical projection which was widely used for navigation charts
+      and currently is used for web mapping.
+      Mercator keeps the shape and angles of small objects but it distorts the size and shape of large objects,
+      as the scale increases from the Equator to the poles, where it becomes infinite.
+
+      This projection is suitable for areas around the great-circle that crosses the reference point of
+      the projection perpendicular to the axis of the cylinder.
+   }
+   \subsection {Plate-Carrée}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{PlateCarree0.jpg}\image[width:49.5\%;height:auto]{PlateCarree90.jpg}
+      }
+      \xref{http://en.wikipedia.org/wiki/Equirectangular_projection}{Plate-Carrée} is a very simple projection that maps the right ascension and declination directly to
+      the coordinates x and y of the map.
+
+      Despite of its simplicity it can be used for all-sky maps.
+   }
+   \subsection {Hammer-Aitoff}
+   {
+      \figure
+      {
+         \image[width:49.5\%;height:auto]{HammerAitoff0.jpg}\image[width:49.5\%;height:auto]{HammerAitoff90.jpg}
+      }
+      The \xref{http://en.wikipedia.org/wiki/Hammer_projection}{Hammer-Aitoff} projection is an all-sky
+      projection with the property of being equal-area.
+   }
+}
+
+\reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
+
+\reference CalabrettaCelestial {  M. R. Calabretta, E. W. Greisen (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of Celestial Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1077-1122}
+
+\reference WikiProjection {  Wikipedia contributors, \e{ \xref{http://en.wikipedia.org/wiki/Map_projection}{Map projections}}, Wikipedia, The Free Encyclopedia}
+
+
+\relatedscript ImageSolver
+\relatedscript AnnotateImage
+\relatedscript CatalogStarGenerator
+\relatedscript MosaicByCoordinates
+\relatedscript AlignByCoordinates
+
+\make[noauthors]

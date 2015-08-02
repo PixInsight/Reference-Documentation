@@ -1,0 +1,82 @@
+\documentclass PIToolDoc
+
+\tool Debayer
+
+\module Debayer
+
+\categories { ColorSpaces, Preprocessing }
+
+\keywords { one-shot color, OSC, color filter array, CFA, Bayer, demosaicing, color recovery }
+
+\author { Sander Pool, Zbynek Vrastil }
+
+\copyright { 2011, Sander Pool, Zbynek Vrastil }
+
+\brief { Converts a Color Filter Array (CFA) image into a regular RGB color image. }
+
+\description {
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] Debayer.png
+
+   A majority of one-shot color (OSC) cameras---cameras able to produce a color image from a single shot---work by placing a color filter on top of every sensor pixel. The sensor is still a monochrome detector, but the color filter ensures that each pixel collects only photons from one of the three primary colors. The missing color information is then computed algorithmically from neighboring pixels. This arrangement is called \e {Color Filter Array}, or CFA. A typical CFA is composed of red, green and blue filters, although other combinations are possible as well, such as cyan, magenta and yellow.\nf
+
+   The process of computing the missing color values from a CFA is called \e {color recovery}, \e {color reconstruction}, or \e demosaicing. As the most typical CFA pattern is the Bayer pattern, demosaicing is also often referred to as \e debayering. The \s Debayer process implements several methods of color recovery for RGB CFA images. The input image can be either a grayscale image or a color CFA image where each pixel has non-zero values for only one channel. The process creates a new RGB color image with the same view identifier as the input image plus a suffix that can be one of \c _RGB_SuperPixel, \c _RGB_Bilinear or \c _RGB_VNG, depending on the applied debayering algorithm.
+}
+
+\usage {
+
+   \subsection { \label bayer_mosaic_pattern Bayer/Mosaic Pattern } {
+
+      Specifies the particular arrangement of Color Filter Array used by your camera. There are four possible arrangements/patterns of how red, green and blue pixels can be placed on the camera sensor. The number of green pixels is always doubled compared to red or blue pixels. This is because the human eye is more sensitive to green light, and most OSC cameras have been designed for daylight use. For normal daylight RGB images the green channel usually is a good approximation to the luminance component, where our vision system perceives most of the detail. The following image shows an example of a CFA matrix and the four supported CFA patterns.
+
+      \image[marginBottom:0.5em] CFA.png
+
+      \note {
+         \s Note--- In case the resulting image still shows something like a Bayer pattern, it is very likely that the selected Bayer/Mosaic Pattern does not match the actual CFA pattern of the image.
+      }
+   } % subsection
+
+   \subsection { \label debayer_method Debayer Method } {
+
+      Chooses the method used to recover full pixel colors from a CFA image.
+
+      \definition {
+
+         { Superpixel }
+         { The Superpixel method is very straightforward. It takes four CFA pixels (2x2 matrix) and uses them as RGB channel values for one pixel in the resulting image (averaging the two green values). The spatial resolution of the resulting RGB image is one quarter of the original CFA image, having half its width and half its height. This method is very fast. It has virtually no artifacts and is very well suited for demosaicing oversampled images (images where the sensor resolution is considerably higher than the resolution of the optics).
+
+            The following image schematically shows how the method works and the output it produces.
+
+            \image Superpixel.png }
+
+         { Bilinear }
+         { The Bilinear interpolation method keeps the original resolution of the CFA image. As the CFA image contains only one color component per pixel, this method computes the two missing components using a simple bilinear interpolation from neighboring pixels. This method is very fast, but it tends to smooth sharp edges and generates color artifacts around edges. In general, other methods usually produce better results.
+
+            As the method works on a 3x3 pixel matrix, it can't directly recover colors on one-pixel wide image borders. The current implementation copies border pixel values from neighboring pixels.
+
+            The following image schematically shows how the method works and the output it produces. It also shows the difference between the situation in a green pixel and red/blue pixels.
+
+            \image Bilinear.png }
+
+         { VNG }
+         { The VNG method stands for \e {Variable Number of Gradients}. It works on a 5x5 pixel neighborhood around each source pixel. The method first computes intensity gradients in the eight directions around the current pixel. Then it computes a threshold and takes only gradients below this threshold. In the last step, the missing color components for the pixel are interpolated from neighboring pixels along the directions of the remaining gradients. This method preserves edges much better than bilinear interpolation. It also produces much less color artifacts and less chrominance noise.
+
+            As the method works on a 5x5 pixel matrix, it can't directly recover colors for 2-pixel wide image borders. The current implementation copies border pixel values from neighboring pixels.
+
+            The following image schematically shows how the method works and the output it produces. Gray arrows represent gradients with too high values, which have been discarded for color interpolation.
+
+            \image VNG.png }
+      } % definition
+   } % subsection
+
+   \subsection { \label save_as_default Save as Default } {
+
+      Saves the current values of the \lref bayer_mosaic_pattern {Bayer/Mosaic Pattern} and \lref debayer_method {Debayer Method} parameters so that they will be restored each time you launch the Debayer process, or when you click the \lref restore_from_default {Restore from Default} button.
+   }
+
+   \subsection { \label restore_from_default Restore from Default } {
+
+      Restores the settings previously stored using the \lref save_as_default {Save as Default} button.
+   }
+} % usage
+
+\make[noauthors]

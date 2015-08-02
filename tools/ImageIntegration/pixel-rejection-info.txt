@@ -1,0 +1,33 @@
+Pixel rejection counts:
+/home/juan/tmp/18/registered/Blue/M81-M82-B-001-crop2K_c_r.fit
+    1 :     88524   2.111% (    81726 +      6798 =   1.948% +   0.162%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-002-crop2K_c_r.fit
+    2 :    116132   2.769% (   109492 +      6640 =   2.610% +   0.158%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-003-crop2K_c_r.fit
+    3 :     90520   2.158% (    83554 +      6966 =   1.992% +   0.166%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-004-crop2K_c_r.fit
+    4 :    114049   2.719% (   108217 +      5832 =   2.580% +   0.139%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-005-crop2K_c_r.fit
+    5 :     49877   1.189% (    45129 +      4748 =   1.076% +   0.113%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-006-crop2K_c_r.fit
+    6 :     74476   1.776% (    69623 +      4853 =   1.660% +   0.116%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-007-crop2K_c_r.fit
+    7 :     44600   1.063% (    40509 +      4091 =   0.966% +   0.098%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-008-crop2K_c_r.fit
+    8 :     46470   1.108% (    42869 +      3601 =   1.022% +   0.086%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-009-crop2K_c_r.fit
+    9 :     24781   0.591% (    22196 +      2585 =   0.529% +   0.062%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-010-crop2K_c_r.fit
+   10 :     38032   0.907% (    35522 +      2510 =   0.847% +   0.060%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-011-crop2K_c_r.fit
+   11 :     27588   0.658% (    25141 +      2447 =   0.599% +   0.058%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-012-crop2K_c_r.fit
+   12 :     37152   0.886% (    34911 +      2241 =   0.832% +   0.053%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-013-crop2K_c_r.fit
+   13 :     60279   1.437% (    57837 +      2442 =   1.379% +   0.058%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-014-crop2K_c_r.fit
+   14 :     46786   1.115% (    44337 +      2449 =   1.057% +   0.058%)
+/home/juan/tmp/18/registered/Blue/M81-M82-B-015-crop2K_c_r.fit
+   15 :    133531   3.184% (   129814 +      3717 =   3.095% +   0.089%)
+
+Total :    992797   1.578% (   930877 +     61920 =   1.480% +   0.098%)

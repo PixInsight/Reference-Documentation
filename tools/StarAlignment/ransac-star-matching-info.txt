@@ -1,0 +1,14 @@
+Performing RANSAC ...
+1169 star pair matches in 71 RANSAC iterations.
+Summary of model properties:
+Inliers     : 0.842
+Overlapping : 1.000
+Regularity  : 0.994
+Quality     : 0.921
+Root mean square error:
+ΔRMS  :  0.300 px
+Average RMS error deviation:
+σRMS  :  0.156 px
+Peak errors:
+Δxmax :  0.972 px
+Δymax :  1.041 px

@@ -1,0 +1,5 @@
+Registering target image 1 of 6
+Loading target file:
+/media/Pleiades001/test-images/m81m82L/m81n-002L_c.fit
+Reading FITS: 32-bit floating point, 1 channel(s), 2048x2048 pixels: 100%
+Normalizing sample values: 100%

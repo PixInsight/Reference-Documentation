@@ -1,0 +1,101 @@
+% AutoHistogram process
+
+\documentclass PIToolDoc
+
+\tool AutoHistogram
+
+\module IntensityTransformations
+
+\categories { IntensityTransformations }
+
+\keywords { histogram, histogram manipulation, automatic midtones balance, gamma stretch, logarithmic stretch, midtones transfer function, MTF }
+
+\author { Carlos Milovic F., PTeam. }
+
+\copyright { 2012 Pleiades Astrophoto S.L. All Rights Reserved. }
+
+\brief { Automatic histogram transformation based on statistical image properties. }
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] AutoHistogram.png
+
+   The sky background is often the dominant feature in deep-sky astronomical images. When this happens, statistical information can be used to model the contents of the image. In particular, the median of the image pixels tends to be a good estimate of the mean background value. Under this assumption, we can stretch the image nonlinearly with an automatically calculated midtones adjustment function to achieve a prescribed mean background value. The same procedure can help also to achieve the desired background color balance.
+
+   Before stretching the image, the dynamic range can also be reduced as an option by specifying black and white clipping points. This procedure clips a user-defined percentage of pixels, instead of using pixel values as fixed clipping points. See the AutoClip feature of the \tref HistogramTransformation HistogramTransformation tool for more information on this procedure.
+}
+
+\parameter { Histogram Clipping } {
+
+   Use these parameters to set the amount of clipping in the shadows and/or the highlights. Values are expressed as percentages of the total pixels.
+}
+
+\parameter { Target Median Values } {
+
+   This is the desired median value of the final image. If the background sky dominates the image, the median is a good estimate of its mean value. If the Joint RGB/K channels option is selected (default state), a neutral sky color will be achieved.
+}
+
+\parameter { Stretch Method } {
+
+   Select the algorithm used to perform the nonlinear midtones adjustment. You may choose among the most used algorithms to compress raw data:\ref schlick_1994
+
+   \definition {
+
+      { Gamma Transformation}
+      { This is a simple exponential transformation. The gamma exponent is automatically calculated by direct substitution. See the documentation for the \tref GammaStretch GammaStretch tool for more information on this function. }
+
+      { Logarithmic Transformation }
+      { Logarithm function with a unit pedestal and custom range parameter. The range necessary to achieve the specified median value is automatically calculated with an iterative routine. See the documentation for \tref LogStretch LogStretch for more information. }
+
+      { Rational Interpolation (MTF) }
+      { A \e {midtones transfer function} (MTF) in PixInsight is a special rational interpolation function where a \e {midtones balance} parameter defines a nonlinear histogram stretch in the \[0,1\] range. In this mode, the necessary midtones balance to achieve the prescribed median value is computed automatically. More information on the MTF is avalaible in the documentation for the \tref HistogramTransformation HistogramTransformation process. }
+  }
+}
+
+\usage {
+
+   \subsection { Histogram Clipping } {
+
+      \image[border] HistogramClipping.png
+
+      This section is disabled by default. When it is enabled, the parameters in this section allow you to clip the specified percentages of the total pixels in the shadows and/or the highlights of the target image. Since the noise is higher in dark areas, a relatively small amount of pixels can usually be clipped in the shadows without destroying significant data. For this procedure to work correctly, make sure to crop any black borders caused by partial coverage during image registration, or similar border artifacts.
+
+      In general, for histogram manipulation of astronomical images we recommend using other tools that provide more accurate control, such as \tref HistogramTransformation HistogramTransformation. However, when used carefully this automatic clipping feature can yield very good results in combination with the different automatic stretch functions available (see below).
+   }
+
+   \subsection { Target Median Values } {
+
+      \image[border] TargetMedianValues.png
+
+      Use these parameters to specify the desired median value(s) in the target image. These parameters can be used to alter both the global illumination and the color balance. When the process is applied to a color image, different target median values for individual RGB channels modify color balance. When the same values are specified for all channels, a neutral background will be achieved, assuming that the sky background is the dominant feature in the image.
+
+      For images not dominated by the background sky---for example, when large DSOs cover the field of view---a useful alternative is to extract the lightness (CIE L* component) as a grayscale image, process it with AutoHistogram, and then reinsert the modified lightness in the color image. See the ColorSpaces category for ways to perform this task.
+
+      Click the \s {Set As Active Image} button to copy target median values from the active image. If the active image is in the grayscale color space, the \e {joint RGB/K channels} option will be enabled automatically. If the active image is a color image, the \e {individual RGB/K channels} option will be enabled.
+
+      Enable the \s {capture readouts} option to read target median values from image readouts when this tool is visible. Readouts are generated when you click on an image with the mouse or other pointing device. You can click and drag to generate readouts as you move the cursor over the image.
+}
+
+   \subsection { Stretch Method } {
+
+      The selected algorithm isn't critical to the result, but it affects the global contrast of the transformed image and can make easier or harder further fine adjustments (with \tref CurvesTransformation CurvesTransformation or \tref HDRMultiscaleTransform HDRMultiscaleTransform tools, for example). In general, a gamma transformation generates less contrasted images, while the MTF (midtones transfer function) tends to yield more contrasted images. The logarithmic transformation provides intermediate contrast, but the achieved median values may be somewhat less accurate. We encourage you to test the different methods available and select the result that best suits your needs in each case.
+
+      \figure {
+         \imageselect[menuPos:right] {
+            NGC1808_Original.jpg  {Original linear image}
+            NGC1808_Gamma.jpg     {Gamma stretch}
+            NGC1808_Log.jpg       {Logarithmic function}
+            NGC1808_MTF.jpg       {Midtones transfer function (MTF)}
+            NGC1808_MTF_HDRMT.jpg {MTF + HDRMultiscaleTransform}
+         }
+         \vs[length:0.5em]
+         \s {Automatic stretch functions comparison} with a linear luminance image of NGC 1808. In all cases the AutoHistogram tool has been applied with default parameters and automatic histogram clipping enabled. The logarithmic function yields a rather nice result in this case, especially to avoid star bloating. The midtones transfer function provides a more aggressive stretch, useful to prepare the image for HDR compression. Image courtesy of Jack Harvery (SSRO/PTeam).
+      }
+   }
+}
+
+\reference schlick_1994 { Schlick, C. 1994. \e { Quantization techniques for visualization of high dynamic range pictures. } In \e { Photorealistic Rendering Techniques, } Springer-Verlag, P. Shirley, G. Sakas and S. Müller, Eds., 7--20. }
+
+\relatedtools { HistogramTransformation, GammaStretch, LogStretch }
+
+\make[noauthors]

@@ -1,0 +1,146 @@
+% Crop tool
+
+\documentclass PIToolDoc
+
+\tool Crop
+
+\module Geometry
+
+\category Geometry
+
+\keywords { cropping, margins, canvas, image resolution }
+
+\author {
+   Javier Sanchis Muñoz, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Adds or removes image margins.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] Crop.png
+
+   Crop is a basic geometrical tool to change the dimensions of a target image by adding or removing margins of user-defined lengths. Crop is a versatile tool that allows working either with absolute dimensions in pixels, centimeters or inches, or with relative dimensions. It can create margins filled with a user-defined color and opacity, remove rows and columns of pixels, or modify the printing resolution of the target image.
+
+}
+
+\usage {
+
+   The first element in the Crop interface is a \e {view selector}, which can be used to copy geometric properties from an image to the \lref dimensions_section Dimensions section of the interface. Selecting a view is optional and has no effect at all on the selected view. Changes can be applied to the active view by clicking the \e Apply button (or by pressing F5), or by direct application of an instance of the process to a view, as part of the usual procedures to execute a process in PixInsight.
+
+   \figure {
+      \group [marginBottom:8px] {
+         \image[float:left,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] DimensionsSectionDefault.png
+         \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] DimensionsSectionFromView.png
+      }
+
+      The left picture above shows the default \lref dimensions_section Dimensions section. In the right image the Dimensions section has acquired the geometric properties of the image specified by the view selector. Note the disabled \e {Original px Width} and \e {Heigth} edit boxes. When a view is selected, both fields are no longer modifiable since the \e {Original px} dimensions correspond to those of the selected view.
+   }
+
+   \subsection { \label margins_anchors_section Margins/Anchors } {
+
+      \image[border] MarginAnchors.png
+
+      This section allows creating or removing margins in an image with four edit boxes and an \e {arrow pad}. The extent of each of the four margins in pixels is specified by its corresponding edit box. When an edit box has a positive value, the specified margin in pixels will be \e added at the corresponding side of the target image. In this case the newly created rows or columns of pixels will be filled with the color and opacity specified in the \lref fill_color_section {Fill Color} section. Specifying a negative margin in an edit box \e removes it from the corresponding side. The values expressed in the four edit boxes can have different meanings, depending on the selected \lref process_mode_section {Process Mode}.
+
+      The user can easily redistribute the total margin lengths by clicking one of the nine \e {arrow pad buttons}. The table below exemplifies the use of the edit boxes and the arrow pad in the \lref process_mode_section {Absolute margins in pixels} process mode.
+
+      \center \table[header,width:100\%,marginTop:1em] {
+         { \center { Arrow Pad } \center {Image Sample} \center {Image Dimensions} \center Description } % table header
+
+         { \image[border] MarginAnchorsExample_01.png
+           \image[border] MarginAnchorsExample_02.png 133x200
+           \left { Original image without margins and default arrow pad. } }
+
+         { \image[border] MarginAnchorsExample_03.png
+           \image[border] MarginAnchorsExample_04.png 113x180
+           \left { A margin of 10 pixels has been removed from each side of the original picture.\n\n
+                   Use negative values in the width edit boxes to remove a margin of the specified length from the corresponding side. } }
+
+         { \image[border] MarginAnchorsExample_05.png
+           \image[border] MarginAnchorsExample_06.png 153x220
+           \left { A margin of 10 pixels (see the \lref fill_color_section {Fill Color} section) has been added to each side of the original picture.\n\n
+                   Use the center key to come back to the default arrow pad and to distribute the margin lengths equally on the vertical and horizontal directions. } }
+
+         { \image[border] MarginAnchorsExample_07.png
+           \image[border] MarginAnchorsExample_08.png 153x220
+           \left { The image has no margin at its left side and a 20 pixels margin at its right side. This is the result of specifying a margin of 10 pixels for each edit box, then clicking on the center-left arrow.\n\n
+                   Use the central arrow buttons on each side of the arrow pad to apply the total length of the horizontal and vertical margins at the oppsosite sides to the clicked button. } }
+
+         { \image[border] MarginAnchorsExample_09.png
+           \image[border] MarginAnchorsExample_10.png 153x220
+           \left { The image has no margins at its top and left sides, but it has a 20 pixels margin at its right and bottom sides. This is the result of specifying a margin of 10 pixels for each edit box, then clicking the top left corner arrow button.\n\n
+                   Use the corner arrow buttons to apply the total length of the horizontal and vertical margins only at the opposite sides to the clicked corner button. } }
+      }
+   }
+
+   \subsection { \label dimensions_section Dimensions } {
+
+      \image[border] Dimensions.png
+
+      In this section you can specify the new dimensions of the target image directly by specifying a new width and height, either in pixels, as a percentage of the original picture, in centimeters, or in inches. The \e cm and \e inch fields depend on the resolution of the image, which can be changed in the \lref resolution_section Resolution section. The text area below the edit fields provides information on the dimensions of the resulting image. The final dimensions are calculated from the current dimensions in \e {Original px}. When no view is selected in the view selector, a default 32-bit format is considered for dimensions calculation.
+
+      Special attention must be paid to understand that this tool performs a redimensioning of the target image by adding or removing margins, and \e {not by resizing or rescaling the original image} (for this purpose refer to the \tref Resample Resample tool). As a result, the Crop tool performs no interpolation of pixel values.
+
+      When new margins are created in the target image, they will be filled with a user-specified color and opacity (see the \lref fill_color_section {Fill Color} section).
+
+      When new dimensions (different from the \e {Original px} dimensions) are specified in this section, new values appear automatically on the four edit boxes of the \lref margins_anchors_section {Margins/Anchors} section. These values correspond to the positive or negative margins to be applied in order to achieve the specified dimensions for the target image. By default, the positive or negative margins are referred to the center of the image, but this behavior can be changed either by modifying the edit boxes directly, or by clicking the nine buttons on the arrow pad.
+   }
+
+   \subsection { \label resolution_section Resolution } {
+
+      \image[border] Resolution.png
+
+      The resolution of an image is used to specify its final dimensions, in inches or centimeters, when the image is to be \e printed. The resolution is relevant when the image is imported in a page layout application, such as a word processor or a desktop edition application. It is important to point out that \e {changing the resolution of an image does not change its dimensions in pixels}. It is just \e {the dimensions of a printed pixel} what image resolution specifies.
+      A default resolution of 72x72 pixels/inch is predefined.
+
+      \nf \definition {
+         { Horizontal and Vertical }
+         { The user can specify the horizontal and vertical resolution either in centimeters or inches. The physical width and heigth of the pinted image depend on the resolution and the dimensions in pixels; for instance, a 1000x1000 pixels image with a resolution of 100 pixels per inch in both axes would be printed over a square of 10x10 inches. }
+
+         { Force resolution }
+         { When this checkbox is checked the resolution of the target image is effectively modified when the process is executed. Otherwise, when this chekbox is unchecked, resolution values are used \e {for informative purposes exclusively}, but they won't change the current resolution of the target image. In both cases, the specified horizontal and vertical resolutions are used to calculate the \e cm and \e inch fields of the \lref dimensions_section Dimensions section. }
+
+      }
+   }
+
+   \subsection { \label process_mode_section Process Mode } {
+
+      \image[border] ProcessMode.png
+
+      This section allows specifying the working mode of the \lref margins_anchors_section {Margins/Anchors} section.
+
+      \nf \definition {
+         { Relative margins }
+         { When this mode is selected, the margin values are expressed as relative values, where the unity on each axis corresponds to the original dimension of the target image. For instance, a value of 0.2 in the left side edit box will add a left margin of the 20\% of the \e {Original px Width} field.  }
+
+         { Absolute margins in pixels }
+         { In this mode, the values of the \e {Margins/Anchors} section are expressed in pixels. This is the default mode. }
+
+         { Absolute margins in centimeters }
+         { The values of the \e {Margins/Anchors} section are expressed in centimeters. }
+
+         { Absolute margins in inches }
+         { The values of the \e {Margins/Anchors} section are expressed in inches. }
+      }
+   }
+
+   \subsection { \label fill_color_section Fill Color } {
+
+      \image[border] FillColor.png
+
+      In this section you can define the color and opacity of newly created margins (when positive margins are specified) by adjusting three sliders corresponding to the individual RGB channels plus one corresponding to the alpha channel. A color sample area below the sliders shows the custom color and opacity.
+   }
+} % Usage
+
+\relatedtool DynamicCrop
+\relatedtool Resample
+\relatedtool IntegerResample
+
+\make[noauthors]

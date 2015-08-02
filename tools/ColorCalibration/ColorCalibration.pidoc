@@ -1,0 +1,183 @@
+% ColorCalibration tool
+
+\documentclass PIToolDoc
+
+\tool ColorCalibration
+
+\module ColorCalibration
+
+\categories {
+   ColorCalibration
+}
+
+\keywords {
+   color calibration, white reference, background reference
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Calibrates the color of a linear deep-sky image based on documentary criteria.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] ColorCalibration.png
+
+   The ColorCalibration tool performs a balancing of the colors of a linear RGB deep-sky image based on the following \e {documentary criteria:}
+
+   \list {
+      { Maximize information representation in the calibrated color image. }
+      { Don't favor any particular color or spectral type as a white reference. }
+   }
+
+   Note that this is a spectrum-agnostic color calibration procedure, very different from other methods based on fixing a white reference with respect to a particular spectral type.\nf
+
+   Our approach originates from the fact that ---in our opinion--- the concept of \e {real color} makes no sense in deep-sky astrophotography. Real color doesn't exist in the deep sky because, on one hand, the objects represented in a deep-sky image are far beyond the capabilities of the human vision system, and on the other hand, the physical nature, properties and conditions of the deep-sky objects are very different from those of the subjects that can be acquired under normal daylight conditions.
+
+   \subsection { Working Images } {
+
+      The ColorCalibration tool needs two reference images to work. One is the \e {background reference image,} whose pixels are used to compute a set of per-channel initial mean background values. The other working image is the \e {white reference image,} whose pixels allow computing per-channel color calibration factors, which are applied by multiplication to perform the color balancing. The color calibration procedure works in such a way that the average color of the white reference image would (or will) be neutral (unsaturated gray) after calibration. Note that one or both reference images can be (and use to be) the same image being calibrated, or a suitable subset of it.
+
+      For the color calibration process to yield coherent results, two conditions must be met:
+
+      \list[spaced] {
+         { The background reference image must provide a good sample of the \e {true background.} In general, this means that the background reference image should be a view or subimage whose pixels are strongly dominated (in the statistical sense) by the sky background, as it has been recorded on the image. }
+         { The white reference image must provide a sample of a sufficiently rich set of objects, in the colorimetric sense. With a sufficiently large and varied set of objects included in the white reference image, no particular color will be favored and hence our spectral agnosticism will be preserved. }
+      }
+
+      Note that meeting the above conditions is the entire responsibility of the user; our ColorCalibration tool will yield incoherent and even wildly wrong results if the user does not provide valid reference images. With a little effort and care though, plausible background and white references can be defined to a sufficient approximation as to achieve excellent results in most practical cases.
+   }
+
+   \subsection { Preconditions } {
+
+      Along with valid reference images, our color calibration procedure requires three further conditions:
+
+      \list[spaced] {
+         { The images must be linear. ColorCalibration won't work with nonlinear (e.g., stretched) images. No consistent color calibration scheme can be implemented with nonlinear data. }
+         { The image(s) must be accurately calibrated. In particular, illumination must be uniform for the whole corrected image and, if different images are used to define the background and/or white references, those images must also have uniform illumination throughout the entire field. This means that flat fielding must be correctly applied as part of the image calibration process, and any residual additive gradients must also be removed \e before attempting to perform a valid color calibration. For background modeling and equalization, you can use the \tref DynamicBackgroundExtraction DynamicBackgroundExtraction and \tref AutomaticBackgroundExtraction AutomaticBackgroundExtraction tools in PixInsight. }
+         { The mean background should be \e neutral. This is particularly important for the white reference image. Actually, a neutral background reference is not a necessary precondition for the ColorCalibration tool to work correctly; for example, in theory background neutralization could be applied after color calibration. In practice however, a non-neutral background will always contaminate the white reference to some extent, since due to the limited signal-to-noise ratio there is always some uncertainty in the selection of white reference pixels. With a neutral background, even if some background pixels enter the set of white reference pixels, their contribution in terms of color balance will be statistically insignificant, and hence the white reference will be more robust. To neutralize the background, the tool of choice is \tref BackgroundNeutralization BackgroundNeutralization in PixInsight. }
+      }
+   }
+
+   \subsection { Working Modes } {
+
+      The ColorCalibration tool can work in three different modes:
+
+      \definition {
+
+         { \label range_selection_mode Range Selection Mode }
+         { In this mode ColorCalibration gathers all pixels of the white reference image within a prescribed range of pixel values, usually defined to prevent inclusion of black and nearly saturated pixels. This mode can be used to select a suitable astronomical object as white reference. In particular, this working mode allows selecting a \e {nearby spiral galaxy} to compute a white reference. The integrated light of a nearby spiral galaxy is a plausible white reference, since it provides a sample of all stellar populations and spectral types, and its redshift is negligible. This method has been proposed by PTeam member Vicent Peris, who first implemented it to calibrate a number of deep sky images taken with large telescopes. According to Vicent, ideal calibration galaxies should have the following properties:
+            \list {
+               { Closer than 50 mpc }
+               { Hubble classifications Sa, Sb, Sc, Scd, SBa, SBb, SBc or SBcd }
+               { Inclination less than 60 degrees }
+               { Integrated intrinsic intergalactic and galactic reddening < 0.5 mag in Johnson B }
+            }
+         }
+
+         { \label structure_detection_mode Structure Detection Mode }
+         { By sampling a large set of unsaturated stars of varied spectral types, a plausible white reference can also be defined. To this purpose, ColorCalibration implements a wavelet-based structure detection algorithm that can be used to select all small-scale structures on the white reference image. }
+
+         { \label manual_mode Manual Mode }
+         { In this mode you can specify three color correction factors, in case you have estimated them by other means, including a previous execution of the ColorCalibration tool with the same or a different image. This is useful to \e transport previously calculated color calibration factors between images. }
+      }
+   }
+}
+
+\parameter { \label white_reference_image White reference: Reference image } {
+
+   ColorCalibration will use pixels read from this image to compute a set of three color calibration factors, one for each RGB channel. If you leave this field blank, or with its default <target image> value, the target image will be also the white reference image during the calibration process.
+
+   The view you specify here should provide, \e {on average}, a suitable white reference. This normally requires restricting sampling white reference pixels to a particular region of the image. This can be done by specifying a preview, or even better, by using a \lref white_region_of_interest {region of interest} (ROI).
+}
+
+\parameter { \label white_lower_limit_param White reference: Lower limit } {
+
+   Lower rejection bound for the set of white reference pixels, in the normalized \[0,1\] range. White reference pixels less than or equal to this value will be rejected for calculation of color correction factors. Note that since the minimum allowed value for this parameter is zero, black pixels are always excluded from the set of white reference pixels.
+}
+
+\parameter { \label white_upper_limit_param White reference: Upper limit } {
+
+   Upper rejection bound for the set of white reference pixels, in the normalized \[0,1\] range. White reference pixels greater than or equal to this value will be rejected for calculation of color correction factors. This parameter allows you to reject saturated pixels, or pixels with very high values pertaining to the nonlinear regions of most CCD response curves. Note that since the maximum allowed value for this parameter is one, white (saturated) pixels are always excluded from the set of white reference pixels.
+}
+
+\parameter { \label white_region_of_interest White reference: Region of Interest } {
+
+   When the whole image cannot be used to sample the white reference, a usual way to restrict sampling to white reference pixels is defining a preview and selecting it as the \lref white_reference_image {white reference image}. In these cases a much better solution is using a \e {region of interest} (ROI). In ColorCalibration, the white reference ROI defines a rectangular area of the white reference image that will be sampled to compute white balancing factors. The ROI is specified by four values expressed in pixels: the coordinates of its top left corner and its width and height. Instead of entering these values directly you can acquire them from an existing preview by clicking the \e {From Preview} button.
+
+   To enable the white reference ROI section, you have to check the corresponding \e {Region of Interest} group title checkbox. ColorCalibration also provides a \lref background_region_of_interest {background ROI} to define its background reference, and the \xref BackgroundNeutralization BackgroundNeutralization tool also has a similar ROI functionality. When using ROIs, you usually will leave the white reference and background reference images with their default blank values (indicated as \e {<target image>} on the ColorCalibration interface). This has the advantage that the process instance so defined is \e reusable: it can be applied to any image without requiring existence of specific previews. This is especially important to integrate ColorCalibration instances with \xref ProcessContainer ProcessContainer.
+}
+
+\parameter { Structure detection } {
+
+   When this option is selected, ColorCalibration will work in \lref structure_detection_mode \e {structure detection mode}. In this mode ColorCalibration uses a multiscale, wavelet-based structure detection routine to isolate bright significant image structures within a prescribed range of dimensional scales ---see the \lref structure_layers_param \e {structure layers} and \lref noise_layers_param \e {noise layers} parameters. This feature can be used to perform a color calibration based on the stars recorded in the white reference image, as we have \lref structure_detection_mode described in the introduction. This option is selected by default.
+
+   When this option is disabled, ColorCalibration will work in \lref range_selection_mode \e {range selection mode}, which you can use to calibrate with a nearby spiral galaxy, as we have also \lref range_selection_mode described in the introduction section of this document.
+}
+
+\parameter { \label structure_layers_param Structure layers } {
+
+   This is the number of small-scale wavelet layers (in a dyadic scaling sequence) used for structure detection. More layers will use larger image structures for calculation of color calibration factors. The default value is 5, which corresponds to a scale of 32 pixels.
+}
+
+\parameter { \label noise_layers_param Noise layers } {
+
+   Number of wavelet layers used for noise reduction. Noise reduction prevents detection of bright noise structures, including hot pixels and cosmic rays. This parameter can also be used to control the sizes of the smallest detected stars (increase it to exclude more stars).
+}
+
+\parameter { Manual white balance } {
+
+   With this option selected, ColorCalibration will work in \lref manual_mode \e {manual mode}. In this mode you can perform a manual white balance by specifying the three color correction factors literally. If you select this option, no automatic color calibration routine will be applied, and you'll be allowed to enter the correction factors for red, green and blue with the next three parameters. This option is disabled by default.
+}
+
+\parameter { Manual red, green and blue factors } {
+
+   These three parameters are the manual color balancing factors for the red, green and blue channels, respectively, of the target image. These parameters are only enabled when ColorCalibration is working in \lref manual_mode \e {manual mode}.
+}
+
+\parameter { Output white reference mask } {
+
+   If this option is selected, ColorCalibration will create a new image window with a \e {white reference mask}. A white reference mask is white for pixels in the white reference image that have been used to calculate color correction factors, black anywhere else. You can use this mask to check whether the \lref white_lower_limit_param lower and \lref white_upper_limit_param upper limit parameters are doing a good job selecting the set of pixels that you intend to use as a white reference.
+}
+
+\parameter { \label background_reference_image Background reference: Reference image } {
+
+   ColorCalibration will use pixels read from this image to compute an initial mean background level for each color channel. If you leave this field blank (or with its default <target image> value), the target image will be also the background reference image during the color calibration process.
+
+   You should specify a view that represents the \e {true background} of the image. In most cases this means that you must select a view whose pixels are strongly dominated by the sky background, as it is being represented on the target image. A typical example involves defining a small preview over a free sky area of the target image, and selecting it as the background reference image. Even better than selecting a preview as a background reference image is using a \lref background_region_of_interest {region of interest} (ROI).
+}
+
+\parameter { \label background_lower_limit_param Background reference: Lower limit } {
+
+   Lower bound of the set of background pixels. Background reference pixels below this value will be rejected for calculation of mean background values.
+}
+
+\parameter { \label background_upper_limit_param Background reference: Upper limit } {
+
+   Upper bound of the set of background pixels. Background reference pixels above this value will be rejected for calculation of mean background values.
+}
+
+\parameter { \label background_region_of_interest Background reference: Region of Interest } {
+
+   When the whole image cannot be used to sample the background, a usual way to restrict sampling to background pixels is defining a preview and selecting it as the \lref background_reference_image {background reference image}. In these cases a much better solution is using a \e {region of interest} (ROI). In ColorCalibration, the background reference ROI defines a rectangular area of the background reference image that will be sampled to compute mean background values. The ROI is specified by four values expressed in pixels: the coordinates of its top left corner and its width and height. Instead of entering these values directly you can acquire them from an existing preview by clicking the \e {From Preview} button.
+
+   To enable the background reference ROI section, you have to check the corresponding \e {Region of Interest} group title checkbox. ColorCalibration also provides a \lref white_region_of_interest {white reference ROI} to define its white reference, and the \xref BackgroundNeutralization BackgroundNeutralization tool also has a similar ROI functionality. When using ROIs, you usually will leave the white reference and background reference images with their default blank values (indicated as \e {<target image>} on the ColorCalibration interface). This has the advantage that the process instance so defined is \e reusable: it can be applied to any image without requiring existence of specific previews. This is especially important to integrate ColorCalibration instances with \xref ProcessContainer ProcessContainer.
+}
+
+\parameter { Output background reference mask } {
+
+   If this option is selected, ColorCalibration will create a new image window with a \e {background reference mask}. A background reference mask is white for pixels in the background reference image that have been used to calculate mean background levels, black anywhere else. You can use this mask to check whether the \lref background_lower_limit_param lower and \lref background_upper_limit_param upper limit parameters define a suitable range of values to select the pixels that you intend to use as background reference.
+}
+
+\relatedtools {
+   BackgroundNeutralization, LinearFit
+}
+
+\make[noauthors]

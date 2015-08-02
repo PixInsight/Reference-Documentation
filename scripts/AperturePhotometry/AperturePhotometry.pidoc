@@ -1,0 +1,767 @@
+\documentclass PIScriptDoc
+
+\script {
+   AperturePhotometry
+}
+
+\keywords {
+   photometry, aperture photometry
+}
+
+\author {
+   Andrés del Pozo
+}
+
+\copyright {
+   2013, Andrés del Pozo, Vicent Peris (OAUV)
+}
+
+\brief {
+   Script for measuring the flux of the known stars in astronomical images.
+}
+
+\introduction{
+   Wikipedia defines \xref{http://en.wikipedia.org/wiki/Photometry_\%28astronomy\%29}{Photometry} \ref WikiPhotometry as \e{a technique of astronomy concerned with
+   measuring the flux, or intensity of an astronomical object's electromagnetic radiation}.
+   Although there are several methods for measuring the flux, this script uses one based
+   on what we call \e{apertures}: windows of a given size where the flux is integrated.
+
+   This script is limited to the flux calculation. Further analysis must be done using other tools.
+
+   For each star we want to measure, an aperture is centered on the star with dimensions chosen by the user.
+   The flux is obtained by adding the value of each pixel contained in the aperture
+   and subtracting the estimated background level.
+   The script implements two different algorithms for calculating the flux depending
+   on how the background is estimated.
+
+   When the background is estimated from a background model (see \lref{MMT}{Multiscale Median Transform} or
+   \lref{ABE}{Automatic Background Extraction}), the script uses this formula:
+      \equation[numbered:eqn_fluxBkgModel]{#:
+         $$
+         Flux = \sum_{i} w_i (Pixel_i - BkgModel_i)
+         $$
+      :#}
+   Where \im i is the index of each pixel of the image. \im w_i is the area of the intersection of the pixel and the aperture.
+   The values of \im w_i are such that the area of the aperture is the sum of the values of \im w_i for
+   all the pixels:
+      \equation[numbered:eqn_windowArea]{#:
+         $$
+         WindowArea = \sum_{i} w_i
+         $$
+      :#}
+
+   When the background is estimated from the source image (see \lref{SourceImage}{Source Image}), the script uses
+   this formula:
+      \equation[numbered:eqn_fluxSource]{#:
+         $$
+         Flux = \left(\sum_{i} w_i Pixel_i \right) - BkgLevel \times WindowArea
+         $$
+      :#}
+   The background level is estimated by calculating the median value of the pixels inside the background aperture
+   (see \lref{SquareRing}{Square ring}). This value is calculated after making a \e{sigma clipping} outlier rejection
+   inside the background aperture (see \lref{SquareRing}{Square ring}).
+
+
+   The script currently only measures the flux of known stars in one of the supported catalogs.
+
+   The script uses the following steps:
+      \list{
+         {\s{Image selection}: The user can choose between analyzing the active image
+         in PixInsight or processing a list of images.
+         The images must be plate-solved in order before applying the script.
+         If the images do not have an astrometric solution yet, the script can solve them. }
+
+         {\s{Star extraction}: For each image the script queries a catalog to get the catalogued stars in the field of view of the image.
+         Then, these stars are projected into the image and their exact position is calculated.}
+
+         {\s{Flux calculation}: For each star the script calculates the \e{raw flux}
+         adding the value (in electrons) of each pixel inside the aperture.
+         The pixels only partially inside the aperture are weighted proportionally to the area inside of it.}
+
+         {\s{Background calculation}: For each star the script calculates the \e{background flux}.
+         This calculation can be using different methods.
+         The \e{net flux} of the star is obtained subtracting the background flux from the raw flux.}
+
+         {\s{Output}: After measuring all the stars in the images,
+         the scrip can write the results to files.
+         The user can choose what types of data wants to write.}
+      }
+   The configuration dialog of the script is structured mirroring these steps.
+   The dialog has a tab for configuring each step.
+   The usage of the script is explained in the next section.
+}
+
+\usage {
+   The photometry script has many configuration parameters.
+   To simplify its use the configuration dialog has been divided in separate sections.
+   Each allows to define a set of parameters.
+
+   \subsection { Images } {
+
+      The objective of the \s{ Images} tab is the selection of the image or images that the script will process:
+
+        \center{ \image{images.png}}
+
+      \definition {
+         { Active image in PixInsight }
+         {
+            When this option is selected the script will process the active image in PixInsight.
+            This option is enabled only when there is at least one image open in the application.
+         }
+
+         { Files }
+         {
+            Click this option to select a list of files to process.
+            Use the buttons \s{Add files} and \s{Remove files} to add or remove files to the list.
+            The button \s{Clear files} removes all the files in the list.
+
+            The files in this list don't need to be open in the application as the script
+            opens them before processing each one.
+         }
+      }
+
+      \division{Plate-solve parameters}
+      {
+         This collapsible section allows to define the plate-solving parameters for the images.
+         \definition {
+            { Plate-solve the unsolved images }
+            {
+               The script requires an astrometric solution for each image, stored in tags
+               using the WCS convention \ref GreisenWCS \ref CalabrettaCelestial{.}
+               If the image has not coordinates and this option is selected the script
+               tries to solve it by using the \sref{ImageSolver}{ImageSolver} script.
+               If the image cannot be solved, the script skips it and jumps to the next image.
+
+               The button \s{Configure solver} opens the configuration dialog of ImageSolver.
+               These parameters are used as a starting point when solving the images.
+               This forces to have a similar center and resolution for all the image set.
+               If the images are from different sky areas, they must be solved prior to running
+               the AperturePhotometry script, using ImageSolver on each one.
+            }
+
+            { Force plate-solving the already solved images }
+            {
+               When this option is active the script tries to plate-solve all the images,
+               including those already solved.
+
+               This option can be used when the current referentiation is not good enough and
+               you desire to improve it.
+            }
+
+            { Save the solution of the plate-solving }
+            {
+               If this option is selected the images are saved with the newly found astrometric solution.
+               When this option is not selected the images are not modified in the
+               disk and the coordinates are lost when the script finishes.
+               This option is only enabled when \s{Plate-solve the unsolved images} is selected.
+            }
+
+            { Output file suffix }
+            {
+               This suffix will be appended to the filename when saving the plate-solve solution.
+               If it is empty, the original file will be overwritten.
+            }
+         }
+      }
+   }
+
+   \subsection { Stars } {
+
+      This tab provides the options for configuring how the stars are found in the image.
+
+        \center{ \image{stars.png}}
+
+      \division{Stars Catalog}
+      {
+         The \s{Stars Catalog} section configures the queries to the star catalog.
+
+         \definition {
+            { Catalog }
+            {
+               This options determine which catalog is going to be used for finding stars.
+               The script will only process the stars in this catalog.
+               The list shows all the available catalogs in \sref{AnnotateImage}{AnnotateImage}.
+               Since some of the catalogs don't store stars, the catalog must be chosen carefully.
+            }
+
+            { VizieR server }
+            {
+               This list shows the list of mirrors of VizieR.
+               You should select the best server for your location.
+            }
+
+            { Maximum magnitude \label CatalogFilter }
+            {
+               This option limits the magnitude of the extracted stars.
+               This magnitude is the actual value in the catalog and not the effective magnitude in the image.
+               You should select a suitable value for the images that are going to be processed.
+               It is useless to select a too high magnitude limit for your image set because they will have a very low SNR.
+
+               Since most of the catalogs store the magnitudes for different filters,
+               you have to select the desired catalog filter.
+            }
+         }
+      }
+
+      \division{User defined objects}
+      {
+         Sometimes it is necessary to measure the flux of objects that are not in the catalog
+         (supernovas, faint stars, asteroids, comets, etc).
+         This collapsible section allows to add objects to the list of objects that will be measured.
+         This objects will be measured the same way as the objects read from the catalog.
+
+         \definition{
+            {List of objects}
+            {
+               This list shows the objects defined by the user.
+               For each object the list contains its name and equatorial coordinates.
+            }
+            {Add object}
+            {
+               This button opens a dialog for defining a new object.
+               This dialog has two tabs: one for searching the coordinates in the service Sesame.
+               The other has fields for writing the coordinates.
+            }
+            {Delete object}
+            {
+               Deletes the selected objects in the list.
+            }
+            {Modify object}
+            {
+               This button opens the configuration dialog of the selected object.
+            }
+         }
+      }
+
+      \division{Source for star extraction}
+      {
+         After querying the catalog for the J2000 coordinates of the stars,
+         the script tries to map these coordinates to actual stars in the image.
+         This collapsible section defines the method the script uses for finding
+         the position of the stars in the image.
+
+         \definition{
+            {Extract stars from the catalog}
+            {
+               The position of the stars is calculated by projecting the catalog coordinates
+               to image coordinates using the referentiation stored in the image.
+
+               This option is only valid when the referentiation is very good.
+               However, if the referentiation is good enough,
+               it allows to predict the position in the image of stars with very low SNR.
+            }
+
+            {Extract stars from each image}
+            {
+               The stars are extracted from each image searching for the best position
+               using the catalog coordinates as a starting point.
+
+               The stars are searched applying \tref{DynamicPSF}{DynamicPSF} directly to each image.
+               This is the best method when the image has good \e{SNR}.
+            }
+
+            {Extract stars from reference image}
+            {
+               The stars are not searched directly in each image but in a reference image. You have to
+               select an image from the list that covers the same area as the images to be processed.
+               After finding the exact position of the stars in the reference image, these positions
+               are translated to pixel coordinates in the target images.
+
+               This option is currently considered as \s{experimental}. The idea behind this capability
+               is that if the reference image is the result of the integration of many frames, the SNR
+               of the faintest stars should be much better. Therefore, \tref{DynamicPSF}{DynamicPSF}
+               should be able to get more precise positions for the fainter stars.
+            }
+         }
+      }
+
+      The star extraction process has additional parameters:
+      \definition{
+         {Margin}
+         {
+            This value sets a minimum distance in pixels of the stars to the borders.
+            The stars that are too close to the image borders are not processed.
+         }
+      }
+   }
+
+   \subsection { Star Flux } {
+      The parameters of this section configure how the star flux is calculated.
+        \center{ \image{flux.png}}
+
+      \definition{
+         {Filter \label Filter}
+         {
+            The filter used in the image can be defined by selecting it from a list,
+            by writing its name in the \s{Filter} field or by choosing the FITS keyword that stores it.
+            The name of the filter is not used anywhere in the calculation and
+            it is used only when writing the results.
+         }
+
+         {Aperture shape \label ApertureShape}
+         {
+            The aperture used for calculating the flux can be a square or a circle
+            centered on the star position.
+            For each star the script calculates the \e{raw flux} adding the value
+            (in electrons) of each pixel inside the aperture.
+            The pixels only partially inside the aperture are weighted proportionally
+            to the area inside it.
+
+            \figure{ \image[width:49\%;height:auto]{ApertureSquare.svg} \image[width:49\%;height:auto]{ApertureCircular.svg} }
+         }
+
+         {Aperture size \label ApertureSize}
+         {
+            The script can calculate the flux for a range of aperture sizes spaced evenly.
+            The field \s{Minimum aperture} defines the minimum aperture size in pixels.
+            \s{Aperture steps} defines the number of different sizes to use.
+            \s{Aperture step size} defines the separation between the steps.
+
+            For square apertures, the size is the length in pixels of the \e{sides} of the square.
+            For circular apertures, the size is the \e{diameter} in pixels of the circle.
+         }
+
+         {CCD gain}
+         {
+            This value is the gain of the camera expressed in \e{electrons/ADU}.
+            It is used for converting the values of the pixels to electrons.
+
+            If you press the arrow button, the script tries to get the gain value form the
+            EGAIN keyword of the image.
+         }
+
+         {SNR threshold \label SNRthreshold }
+         {
+            This parameter is used for flagging the stars which measured SNR is too low.
+            The available flags are defined in the section \lref{Flags}{Image Table}.
+         }
+
+         {Saturation threshold \label SaturationThreshold}
+         {
+            This parameter is used for flagging the stars that have at least one pixel
+            with value greater than the threshold.
+            The threshold is defined as a percent of the maximum value.
+            The available flags are defined in the section \lref{Flags}{Image Table}.
+         }
+      }
+   }
+
+   \subsection { Background }
+   {
+
+      The script needs to calculate the background level at the position of each star.
+      This level is subtracted from the raw flux to get the final flux.
+
+        \center{ \image{background.png}}
+
+      \division{Background aperture}
+      {
+         The flux can be calculated using one of two algorithms:
+
+         \definition
+         {
+            {Square ring \label SquareRing}
+            {
+               The script centers a square ring around each star.
+               This ring's internal and external sizes can be defined.
+               The script uses the pixels of the background model inside the ring
+               for calculating the background level.
+               \figure{ \image{background_ring.png} }
+            }
+
+            {Photometric aperture \label BkgPhotometricWindow}
+            {
+               The script gets the value of the background using the same aperture
+               as used in the flux calculation (see \lref{ApertureShape}{Aperture shape}
+               and \lref{ApertureSize}{Aperture size}).
+               Since this aperture covers the star, this option needs to
+               use a background model without the stars.
+               It cannot be used when the background is extracted from the \lref{SourceImage}{Source Image}.
+            }
+         }
+      }
+
+      \division{Background model}
+      {
+         The script can use three different background models:
+         \definition
+         {
+            {Source image \label SourceImage}
+            {
+               When this option is used the value of the background level
+               is calculated directly from the pixels of the source image.
+               The background level is estimated by calculating the \e{sigma-clipped, median}
+               value of the pixels inside the background aperture.
+               The values \e{Sigma low} and \e{Sigma high} configure the rejection of the SigmaClipping.
+
+               This option can only be used with the option \lref{SquareRing}{Square ring}.
+            }
+
+            {Multiscale Median Transform \label MMT}
+            {
+               The script generates a background model using \tref{MultiscaleMedianTransform}{MultiscaleMedianTransform} (MMT)
+               for removing the smaller scale layers.
+               You can choose the number of images that are removed.
+               If enough layers are removed, the stars disappear from the image.
+               The option \lref{DebugBackground}{Show background model} can be useful
+               for deciding the number of layers to remove.
+            }
+            {Automatic Background Extraction \label ABE}
+            {
+               The script generates a background model using \tref{AutomaticBackgroundExtraction}{AutomaticBackgroundExtraction} (ABE).
+               This process tries to generate a background model placing samples
+               in the background and then interpolating between them.
+               The option \lref{DebugBackground}{Show background model} can be used
+               to validate the background model.
+            }
+         }
+      }
+   }
+
+   \subsection { Output \label Output}
+   {
+      In the \s{Output} tab you can configure several options that determine what
+      kind of values are written in the output files and some debugging options.
+        \center{ \image{output.png} }
+
+         \definition
+         {
+            {Output directory}
+            {
+               This field is the path of the directory where the script will write the results.
+               If it is left empty the files will be created in the directory of the first file.
+
+               Click in the down arrow to open the directory selection dialog.
+            }
+         }
+      \division{Debug Images}
+      {
+         The \s{Output} tab has several options to \e{debug} the process.
+         They are useful for adjusting the parameters of the process.
+         The best way to use them is to activate the debug options and try
+         the process with only one image.
+         When the parameters are set as desired the debug options can be deactivated
+         before processing a large batch of images.
+
+         \definition
+         {
+            {Generate image with detected stars \label ShowStars}
+            {
+               Select this option to generate an annotated image where the detected stars are drawn.
+               For each star the script draws the shape of the photometric apertures
+               and the background ring (when the option \lref{SquareRing}{Square ring} is selected).
+               This option helps to configure the star extraction process
+               and to adjust the photometric apertures.
+
+               The stars have different colors depending on the flags that
+               the process has set on them. The colors have this meaning:
+               \list{
+                  {\s{Red}: The star has the flag \lref{Flags}{MULTIPLE}.}
+                  {\s{Yellow}: The star has the flags \lref{Flags}{OVERLAPPED} or \lref{Flags}{BADPOS}.}
+                  {\s{Cyan}: The star has the flag \lref{Flags}{LOWSNR}.}
+                  {\s{Pink}: The star has the flag \lref{Flags}{SATURATED}.}
+                  {\s{Green}: The star has no flags.}
+               }
+               The colors are assigned in this order. i.e. a star with the flags
+               MULTIPLE and SATURATED is drawn red.
+
+               The images are shown in new windows or saved in files depending on the value of the option \lref{SaveDebug}{Save debug images}.
+            }
+
+            {Show background model \label DebugBackground}
+            {
+               When the option for using the \lref{SourceImage}{Source image}
+               as background model is selected this option generates a synthetic background model.
+               This is generated interpolating with \tref{DynamicBackgroundExtraction}{DynamicBackgroundExtraction}
+               the measured background values for every star.
+               This option can be very slow if the number of stars is very high.
+
+               If the background model is generated with \lref{MMT}{Multiscale Median Transform}
+               or \lref{ABE}{Automatic Background Extraction}, this option shows the generated model.
+
+               It is very important to check the background model before processing
+               a batch of images in order to check that the model is correct.
+
+               The images are shown in new windows or saved in files depending on the value of the option \lref{SaveDebug}{Save debug images}.
+            }
+
+            {Save debug images \label SaveDebug}
+            {
+               When this option is activated the script saves the debug images (\lref{ShowStars}{Detected stars}
+               and \lref{DebugBackground}{Background model}).
+               These images are saved only when their corresponding options are selected.
+
+               If this option is not selected the debug images are shown in new windows in the workspace.
+
+               If this option is selected the debug images are saved in the output directory.
+               In this last case the script \s{do not} show the images in new windows.
+
+            }
+         }
+      }
+      \division{Photometry tables}
+      {
+         The photometric process reads from the images and catalog and generates
+         itself many different values.
+         The section \s{Photometry tables} allows to configure what is written.
+
+         \definition
+         {
+            {Table prefix \label TablePrefix}
+            {
+               Prefix used as the first part of the filename of the generated tables.
+               Its default value is 'Table_'.
+            }
+            {Generate a table for each image with its information \label GenImageTable}
+            {
+               This option generates a \c{CSV} file for each image with the full
+               information available about it.
+               The files have the same name as the images but with \c{.csv} extension.
+               The section \lref{ImageTable}{Image Table} describes the contents of theses files.
+            }
+
+            {Generate flux tables}
+            {
+               This option generates tables that summarize the measured fluxes for all the stars in all the images.
+               The script generates a different table for each photometric aperture (see \lref{ApertureSize}{Aperture size}).
+               The tables have the name '\c{\e{\lref{TablePrefix}{Prefix}}Flux_ApN.csv}' where N is the aperture size.
+               The format of the table is described in the section \lref{BatchTable}{Batch Table}.
+            }
+
+            {Generate background table}
+            {
+               This option generates a table with the measured background for all the stars in all the images.
+               When the option \lref{BkgPhotometricWindow}{Photometric window} is used and
+               the script uses more than one aperture (see \lref{ApertureSize}{Aperture size}),
+               the values written in the table are the backgrounds for the smaller aperture.
+               The table has the name '\c{\e{\lref{TablePrefix}{Prefix}}Background.csv}'.
+               The format of the table is described in the section \lref{BatchTable}{Batch Table}.
+            }
+
+            {Generate SNR table}
+            {
+               This option generates tables that summarize the measured \e{SNR} for all the stars in all the images.
+               The script generates a different table for each photometric aperture (see \lref{ApertureSize}{Aperture size}).
+               The tables have the name '\c{\e{\lref{TablePrefix}{Prefix}}SNR_ApN.csv}' where N is the aperture size.
+               The format of the table is described in the section \lref{BatchTable}{Batch Table}.
+            }
+
+            {Generate flags table}
+            {
+               This option generates a table with the flags of all the stars in all the images.
+               The table has the name '\c{\e{\lref{TablePrefix}{Prefix}}Flags.csv}'.
+               The format of the table is described in the section \lref{BatchTable}{Batch Table}.
+            }
+
+
+            {Generate error file}
+            {
+               When an error occurs in an image, the application does not stop and jumps to the next image.
+               When the script finishes it writes in the console the number of successful images and the number
+               of errors.
+
+               If this option is selected, a summary of the errors is written in a file.
+               The name of the file is '\c{\e{\lref{TablePrefix}{Prefix}}Errors.csv}'.
+            }
+         }
+      }
+   }
+}
+
+\section{Output tables}
+{
+   \subsection{Image Table \label ImageTable}
+   {
+      The photometry script can generate a table for each image with all the information available of it.
+      This table is generated when the user activates the option \lref{GenImageTable}{Generate a table for each image with its information}
+      in the \lref{Output}{Output tab}.
+      The information in this table is read from the catalog or the FITS keywords
+      or it is calculated by the script.
+        \figure{ \image[width:100\%;height:auto]{image_table.png} }
+      The table has a header and, after it, one row for each star. The columns store the following information:
+      \definition
+      {
+         {DATE_OBS}
+         {
+            Value of the DATE_OBS keyword of the image. The value is stored as a julian date.
+         }
+         {NAME}
+         {
+            Name of the star as read from the catalog.
+         }
+         {FILTER}
+         {
+            Name of the filter chosen by the user in the option \lref{Filter}{Filter}.
+            It can be obtained from a keyword of the image.
+         }
+         {CATRA, CATDEC}
+         {
+            Equatorial J2000 coordinates of the star as stored in the catalog.
+            Both components are stored as degrees.
+            Therefore the Right Ascension will be in the range \[0,360).
+         }
+         {IMGRA, IMGDEC}
+         {
+            Equatorial J2000 coordinates of the star as measured in the image.
+            This value is calculated unprojecting the measured pixel coordinates of the star.
+            Both components are stored as degrees.
+            Therefore the Right Ascension will be in the range \[0,360).
+         }
+         {IMGX, IMGY}
+         {
+            Pixel coordinates of the star.
+            This value is the returned by \tref{DynamicPSF}{DynamicPSF}.
+         }
+         {\e{CatalogMagnitude}}
+         {
+            The name of this column is the name of the filter chosen in the section
+            \lref{CatalogFilter}{Maximum magnitude}.
+            It contains the catalog value of the magnitude of the star for this filter.
+         }
+         {BACKGROUND}
+         {
+            Background level used for the star expressed in electrons.
+            The background flux is the product of the background level and
+            the area of the photometric aperture.
+         }
+         {BGSTDDEV}
+         {
+            This column is the estimation of the noise of the background of the star.
+
+            When the background is calculated from the \lref{SourceImage}{source image}
+            this column contains the \e{standard deviation} of the result of the
+            \e{Median/SigmaClipping} algorithm.
+
+            When the background is calculated from a \lref{MMT}{MMT} or \lref{ABE}{ABE} model,
+            this column contains the noise of the whole image.
+         }
+         {BGRJCT}
+         {
+            This column contains the fraction of pixels rejected in the noise calculation.
+            The value is in the range \[0,1\], being 0 no pixels rejected.
+         }
+         {PSF_A, PSF_SIGMAX, PSF_SIGMAY, PSF_THETA, PSF_MAD}
+         {
+            Values of the PSF fitting for the star as calculated by \tref{DynamicPSF}{DynamicPSF}.
+         }
+         {FLUX\im _i}
+         {
+            The table has a FLUX\im _i column for each \lref{ApertureSize}{aperture size}.
+            These columns contain the value of the measured flux in electrons for each star and aperture.
+            The index \im i is the size of the aperture.
+         }
+         {SNR\im _i}
+         {
+            The table has a SNR\im _i column for each \lref{ApertureSize}{aperture size}.
+            These columns contains the value of the \e{Signal to Noise Ratio} (SNR) for each
+            star and aperture.
+            The index \im i is the size of the aperture.
+         }
+         {FLAG \label Flags}
+         {
+            The script applies several validations for each star and generates a flag when when one of the validations fail.
+
+            The value of the flags of a star is the logical \e{OR} of the individual flags.
+            When a star has no flags, the value is 0.
+            The available flags are:
+            \list{
+               {\s{MULTIPLE (1)}:
+                  This flag is added to the stars that have another star less than one pixel away.
+               }
+               {\s{OVERLAPPED (2)}:
+                  This flag is added to the stars that have another star inside the photometric window.
+               }
+               {\s{BADPOS (4)}:
+                  This flag is used for the stars which predicted position from the catalog is too
+                  different to the actual position measured in the image.
+                  This usually happens when there is any problem in the star fitting process.
+               }
+               {\s{LOWSNR (8)}:
+                  This flag is added to the stars with a SNR below the threshold
+                  defined in the field \lref{SNRthreshold}{SNR threshold}.
+               }
+               {\s{SATURATED (16)}:
+                  This flag is added to the stars with at least one pixel with a value over
+                  the staturation threshold as defined in the field
+                  \lref{SaturationThreshold}{Saturation threshold}.
+               }
+            }
+         }
+      }
+   }
+
+   \subsection{Batch Table \label BatchTable}
+   {
+      The photometry script can generate tables with the summary of the calculated values of several images.
+      These tables are generated when the user activates the options \s{Generate flux tables},
+      \s{Generate background table}, \s{Generate SNR tables} and \s{Generate flags table}
+      in the \lref{Output}{Output tab}.
+      The script generates an individual table for each selected option (Flux\e{i}, Background, SNR\e{i} or Flags).
+        \figure{ \image{batch_table.png} }
+      This table has three sections. The screen capture has these sections highlighted with different colors.
+      \division{Image section (\e{Light red})}
+      {
+         In this section there is a column for each image and rows for several fields:
+         \definition{
+            {ImageId}
+            {
+               This row stores the name of the image.
+            }
+            {DATE_OBS}
+            {
+               Value of the DATE_OBS keyword of each image translated to julian date.
+            }
+            {FILTER}
+            {
+               Name of the filter chosen by the user in the option \lref{Filter}{Filter}.
+               It can be obtained from a keyword of the image.
+            }
+         }
+      }
+      \division{Star section (\e{Light blue})}
+      {
+         This section has a row for each star.
+         These columns have the values of several fields common to all the images.
+         \definition
+         {
+            {StarId}
+            {
+               Name of the star as read from the catalog.
+            }
+            {RA, Dec}
+            {
+               Equatorial J2000 coordinates of the star as stored in the catalog.
+               Both components are stored as degrees.
+               Therefore the Right Ascension will be in the range \[0,360).
+            }
+            {Flags}
+            {
+               Combination using logical OR of the flags of all the images.
+            }
+            {Catalog_\e{filter}}
+            {
+               Catalog value of the magnitude of the star for the filter chosen
+               by the user for the parameter \lref{CatalogFilter}{Maximum magnitude}.
+            }
+            {MinSNR}
+            {
+               Minimum value for the SNR of the star in all the images.
+            }
+         }
+      }
+      \division{Values section (\e{Yellow})}
+      {
+         This section is different depending on the summarized field of the table.
+         It can contain the flux for an aperture, the background level, SNR or flags.
+         Each row contains the value for a star and each column the value for an image.
+      }
+   }
+}
+
+\reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
+
+\reference CalabrettaCelestial {  M. R. Calabretta, E. W. Greisen (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of Celestial Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1077-1122}
+
+\reference WikiPhotometry {  Wikipedia contributors, \e{ \xref{http://en.wikipedia.org/wiki/Photometry_\%28astronomy\%29}{Photometry} }, Wikipedia, The Free Encyclopedia}
+
+\make[noauthors]

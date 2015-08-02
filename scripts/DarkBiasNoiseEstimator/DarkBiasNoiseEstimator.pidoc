@@ -1,0 +1,186 @@
+%% ****************************************************************************
+%% DarkBiasNoiseEstimator.pidoc - Released 2014/12/19 00:00:00 UTC
+%% ****************************************************************************
+%%
+%% This file is part of DarkBiasNoiseEstimator Script version 0.11
+%%
+%% Copyright (C) 2012-2014 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2014 Pleiades Astrophoto S.L. All Rights Reserved.
+%% ****************************************************************************
+
+\documentclass PIScriptDoc
+
+\script DarkBiasNoiseEstimator
+
+\keywords {
+   offset estimation, temporal noise estimation, frame quality evaluation, detector characterization
+}
+
+\author {
+   Mike Schuster
+}
+
+\copyright {
+   2012-2014 Mike Schuster. All Rights Reserved.
+}
+
+\brief {
+   Estimates the offset and the standard deviation of temporal noise (e.g. read noise and dark noise) in dark or bias subframes or integrations.
+}
+
+\description {
+   This script estimates the offset and the standard deviation of temporal noise (e.g. read noise and dark noise) in dark or bias subframes or integrations. The information is useful for dark and bias frame quality evaluation and detector characterization.
+
+   This script requires as inputs two darks or biases, both equally sized, single channel subframes or integrations. Subframes must be similarly exposed. Integrations must be similar combinations of the same number of similarly exposed subframes. The darks or biases may be monochrome detector images, raw Bayer CFA detector images, or a CFA channel extracted from raw Bayer CFA detector images. Estimation accuracy will be compromised for RGB channels extracted from de-Bayered CFA images due to channel interpolation.
+
+   Spurious signal noise (e.g. cosmic-ray hits) is discounted from the offset estimation by measuring the typical median of local regions in the normalized sum of the darks or biases.
+
+   Spatial noise (e.g. offset and dark current nonuniformity) and spurious signal noise (e.g. cosmic-ray hits) are discounted from the temporal noise estimation by measuring the typical normalized Rousseeuw and Croux S\sub{n} scale estimate \ref Rousseeuw_1993\sup{,} \ref Croux_1992 of local regions in the normalized difference between the darks or biases.
+}
+
+\usage {
+   \image dark_result.png
+
+   \subsection { Parameters } {
+      \definition {
+         { Dark or bias 1 } {
+            Specifies a dark or bias subframe or integration.
+         }
+
+         { Dark or bias 2 } {
+            Specifies a dark or bias subframe or integration.
+         }
+      }
+   }
+
+   \subsection { Results } {
+      \definition {
+         { Offset } {
+            Offset is an estimate of the offset of the darks or biases, in data number (DN 16-bit \[0,65535\]) units.
+         }
+
+         { Temporal noise } {
+            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. read noise and dark noise) in the darks or biases, in data number (DN 16-bit \[0,65535\]) RMS units.
+         }
+      }
+   }
+
+   \subsection { Push buttons } {
+      \definition {
+         { Browse Documentation } {
+            Opens a browser to view the script's documentation.
+         }
+
+         { Reset } {
+            Resets the dialog's parameters.
+         }
+
+         { Estimate } {
+            Estimates the offset and the standard deviation of temporal noise (e.g. read noise and dark noise) in the darks or biases.
+         }
+
+         { Dismiss/Abort } {
+            Dismisses the dialog or aborts the estimation.
+         }
+      }
+   }
+}
+
+\section { Applications } {
+   \subsection { Detector read noise in e- RMS estimation } {
+      Figure 1 shows results for flat dark subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds at -20{\deg}C. Since detector dark current is relatively low and the exposures are relatively short, dark noise is negligible and so the temporal noise estimate provides a reasonable estimate of the standard deviation of detector read noise in DN RMS. Using the camera vendor provided detector gain of 1.059 e-/DN, an estimate of the detector's binned 2x2 read noise at -20{\deg}C is 12.65 DN RMS * 1.059 -e/DN = 13.4 e- RMS.
+
+      \figure [float:left] {
+         \image flat_dark_result.png
+      }
+   }
+
+   \subsection { Detector dark current in e-/second estimation } {
+      Figures 2 and 3 shows results for flat dark and dark subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 and 2400 seconds, respectively, at -20{\deg}C. Detector dark current in electrons per second may be estimated by the ratio of the quadrature difference in temporal noise estimates and the difference in exposure times. Using the camera vendor provided gain of 1.059 e-/DN, an estimate of the detector's binned 2x2 dark current at -20{\deg}C is (15.18^2 - 12.65^2) DN / ((2400 - 24) second) * 1.059 e-/DN = 0.031 e-/second.
+
+      Detector dark current may also be estimated by the normalized offset difference. Using this technique, an estimate of the detector's binned 2x2 dark current at -20{\deg}C is (337.75 - 285.25) DN / ((2400 - 24) second) * 1.059 e-/DN = 0.023 e-/second.
+
+      The camera vendor's specification for dark current is <0.02 e-/second at -10{\deg}C with a dark current doubling of 5.8{\deg}C. Assuming 4 doses of dark current due to binning 2x2, the specification is equivalent to <0.024 e-/second at -20{\deg}C. The detector meets specification when the normalized offset difference measurement technique is used.
+
+      \figure [float:left] {
+         \image flat_dark_result.png
+      }
+
+      \nf
+      \figure [float:left] {
+         \image dark_result.png
+      }
+   }
+
+   \subsection { Subframe integration efficiency and quality estimation } {
+      Figures 4 and 5 show results for flat dark subframes and integrations from a Kodak KAF-8300 detector. The integrations are average combinations of 64 subframes with permissive outlier rejection. All subframes were binned 2x2 and exposed 24 seconds at -20{\deg}C. The integration to subframe temporal noise ratio equals 12.65 / 1.59 = 7.96, which is nearly equal to the expected square root of 64. This result indicates that the noise reduction achieved by the integration combination is near optimal.
+
+      \figure [float:left] {
+         \image flat_dark_result.png
+      }
+
+      \nf
+      \figure [float:left] {
+         \image flat_dark_integration_result.png
+      }
+   }
+}
+
+\section { Algorithm } {
+   The algorithm computes the normalized sum and difference of the input images, measures the location and scale of local regions in the combinations, and finally estimates the location of these region measurements.
+
+   \list [ordered] {
+      {
+         Given dark or bias images \e{db\sub{1}} and \e{db\sub{2}}, compute the two channel combination image \e{sd}, with a normalized sum channel \e{s} equal to 0.5 * (\e{db\sub{1}} + \e{db\sub{2}}) and a normalized difference channel \e{d} equal to 0.5\sup{0.5} * (\e{db\sub{1}} - \e{db\sub{2}}).
+      }
+      {
+         Partition the combination image \e{sd} into a grid of 8 x 8 pixel blocks.
+      }
+      {
+         For each block of the partition, compute the statistics pair \e{ls}, with a location component \e{l} equal to the median of the \e{s} channel of the block and a scale component \e{s} equal to the normalized Rousseeuw and Croux S\sub{n} scale parameter of the \e{d} channel of the block.
+      }
+      {
+         Compute a partition location estimate \e{l} equal the median of the \e{l} component of the statistics pairs \e{ls}.
+      }
+      {
+         Compute a partition scale estimate \e{s} equal to the median of the \e{s} component of the statistics pairs \e{ls}.
+      }
+      {
+         Iterate steps 2, 3, 4, and 5, each iteration with a distinct, shifted partitioning grid on the combination image \e{sd}.
+      }
+      {
+         The Offset estimate equals the mean of the partition location estimates \e{l}.
+      }
+      {
+         The Temporal noise estimate equals the mean of the partition scale estimates \e{s}.
+      }
+   }
+}
+
+\section { Limitations } {
+   \list {
+      {
+         The script assumes that spatial noise in the darks or biases is equal, otherwise spatial noise will not be properly discounted from the temporal noise estimate. The images should be captured within a time period short enough to guarantee negligible spatial noise drift.
+      }
+      {
+         Darks or biases for Bayer CFA detectors should be either raw Bayer CFA images or a CFA channel extracted from raw Bayer CFA images. Estimation accuracy will be compromised for RGB channels extracted from de-Bayered CFA images due to channel interpolation.
+      }
+   }
+}
+
+\relatedscripts {
+   FlatSNREstimator
+}
+
+\relatedtools {
+}
+
+\reference Rousseeuw_1993 {
+   P.J. Rousseeuw and C. Croux (1993), \e {Alternatives to the Median Absolute Deviation}, Journal of the American Statistical Association, Vol. 88, pp. 1273-1283.
+}
+
+\reference Croux_1992 {
+   C. Croux and P.J. Rousseeuw (1992), \e {Time-Efficient Algorithms for Two Highly Robust Estimators of Scale}, Computational Statistics, Vol. 1, pp. 411-428.
+}
+
+\make

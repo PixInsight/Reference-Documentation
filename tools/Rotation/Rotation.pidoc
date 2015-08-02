@@ -1,0 +1,77 @@
+% Rotation tool
+
+\documentclass PIToolDoc
+
+\tool Rotation
+
+\module Geometry
+
+\category Geometry
+
+\keywords { image rotation, pixel interpolation }
+
+\author {
+   Javier Sanchis Muñoz, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Rotates images by arbitrary angles.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] Rotation.png
+
+   \vs[length:2em]
+   The Rotation tool allows you to rotate an image by arbitrary angles. The process uses pixel interpolation algorithms to generate rotated output images, except for \pm{}90\deg and 180\deg rotation angles when the \e {Optimize fast rotations} option is active (see below). The empty areas that fall outside the original image on the output rotated image are filled with user specified color and opacity.
+}
+
+\usage {
+
+   \subsection { \label rotation_section Rotation Angle } {
+
+      \image[border,marginBottom:0.5em] RotationAngle.png
+
+      \definition {
+
+         { Angle }
+         { The rotation angle ranges from 0\deg to 180\deg. Instead of using negative and positive angles, we talk of \e {clockwise} and \e {counter clockwise} angles, respectively. You can define the rotation angle in a rapid and coarse way by clicking and dragging on the \e {rotation angle diagram}, which is a square graph at the right side of the Rotation section. You can also enter a rotation angle in degrees directly using the corresponding edit field. }
+
+         { Clockwise }
+         { Uncheck this check box to specify a positive rotation angle (counter clockwise direction). Activate this option to rotate by a negative angle (clockwise direction). When dragging and moving around the rotation angle diagram, the \e Clockwise checkbox is checked or unchecked automatically, depending on wether the angle defined is negative or positive, respectively. }
+
+         { Use fast rotations }
+         { Rotations by 90\deg clockwise or counter clockwise and 180\deg can be applied through \e { fast rotation } operations. When this option is selected, only pixel copy and exchange operations are used to perform fast rotations, instead of making use of interpolation algorithms, to generate the output image. Copying and exchanging pixels are \e nondestructive operations: as long as no parts of the image are cropped, an unlimited number of these operations could be applied without modifying the original pixel values (they would only change their positions in the output image). However, interpolated pixel values cannot be used to recover the original values, so we say that interpolation is a \e destructive operation. }
+      } % definition
+   } % Rotation
+
+   \subsection { \label interpolation_section Interpolation } {
+
+      \image[float:left,border,marginRight:1.25em,marginBottom:0.5em] Interpolation.png
+
+      Pixel interpolation algorithms are necessary to compute output image pixels when the process rotates an image. The exception is when the image is being rotated by \pm{}90\deg or 180\deg and the \e {Use fast rotations} option is enabled (see the \lref rotation_section {Rotation section} above).\nf
+
+      For detailed information on interpolation algorithms, refer to the \dref InterpolationAlgorithms {Interpolation Algorithms documentation}.
+   } % Interpolation
+
+   \subsection { \label fill_color_section Fill Color } {
+
+      \image[float:left,border,marginRight:1.25em,marginBottom:0.5em] FillColor.png
+
+      In this section you can define the color and opacity of the pixels used to fill the empty areas that fall outside the original image on the output rotated image. You can adjust three slider controls, corresponding to the individual RGB components, plus one slider for the alpha (opacity) channel. For grayscale monochrome images, only the first slider (R) applies. A rectangular control below the sliders shows a sample of the custom color and its opacity.\nf
+
+      \division { Setting the fill color through pixel readouts } {
+         You can read the fill color directly from any image by clicking on it in \e {readout mode}. This only works when the Fill Color section of the Rotation interface is expanded. }
+   } % Fill Color
+} % Usage
+
+\relatedtool FastRotation
+\relatedtool DynamicCrop
+
+\relateddocument InterpolationAlgorithms { Interpolation Algorithms in PixInsight }
+
+\make[noauthors]

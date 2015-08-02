@@ -1,0 +1,65 @@
+\documentclass PIToolDoc
+
+\tool LocalHistogramEqualization
+
+\module LocalHistogramEqualization
+
+\categories { IntensityTransformations }
+
+\keywords { histogram equalization, local contrast }
+
+\author { Zbynek Vrastil }
+
+\copyright { 2011, Zbynek Vrastil }
+
+\brief { Implements local equalization of the histogram. Can be used to enhance local contrast and visibility of structures in the image. }
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] LocalHistogramEqualization.png
+
+   This process implements local histogram equalization with configurable limitation of maximum contrast enhancement. It is based on the CLAHE method (Contrast-Limited Adaptive Histogram Equalization). The main purpose of the process is to enhance local contrast and visibility of structures in low-contrast regions of the image. The process is designed to run on non-linear (already stretched) images.
+
+   Histogram equalization takes the histogram and computes a transfer curve, which grants more brightness range to higher histogram peaks and less brightness range to histogram valleys. In other words, large areas of similar brightness get more contrast. Local histogram equalization works on individual pixels and computes a transfer curve from the histogram of a pixel neighborhood.
+
+   The classical histogram equalization algorithm has the drawback of giving most contrast range to high narrow peaks, like a uniform noisy background. This problem is solved with the \e {contrast limit} property of the CLAHE method. This parameter limits the maximum slope of the transfer curve and prevents narrow peaks from getting too much contrast, effectively reducing noise promotion.
+}
+
+\parameter { \label kernel_radius Kernel Radius } {
+
+   Radius of the area around the pixel used to evaluate the histogram. Lower values strenghten the effect but are sensitive to noise and suffer from ringing around bright features like stars. Higher values weaken the effect but are more stable and do not exhibit ringing. For most images, values from 32 to 128 are suitable.
+}
+
+\parameter { \label contrast_limit Contrast Limit } {
+
+   Maximum allowed slope of the transfer curve applied to individual pixels. A value of 1.0 means no change at all. High values make the method very similar to classical histogram equalization and tend to promote noise. Suggested values are from 1.5 to 3.
+}
+
+\parameter { \label amount Amount } {
+
+   Allows you to control the amount of delivered change by blending the result with the original image. The value of 0.75 means that the resulting image will be a blend of 1/4 of the original and 3/4 of the processed image.
+}
+
+\parameter { \label histogram_resolution Histogram Resolution } {
+
+   The resolution of the histogram used to evaluate the equalization transfer curve. Higher values makes computation more precise but slower. Besides, they can work poorly with low values of the \lref kernel_radius {kernel radius parameter}. For most images, use 8-bit resolution. In case you're using high kernel radii and you encounter posterized results, try higher resolutions. }
+
+\parameter { \label circular_kernel Circular Kernel } {
+
+   If switched on, the histogram is evaluated from a circular area around each pixel. This is recommended to make the effect more uniform. If switched off, the histogram is evaluated from a square area.
+}
+
+\usage {
+
+   Usually, this process is used in the final stages of your image processing, when the image is already stretched. In case there are regions with low-contrast structures (like nebulae or galaxies), you can use this process to increase contrast in these areas.
+
+   Test the process on previews. In order to provide a good preview of the final result, the preview size should be larger than the kernel diameter (twice the \lref kernel_radius {kernel radius parameter}). You may want to protect the stars or the background with a mask. The process works best on regions with moderate brightness.
+
+   Experiment with two basic parameters: \lref kernel_radius {kernel radius} and \lref contrast_limit {Contrast Limit}. In general, decreasing radius or increasing limit makes the effect stronger but also more noisy. When you are satisfied, you can fine-tune the amount of the delivered change by using the \lref amount {Amount parameter}.
+
+   It is recommended to keep the last two parameters (\lref histogram_resolution {histogram resolution} and \lref circular_kernel {circular kernel}) with their default values unless you have good reasons to change them.
+
+   \image BeforeAndAfter.jpg
+}
+
+\make[noauthors]

@@ -1,0 +1,57 @@
+\documentclass PIToolDoc
+
+\tool Annotation
+
+\module Annotation
+
+\categories { Painting }
+
+\keywords { text rendering, dynamic process }
+
+\author { Zbynek Vrastil }
+
+\copyright { 2011, Zbynek Vrastil }
+
+\brief { An interactive text rendering procedure implemented as a dynamic process. }
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] Annotation.png
+
+   Annotation is a text rendering tool and can be found under the Painting category. It can render a single line of text with specified font and color. You can also display a leader line from the text to an arbitrary point on the image. Annotation is a dynamic process that allows you to position the text and leader in the image with the mouse. The text is not rendered into image pixels until you apply the process. You can only execute Annotation on images, not on previews.
+}
+
+\parameter { Text } { The text of the annotation. No escape sequences, commands or HTML tags are supported --- the text will be rendered \e {as is}. You can enter only one line of text. }
+
+\parameter { Show Leader } { If checked, a leader line is displayed. It points from the text to an arbitrary point on the image. }
+
+\parameter { Font } { The font used to render the text. You can choose from all fonts installed on your system. }
+
+\parameter { Size } { The size of the font in typographical points. }
+
+\parameter { Bold } { Switches on or off the bold font style. }
+
+\parameter { Italic } { Switches on or off the italic font style. }
+
+\parameter { Underline } { Switches on or off the underlined font style. }
+
+\parameter { Shadow } { If selected, a one-pixel wide black shadow is rendered under the text and the leader line. }
+
+\parameter { Color } { The color of the rendered text and leader. This combo box provides a list of predefined colors. You can also define a custom color by clicking on the rectangle just beside the combo box. In such case, a simple color definition dialog is launched. }
+
+\parameter { Opacity } { The opacity of the rendered text and leader. Fully opaque text has an opacity of 255, while 0 means full transparency. }
+
+\usage {
+
+   After you defined the parameters of your annotation (or before if you like), click somewhere in the image to show the dynamic preview of the annotation. The annotation is displayed in the image. Any change to the annotation parameters is immediately reflected on the image. The dashed rectangle around the text indicates the area where you can grab the text with a mouse and move it around the image. This is also indicated by a change in the shape of the mouse cursor.
+
+   In case you checked the \e {Show Leader} checkbox, the leader line is also displayed. A small dashed square at the endpoint again indicates the area which can be used to position the leader with the mouse.
+
+   The helper rectangles disappear when you execute the process and the annotation is rendered to the image. You can immediately start positioning of the next annotation with a single mouse click in the image.
+
+   It usually does not make sense to combine text rendering with an image mask. If the Annotation process detects an enabled mask on the target image, it displays a message and offers you the option to temporarily switch off the mask during text rendering.
+
+   \center \image AnnotationExample.jpg
+}
+
+\make[noauthors]

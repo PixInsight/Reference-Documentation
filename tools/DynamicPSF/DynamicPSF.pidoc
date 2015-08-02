@@ -1,0 +1,559 @@
+% DynamicPSF tool
+
+\documentclass PIToolDoc
+
+\tool DynamicPSF
+
+\module Image
+
+\categories {
+   Image
+}
+
+\keywords {
+   PSF fitting, PSF modeling, function fitting
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   A dynamic tool for interactive PSF fitting.
+}
+
+\description {
+
+   \image[marginBottom:0.5em] DynamicPSF.png
+
+   DynamicPSF is a dynamic PixInsight tool for interactive point spread function (PSF) fitting. Although it can be used to model any point-like or relatively bright and isolated image feature, the main purpose of DynamicPSF is to fit mathematical modelling functions to star images. Once a function has been fitted to a selected image structure, DynamicPSF provides a number of useful parameters describing it, such as the coordinates of the object's centroid, mean local background, peak value, dimensions, shape, orientation and estimated quality of the fit, among others.
+
+   As most dynamic PixInsight tools, DynamicPSF works in an interactive way using the resources of PixInsight's graphical interface, mainly image views and pointing devices. Typically, the user makes a mouse click on an image and DynamicPSF looks for a star (or a star-like object) around the selected coordinates. If something reasonably similar to a star can be found close to those coordinates, DynamicPSF tries to fit a three-dimensional function from a set of sampled image pixels. This operation can be repeated unlimited times on an unlimited number of images to form a set of \e { PSF collections } that can be further analyzed and reused.
+
+   \subsection { PSF Model Functions } {
+
+      The current version of DynamicPSF can fit elliptical Gaussian and Moffat \ref moffat_1969 functions. These functions have been selected because their shapes make them particularly suitable to model stellar objects represented on most deep-sky images.
+
+      DynamicPSF implements the \xref http://en.wikipedia.org/wiki/Levenberg\%E2\%80\%93Marquardt_algorithm Levenberg-Marquadt algorithm as a \xref http://en.wikipedia.org/wiki/Trust_region {model trust region} minimization procedure. Given sampled data consisting of two sets of independent and dependent variables, \{x\sub 0 \ellipsis x\sub{N--1}\} and \{y\sub 0 \ellipsis y\sub{N--1}\} respectively, the algorithm minimizes the sum of absolute differences of the model function \e f with the sampled data for a vector \s a of fitted function parameters:
+
+      \center \image LMMinimizationFunction.svg
+
+      In this application the independent variables are pairs of pixel coordinates on the image, and the dependent variables are the corresponding pixel values. The underlying implementation is a custom adaptation of the MINPACK library \ref more_1980 \ref devernay to the PixInsight/PCL framework. Some routines also implement ideas and algorithms from other sources listed in the References section.\ref stetson_1989 \ref press_2007
+
+      \definition {
+
+         { \label gaussian_function Gaussian Function } {
+
+            An elliptical Gaussian PSF fitting function is defined as:
+
+            \center \image GaussianFunction.svg
+
+            where the parameters are as follows:
+
+            \list {
+               { \s B --- Average local background. }
+               { \s A --- Amplitude, which is the maximum value of the fitted PSF, and also the function's value at the centroid coordinates. }
+               { \s x\sub 0, \s y\sub 0 --- Centroid coordinates in pixel units. This is the position of the center of symmetry of the fitted PSF. }
+               { \s \sigma\sub x, \s \sigma\sub y --- Standard deviation of the Gaussian distribution on the horizontal and vertical axes, measured in pixels. }
+            }
+         }
+
+         { \label moffat_function Moffat Function } {
+
+            An elliptical Moffat PSF fitting function is defined as:
+
+            \center \image MoffatFunction.svg
+
+            where the parameters are as in the Gaussian case, and the \beta exponent controls the overall shape of the fitting function. In the current implementation of DynamicPSF, the \beta parameter can vary in the range \]0,10\]. When \beta=1, the above equation corresponds to a \xref http://en.wikipedia.org/wiki/Lorentzian_function {Lorentzian distribution}.
+         }
+
+         { Rotated Functions } {
+
+            DynamicPSF also supports rotated PSF fitting functions. When the difference between \sigma\sub x and \sigma\sub y is larger than or equal to 0.01 pixel (the nominal fitting resolution), DynamicPSF fits an additional \theta parameter, which is the rotation angle of the X axis with respect to the centroid coordinates. \theta varies in the range \[0\deg,180\deg\[. For a rotated PSF, the x and y coordinates in the equations above must be replaced by their rotated counterparts x' and y', respectively:
+
+            \center \image RotationFunction.svg
+
+            Rotation angles are measured in counter-clockwise direction, and can be represented either as unsigned values in the \[0\deg,180\deg\[ range, or as signed quantities in the \[--90\deg,+90\deg\] range. In all cases the functions are fitted to ensure that \sigma\sub x \ge \sigma\sub y.
+         } % Rotated Functions
+
+         { Graphical Function Representations } {
+
+            Graphical representations are the best way to understand the geometries of different PSF fitting functions and how they change by varying their parameters. The figure below represents several functions graphically. Two-dimensional representations have been generated by running the following script in PixInsight:
+
+            \code[import] GeneratePSFImages.js
+
+            The script represents four PSF fitting functions (those included in the following figure) as new image windows. This script can be easily modified to represent other Gaussian and Moffat functions with different parameters. Once we have the functions represented as images, the standard 3DPlot script can be used in PixInsight to generate high-quality, three-dimensional renditions.
+
+            \figure[marginTop:1em] {
+
+               \group {
+                  \image[float] GaussianFunction2D.png
+                  \image[float] GaussianFunction3D.png
+                  \group[float] { Gaussian function. }
+               }
+
+               \group {
+                  \image[float] Moffat15Function2D.png
+                  \image[float] Moffat15Function3D.png
+                  \group[float] { Moffat function, \beta=1.5. }
+               }
+
+               \group {
+                  \image[float] Moffat40Function2D.png
+                  \image[float] Moffat40Function3D.png
+                  \group[float] { Moffat function, \beta=4. }
+               }
+
+               \group {
+                  \image[float] GaussianFunctionRotated2D.png
+                  \image[float] GaussianFunctionRotated3D.png
+                  \group[float] { Gaussian function, \sigma\sub x = 2\sigma\sub y, \theta = 45\deg. }
+               }
+            }
+         } % Graphical Function Representations
+
+         { Full Width at Half Maximum (FWHM) } {
+
+            For all PSF model functions DynamicPSF computes two additional \e {full width at half maximum} (FWHM) values:
+
+            \list {
+               { \s FWHM\sub x --- The FWHM on the X axis. }
+               { \s FWHM\sub y --- The FWHM on the Y axis. For circular (undistorted, unrotated) functions, we have FWHM\sub y = FWHM\sub x. }
+            }
+
+            The FWHM is a well-known, standardized and easy to understand measurement of the size of a star as seen on the image. It is the width in pixels of the fitted function, measured horizontally at half its height. The FWHM on the X axis is given by:
+
+            \center \image FWHMx.svg
+
+            respectively for Gaussian and Moffat fitting functions, with similar expressions for the Y axis by replacing \sigma\sub x with \sigma\sub y. Note that FWHM measurements for Gaussian and Moffat functions are in general not compatible and should not be mutually compared.
+         } % Full Width at Half Maximum (FWHM)
+
+         { \label goodness_of_fit Goodness of Fit } {
+
+            For each fitted PSF DynamicPSF provides an estimate of the \e {goodness of fit}, or how well the computed PSF function agrees with the actual image pixels that have been sampled to perform the function fitting process. In the current version of DynamicPSF a \e {mean absolute difference} (MAD) function is computed for this purpose:
+
+            \center \image MADFunction.svg
+
+            where \e f represents the fitted function and the \e I\sub i elements are the sampled pixels from the original image. The MAD function is intended to provide a robust estimate of the suitability of a model function and its fitted parameters to represent the actual sampled data. MAD estimates should be used to remove \e outliers from the set of fitted objects during a DynamicPSF session. In this context, outliers correspond to poorly sampled objects, such as saturated or too dim objects, or objects of the wrong type (e.g. nonstellar objects such as small background galaxies) that can contaminate the computed average PSF.
+         } % Goodness of Fit
+      } % definition
+   } % PSF Fitting Functions
+}
+
+%\parameter {  } {
+%
+%}
+
+\usage {
+
+   You can start a DynamicPSF session in the usual way for dynamic tools in PixInsight: either directly from the Process Explorer window, where you'll find DynamicPSF under the Image category, or from an existing instance of the DynamicPSF process, such as a process icon or a processing history item. When you launch the process, the DynamicPSF interface is shown and activated.
+
+   DynamicPSF works with \e {PSF collections}. Each collection groups a set of PSF fits performed on a particular image. You can perform an unlimited number of PSF fits on an unlimited number of images. Usually you'll work with a single image, but multiple collections allow you to compare PSF estimates for different images directly in a DynamicPSF session.
+
+   \subsection { PSF Data } {
+
+      The first and largest control on the DynamicPSF interface is a tree box control where the data for all fitted PSF model functions are shown in a hierarchical way. In the first hierarchy level we have PSF collections. There is one PSF collection item for each image involved in the current DynamicPSF session. Each PSF collection can have an unlimited number of \e {star item} descendants. Each star item, in turn, has one or more \e {PSF fits} performed for the same object, whose parameters are listed in the corresponding rows of the tree box. For color images, each channel is treated as a separate image, so there can be one, two or three PSF fits performed with the same parameters for each nominal channel of a RGB color image.
+
+      The following table describes all the data items provided by the current version of DynamicPSF.
+
+      \table [caption,header,width:100\%] {
+         { PSF Data Items }
+         { Parameter Description }
+         { { Function type } { Name of the PSF model function. The following functions are supported: Gaussian, Moffat (corresponding to a Moffat function with a variable (that is, automatically determined) beta exponent), Moffat10, Moffat8, Moffat6, Moffat4, Moffat25, Moffat15 (Moffat functions with fixed beta exponents of 10, 8, 6, 4, 2.5 and 1.5, respectively) and Lorentzian (beta=1). } }
+         { { Ch } { Channel index of this fitted PSF: 0 for grayscale and red, 1 for green and 2 for blue. } }
+         { { B } { Local background in the \[0,1\] range. } }
+         { { A } { Amplitude. This is the peak value of the fitted function, located at the centroid coordinates. } }
+         { { cx } { Horizontal (X axis) coordinate of the centroid in pixels, in the image coordinate system. } }
+         { { cy } { Vertical (Y axis) coordinate of the centroid in pixels, in the image coordinate system. } }
+         { { sx } { Size of the fitted function on the X axis in PSF coordinates, expressed in pixels. This is the \sigma\sub x parameter in the equations for the \lref gaussian_function Gaussian and \lref moffat_function Moffat functions. } }
+         { { sy } { Size of the fitted function on the Y axis in PSF coordinates, expressed in pixels. This is the \sigma\sub x parameter in the equations for the \lref gaussian_function Gaussian and \lref moffat_function Moffat functions. } }
+         { { FWHMx } { Full width at half maximum on the X axis in PSF coordinates, expressed either in pixels or arcseconds, depending on the current settings in the \lref image_scale_parameters {Image Scale} section. } }
+         { { FWHMy } { Full width at half maximum on the Y axis in PSF coordinates, expressed either in pixels or arcseconds, depending on the current settings in the \lref image_scale_parameters {Image Scale} section. } }
+         { { r } { Aspect ratio. This is the quotient sy/sx. Since sx \ge sy by design, this parameter is always \le 1. } }
+         { { theta } { Rotation angle of the X axis of PSF coordinates in degrees, with respect to the X axis in the image coordinate system and center in the centroid position. The rotation angle can be shown either as an unsigned quantity in the range \[0\deg,180\deg\[, or as a signed angle in the range \[--90\deg,+90\deg\], depending on the current state of the \e {signed angles} option (see the \lref psf_model_functions {PSF Model Functions section}). When signed angles are shown, the counter-clockwise direction is positive and the clockwise direction is negative. } }
+         { { beta } { The beta exponent of \lref moffat_function {Moffat PSF model functions} in the range \]0,10\]. } }
+         { { MAD } { \lref goodness_of_fit {Mean absolute difference} between the fitted PSF model function and the actual pixel values in the sampled PSF region. This is an estimate of fitting quality: the smaller this value, the better the achieved function fit. } }
+      }
+
+      For circular functions, the \e sy, \e FWHMy, \e r and \e theta data items are not provided. For Gaussian functions the \e beta item is not provided.
+   }
+
+   \subsection { Creating New PSF Fits } {
+
+      A new PSF fitting process is performed when you click on an image and release the pointing device without dragging. If there are no PSF fits for the image where you clicked, a new PSF collection is created. A new \e {star item} is then created and appended at the end of the corresponding PSF collection, either a newly created or an already existing collection. Note that, depending on the selected options in \lref psf_model_functions {PSF Model Functions section}, this operation can create one or several PSF fits for the same object. As we have said before, you can repeat this operation unlimited times.
+
+      \image CreateNewPSFFits.png
+
+       When you click on an image to create a new PSF fit, DynamicPSF automatically looks for the nearest small-scale, bright and concentrated image structure, so you don't have to click at any exact location; just clicking around a star is sufficient. The object detection routine is both \e robust and \e stable. It doesn't matter where you click on the image; as far as you click reasonably close to an object of interest, the routine will always converge at the same pixel coordinates and the fitted PSF parameters will always be the same for a given object, irrespective of the initial search location.
+
+      \figure {
+
+         \image[float,marginRight:1.25em] PSFCoordinates.png
+         For each PSF fit, DynamicPSF generates a set of vector graphics elements on the target image. The PSF coordinate system is rotated by the angle \theta with respect to the image coordinate system. In a three-dimensional representation of the PSF model function, the Z axis is perpendicular to the \e {image plane} (the XY plane), and Z coordinates correspond to image pixel values. The plotted ellipse represents the intersection between the 3D PSF model function and a plane parallel to the image plane, elevated by half the maximum value of the function. This defines the \e {full width at half maximum} on the X and Y directions, FWHMx and FWHMy, respectively.\nf
+      }
+
+      \division { Working with Color images } {
+         When working with color images, three PSF fits are created by default for each fitted star, one for each nominal RGB channel (alpha channels are always ignored). You can restrict creation of new PSF fits for a particular channel by selecting it for display on the target image. For example, if you select the green channel (using the channel selector combo box, or pressing Ctrl+Shift+G), only one PSF fit will be created for that channel. }
+   } % Creating New PSF Fits
+
+   \subsection { Selecting PSF Fits } {
+
+      You can select existing PSF fits in several ways:
+
+      \list[spaced] {
+         { By clicking within an existing PSF fit on the image. Each PSF fit is plotted as an ellipse inside a bounding rectangle. To select a PSF fit you have to click inside its bounding rectangle. Hold the Shift key pressed while you click to add a PSF fit to the current selection. }
+
+         { By clicking on the image and dragging to define a selection rectangle. All existing PSF fits within the selection rectangle will be selected. }
+
+         { Using the tree box control on the DynamicPSF interface. You can click on a row of the tree box to select the corresponding star item and/or associated PSF fit(s), Shift+click or click and drag to define multiple selections, etc. }
+      }
+
+      Selected PSF fits are plotted with a special color on the image (green by default). Note that the current selection is always coherent between the vector graphics plotted on the image(s) and the items in the DynamicPSF interface.
+
+      \image SelectPSFFits.png
+   } % Selecting PSF Fits
+
+   \subsection { Removing Items } {
+
+      \center \image RemoveSelectedItems.png
+
+      PSF fits can be removed in two ways:
+
+      \list[spaced] {
+         { By clicking the \e Remove button. This will delete all selected objects, which can be star items (each item with one or more PSF fits) and/or individual PSF fits, depending on the current selection. }
+         { By defining a selection and pressing the Del or Backspace key. This works in the same way as the Remove button described above. }
+      }
+
+      Be careful as item removal operations cannot be undone.
+   } % Removing Items
+
+   \subsection { \label psf_model_functions Selecting PSF Model Functions } {
+
+      \center \image PSFModelFunctionsSection.png
+
+      The \e {PSF Model Functions} section of the DynamicPSF interface allows you to select one or more PSF model functions to use in new PSF fits. The following options are available:
+
+      \definition {
+         { Auto }
+         { Select this option to let DynamicPSF find the best model function for each fitted object. When this option is selected, DynamicPSF fits a Gaussian function and one or several Moffat functions, with variable or fixed \beta exponent, and selects the function that best reproduces the sampled image data. This is the default option. Note that when this option is selected, the Gaussian and Moffat options (see below) are unavailable. }
+
+         { Gaussian }
+         { Select this option to fit \lref gaussian_function {Gaussian PSF model functions}. }
+
+         { Moffat }
+         { Select this option to fit \lref moffat_function {Moffat PSF model functions} with variable (that is, fitted) \beta parameters. }
+
+         { Moffat10, Moffat8, Moffat6, Moffat4, Moffat25, Moffat15, Lorentzian }
+         { Select one or more of these options to fit Moffat PSF model functions with fixed \beta parameters of 10, 8, 6, 4, 2.5, 1.5 and 1.0, respectively (a Lorentzian function is equivalent to a Moffat function with \beta=1). }
+
+         { Circular PSF }
+         { Select this option to fit circular PSF functions. Disable it to fit elliptical functions. An elliptical function provides two separate axes and a rotation angle. In general, elliptical functions are preferable because they provide more information about the true shapes and orientations of the fitted PSFs. Sometimes, however, circular functions may be preferable. For example, strongly undersampled images usually don't provide enough data to fit elliptical functions reliably. Uncertainty due to high noise levels also affects complex function fittings adversely. In such cases a circular function can provide more robust and useful results. Elliptical PSF functions are fitted by default. }
+
+         { Signed angles }
+         { When this option is enabled, rotation angles are shown as \e signed values in the \[--90\deg,+90\deg;\] range. When this option is disabled, rotation angles are represented as unsigned quantities in the \[0\deg,180\deg\[ range. Signed angles are useful to prevent ambiguities introduced by small rotations around zero degrees. These 'oscillatory' rotations occur frequently due to uncertainty in fitting rotation angles for nearly circular stars. For example, imagine a set of PSF fits where we have two subsets with rotations around zero and 180\deg. If we compute average PSF parameters, the resulting average rotation would be around 90\deg. This may be incorrect if both subsets are actually due to dispersion caused by fitting uncertainty, in which case the correct average rotation would be a value close to zero degrees. This option is enabled by default. }
+      } % definition
+   } % Selecting PSF Model Functions
+
+   \subsection { Star Detection Parameters } {
+
+      \center \image StarDetectionSection.png
+
+      The \e {Star Detection} section provides options to control how DynamicPSF searches and detects stellar objects for PSF fitting:
+
+      \definition {
+         { \label search_radius Search radius }
+         { This parameter determines the size in pixels of the initial search box used to detect stars when you clic on an image. Increase it to favor detection of larger stars. Decrease it to facilitate selection of smaller stars. For example, a smaller search radius may be necessary to deal with dense star fields. The valid range is from one to 127 pixels. The default value of eight pixels is quite appropriate in most cases. }
+
+         { \label background_threshold Background threshold }
+         { Threshold value for rejection of background pixels, in sigma units. This value is used by the object detection routine to classify sampled pixels into two disjoint sets: pixels belonging to the local background, and pixels belonging to the object being detected. A smaller threshold value makes the star detection routine less sensitive. This can be useful to avoid detection of very faint objects. On the other hand, a higher threshold allows you to isolate very small and faint objects, which may or may not be a good idea, depending on what you want to do and on the image you are working with. This parameter can range from 0.05 to 5 in sigma units. The default value of one sigma is normally appropriate in most cases. }
+
+         { \label automatic_aperture Automatic aperture }
+         { A PSF fitting process uses a square \e {sampling region} around the fitted object to gather a set of source image pixels. Then a PSF model function is fitted to minimize the difference with the sampled source pixels. When this option is enabled, DynamicPSF computes optimal sampling dimensions adaptively for each fitted star.
+
+            If the sampling region is too small, the local background cannot be determined accurately, and hence the PSF fit will be less accurate. If the sampling region is too large, pixels from nearby objects can contaminate the sample, and computation times grow unnecessarily (bear in mind that they are proportional to the \e square of the sampling size). The automatic aperture feature of DynamicPSF implements a fast and robust algorithm to find the smallest sampling region necessary to minimize uncertainty in the evaluation of the local background. This option is enabled by default. Disabling it is \e {not recommended} under normal working conditions, and can lead to a significant degradation in performance and fitting accuracy. }
+      } % definition
+   } % Star Detection Parameters
+
+   \subsection { \label image_scale_parameters Image Scale Parameters } {
+
+      \center \image ImageScaleSection.png
+
+      This section allows you to specify the scale of the image in arcseconds per pixel. When the image scale is available, DynamicPSF represent FWHM values directly in arcseconds, instead of pixels. The following parameters can be used for this purpose:
+
+      \definition {
+         { Scale mode }
+         { Defines a method to compute the image scale. Can be one of:
+            \list {
+               { \s {Standard FITS keywords.} If this mode is selected, DynamicPSF will try to read standard FOCALLEN, XPIXSZ and YPIXSZ FITS header keywords to compute the image scale in arcseconds per pixel. If these keywords are not present or contain invalid values, no image scale is computed and FWHM is expressed in pixels. }
+               { \s {Literal value.} This mode allows you to enter the image scale directly in arcseconds per pixel (see the next parameter). }
+               { \s {Custom FITS keyword.} This mode allows you to specify the name of a custom FITS keyword whose value is the image scale in arcseconds per pixel. }
+               { \s {Pixels.} This will ignore image scale to show FWHM in pixel units. This is the default option. }
+            }
+         }
+
+         { Image scale }
+         { When the \e {literal value} mode is selected, this control allows you to enter the image scale in arcseconds per pixel. Note that this value will be used for all the images involved in the current DynamicPSF session. }
+
+         { Custom keyword }
+         { When the \e {custom FITS keyword} mode is selected, this control allows you to enter the name of the special FITS header keyword that provides the image scale in arcseconds per pixel. If the specified keyword is not available, image scale will be ignored and FWHM will be shown in pixel units. }
+      } % defintion
+   } % Image Scale Parameters
+
+   \subsection { Tracking Stars } {
+
+      \center \image TrackStars.png
+
+      When the \e {Track Stars} option is enabled (button pushed), DynamicPSF automatically centers the selected star on its corresponding target image and brings the corresponding view to the top of PixInsight's workspace, if necessary. This is very useful to work at high magnifications, as it frees you from having to zoom in/out and pan the images when you are reviewing a set of PSF fits. This option is disabled by default.
+   } % Tracking Stars
+
+   \subsection { Regenerating PSF Fits } {
+
+      \center \image RegeneratePSFFits.png
+
+      You can \e regenerate existing PSF fits, which allows you to calculate new PSF parameters after changing some parameters in the \lref psf_model_functions {PSF Model Functions} section. For example, suppose you have generated a number of PSF fits using elliptical functions. Later you decide to fit circular functions for the same stars. You don't need to remove the previous fits and perform the tedious (and error prone) task of redefining new ones; just select the corresponding option (\e {circular functions}) and regenerate the PSF fits that you have already defined. You can regenerate in two ways:
+
+      \list {
+         { \s {Regenerate selected stars.} Click this button to recalculate only the set of selected PSF fits. }
+         { \s {Regenerate all.} Click this button to recalculate all PSF fits, irrespective of the current selection. }
+      }
+   } % Regenerating PSF Fits
+
+   \subsection { Sorting PSF Collections } {
+
+      \center \image SortPSFCollections.png
+
+      The \e {Sort Stars} button allows you to sort all the existing PSF fits in ascending order by selectable criteria. When you click this button, the Sort PSF Collections dialog opens as shown below.
+
+      \center \image SortPSFCollectionsDialog.png
+
+      On this dialog you can select one of the following sorting criteria:
+
+      \list[spaced] {
+
+         { \s {Star Id.} Each PSF fit is assigned an identifier, which is a running number that is unique within its parent PSF collection. Sorting by identifier classifies the PSF fits by creation order. }
+
+         { \s Background. Sorts PSF fits by the \e {mean local background} parameter (B). }
+
+         { \s Amplitude. Sorts PSF fits by the \e amplitude parameter (A), which is the peak value of the fitted PSF model function. }
+
+         { \s Standard deviation. Sorts PSF fits by their sizes. Note that the size in the X axis (PSF coordinates) is always used, that is the \e sx data item. Sorting by this criterion is equivalent to sorting by FWHM. }
+
+         { \s {Aspect ratio.} Sorts by the quotient sy/sx (r data item), that is by the \e {degree of distortion} of the fitted PSF model function. }
+
+         { \s {Rotation angle.} Sorts by the rotation angles of fitted PSF model functions (theta parameter). Note that the resulting order depends on whether \e {signed angles} are being used in the range \[--90\deg,+90\deg\] or unsigned angles in \[0\deg,180\deg\[. Circular functions are considered to have a zero rotation angle, and are sorted accordingly. }
+
+         { \s {Rotation angle (absolute value).} Same as the preceding criterion, but angles are evaluated in the \[0\deg,180\deg\[ range, irrespective of the current state of the \e {signed angles} option. }
+
+         { \s {Beta exponent.} Sorts by the Moffat beta parameter. Gaussian functions are assumed to have a zero beta exponent, and hence are always placed at the top of the list when this sorting criterion is used. }
+
+         { \s {Mean absolute difference.} Sorts by the MAD data item. This is the default sorting criterion. Use it to classify PSF fits by their \lref goodness_of_fit {quality estimates}. }
+      }
+
+      Sorting your PSF collections is very useful to find and remove \e outliers in the sets of fitted stars. The most obvious use of this feature is to sort by fitting quality (the default MAD sorting criterion). MAD estimates allow you to easily \e cut the lists of PSF fits below a given quality limit. However, other sorting criteria can provide more sophisticated ways to detect incorrect PSF fits that may be difficult to evidence otherwise. For example, if you know that your tracking is accurate and hence all of the stars in your image should have nearly circular shapes, then if there are some objects fitted with relatively small aspect ratios---even if they show pretty low MAD values---, they are clearly nonstellar objects or spurious image features that should be removed from your PSF collections.
+   } % Sorting PSF Collections
+
+   \subsection { \label exporting_a_synthetic_psf Exporting a Synthetic PSF } {
+
+      \center \image ExportSyntheticPSF.png
+
+      By clicking the \e {Export Synthetic PSF} button, DynamicPSF will generate a new image window with an \e {average PSF} computed for the current set of selected PSF fits (you have to select at least one fit for this function to work). Note that the generated PSF image is \e not the result of averaging all PSF function parameters, but something much more robust and accurate. DynamicPSF generates a synthetic PSF by rendering all fitted PSF model functions superposed by transparency over a black canvas, large enough to accomodate the largest PSF, and all of them centered at their centroid positions. This effectively works as if you had acquired all of the fitted stars centered in the same field of view with multiple exposures of a hypothetical CCD camera, able to accumulate the light from all of them without saturation. The main advantage of this method is that the generated PSF image is almost immune to small variations, and hence very accurate to represent the actual PSF of the image; this quality is what we denote as \e robustness in this context.
+
+      A synthetic PSF is the recommended way to generate a PSF image that can be used with PixInsight's \tref Deconvolution Deconvolution tool as an \e {external PSF}. In general, this method provides the best results to deconvolve an image because the obtained PSF is usually very accurate. Achieving similar accuracy by trial and error work with parametric PSFs is a difficult and time consuming task.
+
+      \image SyntheticPSFExample.jpg
+   } % Exporting a Synthetic PSF
+
+   \subsection { Average PSF Parameters } {
+
+      \center \image AveragePSFParameters.png
+
+      DynamicPSF also allows you to read \e {average PSF parameters} for the set of selected PSF fits. This is only possible when the selected PSF fits are \e congruent, that is when the selected set only contains either Gaussian or Moffat modelling functions. When you click the \e {Average PSF Parameters} button the Average Star Data dialog opens and shows a list of parameter values calculated by averaging the set of selected fits, as shown in the following screenshot.
+
+      \center \image AverageStarDataDialog.png
+
+      The Average Star Data dialog also has a button to generate a new PSF image computed from average parameters. Note that this has \e nothing to do with the average PSF image generated when you \lref exporting_a_synthetic_psf {export a synthetic PSF}, which is much more accurate and robust.
+   } % Average PSF Parameters
+
+   \subsection { Exporting CSV Files } {
+
+      \center \image ExportCSVFile.png
+
+      The \xref http://en.wikipedia.org/wiki/Comma-separated_values {comma separated value format} (CSV) is a well-known, de facto standard to share data among applications. It is a rather simple format consisting of plain text data items separated with a delimiter, usually a comma character. The fact that virtually all spreadsheet and database management systems support CSV has encouraged us to implement it, as the best way to export fitted PSF parameters that can be further analyzed with other software applications.
+
+      CSV files exported by the DynamicPSF tool in PixInsight have the following properties and organization:
+
+      \list {
+         { Exported .csv files are plain ASCII text files. }
+         { The data delimiter is a single comma character (ASCII code 44\sub 10 = 2C\sub 16). }
+         { The decimal separator is a single period character (ASCII code 46\sub 10 = 2E\sub 16). }
+         { The first line of an exported .csv file contains the names of the data items, namely: "ViewId,StarId,Channel,Function,B,A,cx,cy,sx,sy,FWHMx,FWHMy,unit,r,theta,beta,MAD" }
+         { Each one of the rest of lines contains the data for a PSF fit. Note that the first item of each line is the identifier of the source view. }
+      }
+
+      The block of text below shows an example CSV file generated with DynamicPSF:
+
+      \verbatim {
+ViewId,StarId,Channel,Function,B,A,cx,cy,sx,sy,FWHMx,FWHMy,unit,r,theta,beta,MAD
+NGC1808_L,28,0,Moffat,0.010567,0.037276,995.48,1533.27,4.54,4.21,3.69,3.42,px,0.926,50.29,4.53,2.823e-03
+NGC1808_L,7,0,Moffat,0.010599,0.027557,1427.22,579.95,4.88,4.31,3.76,3.32,px,0.884,58.90,5.01,2.823e-03
+NGC1808_L,22,0,Moffat,0.010589,0.035163,1917.89,1228.73,5.05,4.53,3.79,3.39,px,0.896,52.51,5.27,3.120e-03
+NGC1808_L,4,0,Moffat,0.010674,0.017232,1520.77,772.01,4.66,4.19,3.69,3.32,px,0.899,55.69,4.76,3.146e-03
+NGC1808_L,30,0,Gaussian,0.011444,0.408243,672.41,706.42,1.70,1.70,4.01,4.01,px,1.000,0.00,0.00,3.206e-03
+NGC1808_L,19,0,Moffat,0.010816,0.017442,1798.46,772.15,4.74,4.15,3.75,3.28,px,0.877,57.03,4.77,3.376e-03
+NGC1808_L,31,0,Gaussian,0.011924,0.648031,1876.11,380.91,1.67,1.67,3.93,3.93,px,1.000,0.00,0.00,3.386e-03
+NGC1808_L,25,0,Moffat,0.010521,0.012280,1220.03,611.32,4.43,4.05,3.65,3.34,px,0.914,55.97,4.42,3.567e-03
+NGC1808_L,6,0,Moffat,0.010647,0.016519,1320.62,714.95,4.87,4.38,3.68,3.32,px,0.901,57.33,5.17,3.825e-03
+NGC1808_L,32,0,Moffat,0.010511,0.013898,1297.07,424.24,4.66,4.66,3.62,3.62,px,1.000,0.00,4.94,4.928e-03
+NGC1808_L,11,0,Moffat,0.010764,0.008830,1437.17,1169.46,4.67,3.98,3.79,3.23,px,0.851,55.29,4.55,5.594e-03
+      }
+   } % Exporting CSV Files
+}
+
+\section { Scripting and Automation } {
+
+   The DynamicPSF process can be easily automated via scripting with the PixInsight JavaScript Runtime (PJSR). This allows you to apply a predefined DynamicPSF instance (e.g., as a process icon) to a set of co-registered images of the same region of the sky. This type of batch procedures can be implemented to perform a variety of analysis tasks such as image grading, automated PSF evaluation, seeing and optical performance anaylisis, etc.
+
+   To automate DynamicPSF execution, a script must invoke the \c executeGlobal method of a DynamicPSF instance. By setting appropriate process parameters before this call, the script can force one or more target images and control regeneration of all the PSF fits defined in the instance. DynamicPSF provides the following useful parameters for scripting:
+
+   \table[width:100\%] {
+      { { \s\c views (Table) } { This table has a single column of string type. Each row in this table specifies the identifier of a target view where the DynamicPSF instance will perform PSF fits. } }
+      { { \s\c stars (Table) } { Each row in this table corresponds to a fitted object. This table has the following columns:
+         \table[width:100\%,marginTop:1em] {
+            { { \s\c viewIndex (UInt32) } { The index of the target view in the \c views table. } }
+            { { \s\c channel (Int32) } { The channel index. } }
+            { { \s\c status (Enumeration) } { Exit status of the star detection routine. Can be one of:
+
+               DynamicPSF.prototype.Star_NotDetected\n
+               DynamicPSF.prototype.Star_DetectedOk\n
+               DynamicPSF.prototype.Star_NoSignificantData\n
+               DynamicPSF.prototype.Star_CrossingEdges\n
+               DynamicPSF.prototype.Star_OutsideImage\n
+               DynamicPSF.prototype.Star_NoConvergence\n
+               DynamicPSF.prototype.Star_UnknownError
+            } }
+            { { \s\c x0 (Int32) } { Horizontal coordinate of the top left corner of the star sampling region. } }
+            { { \s\c y0 (Int32) } { Vertical coordinate of the top left corner of the star sampling region. } }
+            { { \s\c x1 (Int32) } { Horizontal coordinate of the bottom right corner of the star sampling region. } }
+            { { \s\c y1 (Int32) } { Vertical coordinate of the top bottom right of the star sampling region. } }
+            { { \s\c x (Float) } { Horizontal coordinate of the star's barycenter. } }
+            { { \s\c y (Float) } { Vertical coordinate of the star's barycenter. } }
+         }
+      } }
+      { { \s\c psf (Table) } { Each row in this table corresponds to a PSF fit. This table has the following columns:
+         \table[width:100\%,marginTop:1em] {
+            { { \s\c starIndex (UInt32) } { The index of the fitted star in the \c stars table. } }
+            { { \s\c function (Enumeration) } { Fitted PSF model function. Can be one of:
+
+               DynamicPSF.prototype.Function_Gaussian\n
+               DynamicPSF.prototype.Function_Moffat\n
+               DynamicPSF.prototype.Function_Moffat10\n
+               DynamicPSF.prototype.Function_Moffat8\n
+               DynamicPSF.prototype.Function_Moffat6\n
+               DynamicPSF.prototype.Function_Moffat4\n
+               DynamicPSF.prototype.Function_Moffat25\n
+               DynamicPSF.prototype.Function_Moffat15\n
+               DynamicPSF.prototype.Function_Lorentzian
+            } }
+            { { \s\c circular (Boolean) } { True if a circular PSF model function has been fitted; false if the function is elliptic. For circular functions the \c sy and \c theta columns are undefined. } }
+            { { \s\c status (Enumeration) } { Exit status of the PSF fitting routine. Can be one of:
+
+               DynamicPSF.prototype.PSF_NotFitted\n
+               DynamicPSF.prototype.PSF_FittedOk\n
+               DynamicPSF.prototype.PSF_BadParameters\n
+               DynamicPSF.prototype.PSF_NoSolution\n
+               DynamicPSF.prototype.PSF_NoConvergence\n
+               DynamicPSF.prototype.PSF_InaccurateSolution\n
+               DynamicPSF.prototype.PSF_UnknownError
+            } }
+            { { \s\c B (Float) } { Average local background. } }
+            { { \s\c A (Float) } { Amplitude, or function peak value, also the function's value at the centroid coordinates. } }
+            { { \s\c cx (Float) } { Horizontal coordinate of the centroid, in image pixel coordinates. } }
+            { { \s\c cy (Float) } { Vertical coordinate of the centroid, in image pixel coordinates. } }
+            { { \s\c sx (Float) } { Standard deviation on the X axis, in PSF pixel coordinates. } }
+            { { \s\c sy (Float) } { Standard deviation on the Y axis, in PSF pixel coordinates. } }
+            { { \s\c theta (Float) } { Rotation angle in degrees, in the \[0\deg,180\deg\[ range. Undefined for circular functions. } }
+            { { \s\c beta (Float) } { Beta exponent parameter of a Moffat model function. Undefined for Gaussian functions. } }
+            { { \s\c mad (Float) } { Mean absolute difference for this PSF fit. } }
+         }
+      } }
+      { { \s\c autoPSF (Boolean) } { Enables the automatic model function feature of DynamicPSF. } }
+      { { \s\c circularPSF (Boolean) } { Fit circular PSF model functions; otherwise fit elliptical functions. } }
+      { { \s\c gaussianPSF (Boolean) } { Fit Gaussian PSF model functions. } }
+      { { \s\c moffatPSF (Boolean) } { Fit Moffat PSF model functions with variable \beta exponent. } }
+      { { \s\c moffat10PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=10. } }
+      { { \s\c moffat8PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=8. } }
+      { { \s\c moffat6PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=6. } }
+      { { \s\c moffat4PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=4. } }
+      { { \s\c moffat25PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=2.5. } }
+      { { \s\c moffat15PSF (Boolean) } { Fit Moffat PSF model functions with fixed \beta=1.5. } }
+      { { \s\c lorentzianPSF (Boolean) } { Fit Lorentzian PSF model functions (equivalent to a Moffat function with fixed \beta=1). } }
+      { { \s\c signedAngles (Boolean) } { Represent rotation angles as signed values in the \[--90\deg,+90\deg\]. Otherwise represent angles in the \[0\deg,180\deg\] range. } }
+      { { \s\c regenerate (Boolean) } { Enable regeneration of all PSF fits defined in the \c psf table. This will force the DynamicPSF instance to re-search all stars before fitting new PSF model functions. If this parameter is set to false, PSF fits will be recalculated at their original coordinates, which can be faster but less accurate. } }
+      { { \s\c searchRadius (Int32) } { Value of the \lref search_radius {search radius} parameter of DynamicPSF. } }
+      { { \s\c threshold (Float) } { Value of the \lref background_threshold {background threshold} parameter of DynamicPSF. } }
+      { { \s\c autoAperture (Boolean) } { Enable the \lref automatic_aperture {automatic aperture} feature of DynamicPSF. } }
+   }
+
+   After execution in the global context, the \c stars and \c psf table parameters of the executed instance contain all the information associated with the new PSF fits performed.
+
+   The following script is a simple example of DynamicPSF automation. The script creates a new instance of the DynamicPSF process as a duplicate of the instance transported by an existing process icon. The new instance is then initialized to fit circular Gaussian functions for the main view of the active image window. Once executed, the script explores the \c psf table of the instance to compute a weighted average FWHM estimate for the image. The weighting factors are derived from the computed MAD values for each PSF fit.
+
+   \code[import] PSFAutomationExample.js
+}
+
+\section { Usage Hints } {
+
+   \list[spaced] {
+      { \s {PSF measurements are only possible with linear images.} Meaningful PSF measurements are not feasible with nonlinear images. After a large-scale nonlinear transformation, such as the initial stretch applied with a histogram transformation for example, there no longer exists a valid PSF for the whole image. In general, you should use the DynamicPSF tool \e exclusively with linear raw images. You can use DynamicPSF with a deconvolved image to evaluate the star size reduction achieved after deconvolution, but other than this special use, trying to estimate PSFs doesn't make any sense unless raw CCD or DSLR data are used. }
+   }
+
+   \figure[marginTop:1em] {
+      \image[float,marginBottom:8px,marginRight:1.25em] StarsLinear.jpg
+      \vs[length:2em]
+      To the left, a crop of a linear raw CCD image with stars of varied brightness. The 3D rendition below has been generated from the linear data with the 3DPlot script in PixInsight. On a linear image, the disks of all well sampled stars (unsaturated, not too dim stars) have approximately the same diameter, irrespective of their brightness. This happens because the stars, being point sources, are representative of the \e {point spread function} (PSF) of the image, which does not depend on light flux.\nf
+      \center \image StarsLinear3D.png
+      \image[float,marginBottom:8px,marginRight:1.25em] StarsNonlinear.jpg
+      \vs[length:2em]
+      This is the same crop used above after applying a nonlinear intensity transformation (automatic screen stretch with the \tref ScreenTransferFunction ScreenTransferFunction tool). As can be seen on the 3D rendition, nonlinear images don't preserve, in general, the shape and dimensions of the PSF.\nf
+      \center \image StarsNonlinear3D.png
+   }
+
+   \list[spaced] {
+      { \s {Use the \tref ScreenTransferFunction ScreenTransferFunction tool} to make the image visible during a DynamicPSF session. In general, this is the only way you can work with raw images because linear data usually have too much contrast to be displayed on the screen. }
+
+      { \s {Use only moderately bright, \e {average stars}, and avoid saturated stars, too bright and too dim stars.} If you represent a saturated star in three dimensions you can see that its shape has been truncated, and hence cannot be accurately represented with any PSF model function. Too dim stars cannot be modelled well either, because their tails are \e submerged under the background noise. }
+
+      { \s {Don't try to fit elliptical PSF model functions with high uncertainty.} A large dispersion in the estimated rotation angles usually means that the data are insufficiently sampled or too uncertain to provide useful estimates. You know that this happens when you get significantly different estimates of the \e r and/or \e {rotation angle} parameters for similar stars in a more or less random way. In these cases you should select the \e {Circular PSF} option to avoid meaningless results. Typically, fitting elliptical PSF functions does not work in two cases: strongly undersampled images (e.g., wide field images) and raw frames with high noise levels. }
+   }
+
+   \figure[marginTop:1em] {
+      \imageswap[marginBottom:8px] WrongEllipticFitLinear.png WrongEllipticFitStretched.jpg
+
+      An example of wrong use of elliptical PSF model functions. In the set of fitted stars shown on this figure, rotation angles and aspect ratios are inconsistent due to the high noise levels in this raw CCD frame (mouse over the image to see a stretched version). The fitted elliptical functions are meaningless; much more robust and accurate results would be obtained by fitting circular Gaussian or fixed-beta Moffat functions.
+   }
+
+   \list[spaced] {
+
+      { \s {In general, you don't need \e hundreds of PSF fits} to get a good estimate of the true PSF of an image. Usually a relatively small number of \e {carefully chosen} stars are sufficient to achieve an excellent result with the DynamicPSF tool in just a few minutes. }
+
+      { \s {Use the \e {export synthetic PSF} feature} to generate a \e {robust average} of the PSF fits for the selected stars that you can use with the Deconvolution tool, for example. Don't use a PSF image generated with the \e {average PSF parameters} because it is much more sensitive to small deviations, and hence much less accurate. }
+
+      { \s {Avoid comparing FWHM and other fitted star parameters with the results obtained in other applications,} unless you know what you are doing and have enough information on the fitting functions and algorithms used by the other application(s). Each application implements different methods in very different ways and the results are in general not compatible. }
+   }
+} % Usage Hints
+
+\reference moffat_1969 { Moffat, A. F. J., \e { A Theoretical Investigation of Focal Stellar Images in the Photographic Emulsion and Application to Photographic Photometry }, Astronomy and Astrophysics, Vol. 3, p. 455 (1969) }
+
+\reference more_1980 { J. J. Moré, B. S. Garbow, and K. E. Hillstrom, \e { User Guide for MINPACK-1 }, Argonne National Laboratory Report ANL-80-74, Argonne, Ill., 1980. }
+
+\reference devernay { Frédéric Devernay, \xref http://devernay.free.fr/hacks/cminpack/cminpack.html {C/C++ Minpack Library}. }
+
+\reference stetson_1989 { Peter B. Stetson, \xref http://ned.ipac.caltech.edu/level5/Stetson/Stetson_contents.html {The Techniques of Least Squares and Stellar Photometry with CCDs} (A series of five lectures presented at the \e {V Escola Avancada de Astrofisica, 1989 July 30 - August 3, Aguas de Sao Pedro, Brazil}). }
+
+\reference press_2007 { William H. Press et al., \e { Numerical Recipes, The Art of Scientific Computing }, 3rd Ed., Cambridge University Press, 2007, \sect 15.5. }
+
+\make[noauthors]

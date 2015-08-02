@@ -1,0 +1,889 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="Binning_Replication.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="152.57359"
+     inkscape:cy="661.35644"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-grids="true"
+     inkscape:window-width="2560"
+     inkscape:window-height="1393"
+     inkscape:window-x="-2"
+     inkscape:window-y="-3"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2987" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="360"
+       y="292.36218"
+       id="text3047"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3049"
+         x="360"
+         y="292.36218"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Average</tspan><tspan
+         sodipodi:role="line"
+         x="360"
+         y="307.36218"
+         id="tspan3051"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Median</tspan><tspan
+         sodipodi:role="line"
+         x="360"
+         y="322.36218"
+         id="tspan3055"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="360"
+       y="337.36218"
+       id="text3059"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3061"
+         x="360"
+         y="337.36218"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Maximum</tspan><tspan
+         sodipodi:role="line"
+         x="360"
+         y="352.36218"
+         id="tspan3063"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Minimum</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="280"
+       y="362.36218"
+       id="text3107"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3109"
+         x="280"
+         y="362.36218">n: Resample factor</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 290,277.36218 60,0"
+       id="path3113"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 290,282.36218 0,-5"
+       id="path3115"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 350,282.36218 0,-5"
+       id="path3117"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 285,287.36218 -5,0"
+       id="path3119"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 285,347.36218 -5,0 0,-60"
+       id="path3121"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="315"
+       y="272.36218"
+       id="text3123"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3125"
+         x="315"
+         y="272.36218">n</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="270"
+       y="322.36218"
+       id="text3123-1"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3125-0"
+         x="270"
+         y="322.36218">n</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="320"
+       y="262.36218"
+       id="text3123-10"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288"><tspan
+         sodipodi:role="line"
+         id="tspan3125-4"
+         x="320"
+         y="262.36218"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Pixel Binning</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 290,287.36218 60,0 0,60 -60,0"
+       id="path3177"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 310,287.36218 0,60"
+       id="path3181"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 330,287.36218 0,60"
+       id="path3183"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 290,307.36218 60,0"
+       id="path3185"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 290,327.36218 60,0"
+       id="path3187"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <g
+       id="g3100"
+       transform="matrix(1.1428571,0,0,1,-57.142857,0)"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3201"
+         d="m 365,322.36218 0,-10 55,0"
+         style="fill:none;stroke:#000000;stroke-width:0.93541437px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3203"
+         d="m 420,312.36218 0,-10 15,15"
+         style="fill:none;stroke:#000000;stroke-width:0.93541437px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3205"
+         d="m 435,317.36218 -15,15"
+         style="fill:none;stroke:#000000;stroke-width:0.93541437px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3207"
+         d="m 420,332.36218 0,-10 -55,0"
+         style="fill:none;stroke:#000000;stroke-width:0.93541437px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 290,287.36218 0,60"
+       id="path3989"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#c8b7b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 290.5367,297.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3993"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#ffccaa;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 310.5367,297.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3995"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 330.5367,297.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3997"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#c8beb7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 330.5367,317.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3999"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 310.5367,317.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4001"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#aca793;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 310.5367,297.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4003"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#e9ddaf;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 330.5367,297.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4005"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#ac9393;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 290.5367,317.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4007"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#e3dbdb;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 290.5367,337.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4009"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#ffe6d5;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 310.5367,337.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4011"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <path
+       style="fill:#e3e2db;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 330.5367,337.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4013"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288" />
+    <g
+       id="g3874"
+       transform="translate(-30.71429,-29.999997)"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_04.png"
+       inkscape:export-xdpi="120.21288"
+       inkscape:export-ydpi="120.21288">
+      <g
+         style="fill:none"
+         transform="translate(30,30.000003)"
+         id="g3082">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           d="m 445,307.36218 0,20"
+           id="path3041"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           d="m 445,307.36218 20,0"
+           id="path3043"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           d="m 445,327.36218 20,0 0,-20"
+           id="path3045"
+           inkscape:connector-curvature="0" />
+      </g>
+      <path
+         inkscape:connector-curvature="0"
+         id="path4015"
+         d="m 475.71429,347.36218 c 0,3.125 0,6.25 0,9.375 6.19047,0 12.38094,0 18.57143,0 0,-6.25 0,-12.5 0,-18.75 -6.19048,0 -12.38095,0 -18.57143,0 0,3.125 0,6.25 0,9.375 z"
+         style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round" />
+    </g>
+    <g
+       transform="translate(-155,130)"
+       id="g3082-4"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3041-1"
+         d="m 445,307.36218 0,20"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3043-0"
+         d="m 445,307.36218 20,0"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3045-4"
+         d="m 445,327.36218 20,0 0,-20"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    </g>
+    <path
+       style="fill:#e9c6af;fill-opacity:1"
+       d="m 290.63433,447.33149 0,-9.46429 9.375,0 9.375,0 0,9.46429 0,9.46428 -9.375,0 -9.375,0 0,-9.46428 z"
+       id="path3105-8"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 290.65001,447.38324 c 0,3.125 0,6.25 0,9.375 6.19048,0 12.38095,0 18.57143,0 0,-6.25 0,-12.5 0,-18.75 -6.19048,0 -12.38095,0 -18.57143,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4015-7"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="330"
+       y="437.36218"
+       id="text3047-0"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"><tspan
+         sodipodi:role="line"
+         x="330"
+         y="437.36218"
+         id="tspan3051-6"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">n X n</tspan><tspan
+         sodipodi:role="line"
+         x="330"
+         y="452.36218"
+         id="tspan3055-2"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="320"
+       y="467.36218"
+       id="text3059-4"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3061-7"
+         x="320"
+         y="467.36218"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans" /><tspan
+         sodipodi:role="line"
+         x="320"
+         y="482.36218"
+         id="tspan3063-9"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans" /></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 320,452.36218 0,-10 55,0"
+       id="path3201-3"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 375,442.36218 0,-10 15,15"
+       id="path3203-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 390,447.36218 -15,15"
+       id="path3205-2"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 375,462.36218 0,-10 -55,0"
+       id="path3207-8"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 415,407.36218 60,0"
+       id="path3113-3"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 415,412.36218 0,-5"
+       id="path3115-0"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 475,412.36218 0,-5"
+       id="path3117-1"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 410,417.36218 -5,0"
+       id="path3119-7"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 410,477.36218 -5,0 0,-60"
+       id="path3121-8"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="440"
+       y="402.36218"
+       id="text3123-9"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"><tspan
+         sodipodi:role="line"
+         id="tspan3125-1"
+         x="440"
+         y="402.36218">n</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="395"
+       y="452.36218"
+       id="text3123-1-5"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"><tspan
+         sodipodi:role="line"
+         id="tspan3125-0-4"
+         x="395"
+         y="452.36218">n</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 415,417.36218 60,0 0,60 -60,0"
+       id="path3177-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 435,417.36218 0,60"
+       id="path3181-2"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 455,417.36218 0,60"
+       id="path3183-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 415,437.36218 60,0"
+       id="path3185-7"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       d="m 415,457.36218 60,0"
+       id="path3187-4"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 415,417.36218 0,60"
+       id="path3989-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8b7b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.5367,427.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3993-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#ffccaa;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.5367,427.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3995-4"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.5367,427.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3997-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8beb7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.5367,447.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path3999-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.5367,447.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4001-3"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#aca793;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.5367,427.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4003-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9ddaf;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.5367,427.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4005-7"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#ac9393;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.5367,447.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4007-0"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e3dbdb;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.5367,467.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4009-8"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#ffe6d5;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.5367,467.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4011-1"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e3e2db;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.5367,467.33896 c 0,3.15476 0,6.30952 0,9.46428 6.30952,0 12.61905,0 18.92857,0 0,-6.30952 0,-12.61905 0,-18.92857 -6.30952,0 -12.61905,0 -18.92857,0 0,3.15476 0,6.30952 0,9.46429 z"
+       id="path4013-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.65001,427.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4370"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.65001,427.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4372"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.65001,427.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4374"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.65001,447.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4376"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.65001,467.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4378"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.65001,467.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4380"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.65001,467.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4382"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.65001,447.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4384"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#e9c6af;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.65001,447.38324 c 0,3.125 0,6.25 0,9.375 6.25,0 12.5,0 18.75,0 0,-6.25 0,-12.5 0,-18.75 -6.25,0 -12.5,0 -18.75,0 0,3.125 0,6.25 0,9.375 z"
+       id="path4386"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="290"
+       y="472.36218"
+       id="text3107-9"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"><tspan
+         sodipodi:role="line"
+         id="tspan3109-7"
+         x="290"
+         y="472.36218">n: Resample factor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="315"
+       y="392.36218"
+       id="text3123-10-8"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"><tspan
+         sodipodi:role="line"
+         id="tspan3125-4-2"
+         x="315"
+         y="392.36218"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Sans;-inkscape-font-specification:Sans">Pixel Replication</tspan></text>
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 290.82359,447.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3255"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.82359,427.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3257"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.82359,427.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3259"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.82359,427.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3261"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.82359,447.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3263"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 455.82359,467.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3265"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.82359,467.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3267"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.82359,467.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3269"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 435.82359,447.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3271"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447" />
+    <path
+       style="fill:#c8c4b7;fill-opacity:1;stroke-linecap:round;stroke-linejoin:round"
+       d="m 415.82359,447.43431 c 0,3.09524 0,6.19048 0,9.28571 6.19048,0 12.38096,0 18.57143,0 0,-6.19047 0,-12.38095 0,-18.57142 -6.19047,0 -12.38095,0 -18.57143,0 0,3.09523 0,6.19047 0,9.28571 z"
+       id="path3273"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="119.80447"
+       inkscape:export-ydpi="119.80447"
+       inkscape:export-filename="/home/juan/PixInsight/doc/ref/tools/IntegerResample/IntegerResample_05.png" />
+  </g>
+</svg>

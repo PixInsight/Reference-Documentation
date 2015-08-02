@@ -1,0 +1,166 @@
+% RangeSelection tool
+
+\documentclass PIToolDoc
+
+\tool RangeSelection
+
+\module MaskGeneration
+
+\categories MaskGeneration
+
+\keywords { mask generation, pixel selection, fuzzy sets }
+
+\author {
+   Javier Sanchis Muñoz, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Generates a mask defined by a range of selected pixel values with optional fuzziness, smoothness, mask inversion and lightness/RGBK source components.
+}
+
+\introduction {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] RangeSelection.png
+
+   RangeSelection allows you to generate a mask by defining a range of pixel values. Those pixels whose values fall within the selected range will be rendered as white pixels on the mask, while pixels outside the selected range will be rendered as black mask pixels. This simple mechanism can be combined with a \e fuzziness parameter. Fuzziness can be used to introduce a degree of \e uncertainty in the boundaries of the selection range, as described below. RangeSelection allows you to generate either a binary mask or a mask from source pixels through a mechanism that we call \e screening, also explained later in this document. Finally, you can generate a mask from the nominal RGB/K image components or from the lightness (CIE L*) component of a color image, with optional smoothening and inversion of the output mask.
+}
+
+\parameter { \label lower_limit_parameter Lower limit } {
+
+   Defines the lower boundary of the selection range. This parameter can take values in the entire normalized \[0,1\] range, but it cannot be greater than the value of the \lref upper_limit_parameter {upper limit} parameter. The default value is zero. The output mask will always be zero (black) for pixels from the target image whose values are below the lower limit parameter.
+}
+
+\parameter { \label upper_limit_parameter Upper limit } {
+
+   Defines the upper boundary of the selection range. This parameter can take values in the entire normalized \[0,1\] range, but it cannot be less than the value of the \lref lower_limit_parameter {lower limit} parameter. The default value is one. The output mask will always be zero (black) for pixels from the target image whose values are above the upper limit parameter.
+}
+
+\parameter { \label link_range_limits_parameter Link range limits } {
+
+   By enabling this checkbox the lower and upper selection boundaries remain linked. Any changes applied to the \lref lower_limit_parameter {Lower limit} slider will have the same effect on the \lref upper_limit_parameter {Upper limit} slider, and vice-versa, preserving the current interval between both limits. By default this option is disabled, so you can move both sliders freely.
+}
+
+\parameter { \label fuzziness_parameter Fuzziness } {
+
+   This parameter acts like a \e {tolerance factor} or \e uncertainty for the limits of the selection range. It can be used to avoid strong transitions in the output mask. Increase this parameter to soften the transitions between the masked and unmasked regions, or set it to zero (default value) to get strict binary or screening masks ---see the \lref binary_mask_fuzziness \e {binary mask with fuzziness} and \lref screening_mask_fuzziness \e {screening mask with fuzziness} sections for a detailed explanation with examples.
+}
+
+\parameter { \label smoothness_parameter Smoothness } {
+
+   This parameter defines the standard deviation of a Gaussian filter that can be applied by convolution to the output mask. By increasing this parameter the mask will be blurred, which can be useful to make it less dependent on local intensity variations. Set this parameter to zero (default value) to avoid any blurring.
+}
+
+\parameter { \label screening_parameter Screening } {
+
+   When this option is selected, RangeSelection multiplies each mask pixel by its corresponding target image pixel. This has no consequence for black mask pixels, but nonzero mask pixels are replaced by target image pixels, as if these would be projected on a screen through a neutral filter of variable opacity. When this option is disabled (default state) the mask is generated as a binary mask, whose pixels are either zero or one
+}
+
+\parameter { \label lightness_parameter Lightness } {
+
+   When this option is enabled, the mask is built from the CIE L* component (in the \xref http://en.wikipedia.org/wiki/CIE_L*a*b* {CIE L*a*b* color space}) of each target image pixel, and hence the resulting mask is a grayscale image. Color space conversions take place in the \tref RGBWorkingSpace {RGB working space (RGBWS)} of the target image. When this option is disabled (default state) the mask is generated from the nominal \xref http://en.wikipedia.org/wiki/RGB_color_space {RGB/K image components}. This parameter is ignored for grayscale images.
+}
+
+\parameter { \label invert_parameter Invert } {
+
+   If this parameter is enabled, the output mask is inverted as the very last step of the RangeSelection process.
+}
+
+\usage {
+
+   \image[float:left,border,marginRight:1.25em,marginBottom:0.5em] Options.png
+
+   RangeSelection has two \e {target modes} and three \e {output modes}, which we describe below. On the RangeSelection interface, these modes can be selected through several checkbox controls: \e Lightness defines the target mode, while \e Screening and \e Invert select the output working mode.
+
+   \subsection { \label target_image_mode Target Mode } {
+
+      The \e {target mode} determines whether the process works on the nominal color/gray image components, or on the lightness component of a color target image.
+
+      \definition {
+         { \label color_mode Color Mode }
+         { The \e {color mode} is selected when the \e Lightness checkbox is unchecked. In this mode, the process works on the nominal RGB/K components of the target image. }
+
+         { Lightness Mode }
+         { When the \e Lightness checkbox is checked, the process works on the lightness (CIE L* component) of the target image. For grayscale target images the state of the \e Lightness checkbox is ignored. }
+      }
+   }
+
+   \subsection { Output Mode } {
+
+      The \e {output mode} selects one among different techniques available to generate the output mask from the target image component(s) defined by the current \lref target_image_mode {target mode} (RGB/K or lightness).
+
+      \definition {
+         { \label binary_mask_mode Binary Mask Mode }
+         { \s { Binary mask without fuzziness }
+
+            In this output mode the RangeSelection process evaluates each pixel of the target image. If the pixel under evaluation is within the selection range, the resulting mask pixel is one (white); otherwise the resulting mask pixel is zero (black).
+
+            \figure {
+               \group [marginBottom:8px] {
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMask_1.png
+                  \image[float:left,border,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] OriginalExample.png
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMask_2.png
+                  \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMask_3.png
+               }
+               The top left picture shows an example of \e {binary mask} after processing the image at the top right corner. The bottom left graphic describes the process to generate a binary mask without any other processing argument. The bottom right picture shows the parameters of RangeSelection used to obtain this mask.
+            }
+
+            \s { \label binary_mask_fuzziness Binary mask with fuzziness }
+
+            Combining the binary mask mode with the \e Fuzziness parameter we can define a degree of \e uncertainty at the boundaries of the selection range. The fuzziness parameter has been implemented as progressive linear transitions between the selected and unselected pixel sets. The transition slope depends directly on the fuzziness parameter, as described on the figure below.
+
+            \figure {
+               \group [marginBottom:8px] {
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMaskWithFuzziness_1.png
+                  \image[float:left,border,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] OriginalExample.png
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMaskWithFuzziness_2.png
+                  \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] BinaryMaskWithFuzziness_3.png
+               }
+               The top left picture shows how the fuzziness parameter can be used to soften selection transitions. Compare it with the corresponding result in the \e {binary mask mode} example. The bottom left graphic describes the procedure to generate a \e {fuzzy mask}. To understand the effect of the fuzziness parameter, pay special attention to the transition slopes and their analytical expressions.
+            }
+         }
+
+         { Screening Mask Mode }
+         { This mode is similar to the \lref binary_mask_mode {binary mask mode}, but each pixel of the output mask is multiplied by the corresponding pixel of the target image.
+
+            \s { Screening mask without fuzziness }
+
+            In this case all target pixels falling within the selection range are copied directly to the corresponding pixels of the output mask, while target pixels outside the selection range are discarded and the corresponding mask pixels are set to zero (black).
+
+            \figure {
+               \group [marginBottom:8px] {
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMask_1.png
+                  \image[float:left,border,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] OriginalExample.png
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMask_2.png
+                  \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMask_3.png
+               }
+               The top left picture shows a screening mask, where the pixels inside the selection range have been copied directly from the target image. The graphic at the bottom left corner shows how all values inside the selection range (the interval between A and B) remain in the mask, while values outside this interval are discarded and the corresponding mask pixels are set to zero (black).
+            }
+
+            \s { \label screening_mask_fuzziness Screening mask with fuzziness }
+
+            The combination of the \e {screening mask} mode with the fuzziness parameter is similar to the \lref binary_mask_fuzziness {binary mask with fuzziness}, but in this case each pixel of the output mask is multiplied by the original target pixel, as in the \e {screening mask without fuzziness} mode.
+
+            \figure {
+               \group [marginBottom:8px] {
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMaskWithFuzziness_1.png
+                  \image[float:left,border,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] OriginalExample.png
+                  \image[float:left,border,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMaskWithFuzziness_2.png
+                  \image[float:left,marginLeft:0.5em,marginRight:0.5em,marginTop:0.5em,marginBottom:0.5em] ScreeningMaskWithFuzziness_3.png
+               }
+               A mask built with screening and fuzziness enabled. The top left picture shows soft transitions between the masked and unmasked areas. These transitions correspond to the transition zones of the bottom left graphic.
+            }
+         }
+
+         { Invert mode }
+         { When the \e Invert checkbox is checked, the output mask is inverted. Note that mask inversion reverses the meaning of the generated mask pixels in terms of \e {mask protection}. Irrespective of the inversion state, always bear in mind that white mask pixels allow full processing, while black mask pixels prevent processing of the masked image. }
+      }
+   }
+} % description
+
+\relatedtool StarMask
+
+\make[noauthors]

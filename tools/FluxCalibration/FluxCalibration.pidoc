@@ -1,0 +1,108 @@
+\documentclass PIToolDoc
+
+\tool FluxCalibration
+
+\module Flux
+
+\categories Flux
+
+\keywords {
+   flux calibration, instrumental counts
+}
+
+\author {
+   Fernando Ballesteros Roselló (Astronomical Observatory of the University of Valencia - OAUV)
+}
+
+\copyright {
+   2012 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Calibrates an image by applying a conversion factor between instrumental counts and physical energy flux.
+}
+
+\description {
+
+   \image FluxCalibration.png
+
+   The goal of a flux calibration process is to tie the image pixel values to a standard physical system; in this case to a spectral energy flux measured in \s{erg \times cm\sup{-2}s\sup{-1}nm\sup{-1}}.
+
+If your science goal requires a perfectly calibrated measurement of a flux, then you must observe photometric standard stars to perform a photometric calibration. It is the correct way to convert your instrumental counts to a physically meaningful scale. The FluxCalibration tool does not pretend to be a substitute for that process: It only provides a realistic estimation of this conversion factor between instrumental counts and physical energy flux, taking into account most of the elements taking part in the detection process, such as exposure time, CCD quantum efficiency, atmospheric extinction, etc., in order to cancel them. Nevertheless it still will be an \e estimation.
+
+Specifically, the factors FluxCalibration takes into account are:
+
+   \definition {
+
+      { Wavelenght (\lambda) }
+      { Effective filter wavelenth in nm. }
+
+      { Transmissivity (r) }
+      { Filter transmissivity in the range \]0,1\]. }
+
+      { Filter width (\Delta) }
+      { Filter bandwidth in nm. }
+
+      { Aperture (D) }
+      { Telescope aperture diameter in mm. }
+
+      { Central obstruction (d) }
+      { Telescope central obstruction diameter in mm. }
+
+      { Exposure time (T) }
+      { Exposure time in seconds. }
+
+      { Atmospheric extinction (e) }
+      { Atmospheric extinction in the range \[0,1\[. }
+
+      { Sensor gain (G) }
+      { The sensor gain in e-/ADU. Must be greater than zero. }
+
+      { Quantum efficiency (Q) }
+      { Sensor quantum efficiency in the range \]0,1\]. }
+   }
+
+   r, Q and e are dimensionless quantities measured from zero to one. In order to convert from counts to spectral energy flux, it is necessary to know also the effective wavelength of the filter, \lambda. Then, the factor that links instrumental counts (also called \e {data numbers} (DN) or \e {analog to digital units} (ADU)) to energy flux is:
+
+   \center { FLX2DN = T &middot; (\pi &middot; (D\sup{2} – d\sup{2}) / 4) &middot; \Delta &middot; r &middot; G &middot; Q &middot; (1 -- e) &middot; (\lambda/c/h) }
+
+   with c and h being respectively the speed of light and the \xref http://en.wikipedia.org/wiki/Plank\%27s_constant {Planck’s constant}, and \pi = 3.14159... This leads to the following relationship:
+
+   \center { Intensity (erg \times cm\sup{-2}s\sup{-1}nm\sup{-1}) = Intensity (DN) / FLX2DN }
+
+   This value FLX2DN is stored in the FITS header as a keyword of the same name.
+
+   Once the image has been flux--calibrated, FluxCalibration rescales it to the range \[0,1\], storing the rescaling factors in the FITS header. This creates the keywords FLXMIN and FLXRANGE. Using these FITS header keywords, from the pixel intensities in the final image rescaled to the range \[0,1\] one can recover energy fluxes just by:
+
+   \center { FLXRANGE \times pixel_value + FLXMIN = erg \times cm\sup{-2}s\sup{-1}nm\sup{-1} }
+
+   and the original instrumental counts by:
+
+   \center { (FLXRANGE \times pixel_value + FLXMIN) \times FLX2DN = DN }
+}
+
+\usage {
+
+   The input values used by FluxCalibration can be specified in three ways:
+
+      \list[spaced] {
+         { from the FluxCalibration window, entered by the user directly as literal values. }
+         { from the FITS header of the target image, as standard FITS keywords. }
+         { from the FITS header of the target image, as custom user-specified FITS keywords. }
+      }
+
+   \subsection { Important Notes } {
+
+      \list[spaced] {
+         { Before using FluxCalibration, the image must have been dark and bias subtracted and flat-fielded, for example using the \tref ImageCalibration ImageCalibration tool. }
+         { The input image has to be a grayscale image, otherwise FluxCalibration will raise an error. }
+         { If the input image was already flux calibrated, FluxCalibration will give an error to prevent calibrating the same image twice. }
+      }
+   }
+}
+
+\relatedtools {
+   B3Estimator
+}
+
+\make

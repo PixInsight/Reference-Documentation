@@ -1,0 +1,141 @@
+% GradientMergeMosaic tool
+
+\documentclass PIToolDoc
+
+\tool GradientMergeMosaic
+
+\module GradientDomain
+
+\categories {
+   GradientDomain, ImageIntegration
+}
+
+\keywords {
+   mosaic, merge mosaic, gradient domain, seams, seamless, integration, image registration
+}
+
+\author {
+   Georg Viehoever
+}
+
+\copyright {
+   2011 Georg Viehoever, published under LGPL 2.1. With contributions in terms of code, tests, ideas, etc. by Carlos Milovic, Harry Page, Juan Conejero, Zbynek Vrastil, David Raphael, Geert Vanhauwaert, and others.
+}
+
+\brief {
+   Implements gradient domain mosaic creation by merging several registered images into one image without visible borders and seams.
+}
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] GradientMergeMosaic_GUI.png
+
+   The GradientMergeMosaic tool implements the combination of several registered images into one image, using \e {gradient domain} type operations. This technique ensures a smooth transition of intensities where different images meet. It does so by smoothly distributing the differences across a certain area, much in the same way as a thin elastic membrane responds to pressure, such as a soap bubble. In doing so, the seams between images become almost invisible. Please note that \e {while the tool can very successfully hide intensity seams, it will not hide differences in textures, patterns, noise intensities, etc. between images. }
+
+  \center \image GradientMergeMosaic_Seams.png
+
+   The image above shows the result of image registration with \tref StarAlignment StarAlignment, with the frame adaption feature enabled on the left, and the result of GradientMergeMosaic on the right. While StarAlignment's frame adaption does an excellent job, it still leaves small seams that cannot be removed by purely linear adjustments. GradientMergeMosaic will remove all visible seams.
+
+   Each contributing image contains \e {image data} (pixels where any channel has a value greater than the black point) and \e background (pixels where all channels have values less than or equal to the black point). By default, the black point is zero. Background regions are considered to be transparent when combining images.
+
+   Images can be combined in two modes:
+
+   \definition {
+
+      { Overlay }
+	   { In this mode, images are stacked on top of each other, with the last images hiding the first ones. The effective intensity of a pixel is determined by the pixel in the last image. This mode is most useful to add features to an image that are not visible in the first one, but only on the later one. The order of images in the file list is important in this case. }
+
+      { Average }
+      { In this mode, images are stacked on top of each other, with the last images being partially transparent. The intensity of a pixel is the average of all non-background pixels at a given location. This mode further smoothens the differences between images, and also improves the signal-to-noise ratio on overlapping regions. The order of images in the file list does not matter in this case. }
+   } % definition
+
+   GradientMergeMosaic can be applied to both linear and nonlinear images. It will preserve most of the linearity that is contained in the original images.
+} % description
+
+\usage {
+
+   \center \image GradientMergeMosaic_GUI.png
+
+   The GradientMergeMosaic interface allows for selection of the contributing files, for their reordering, and for tuning certain process parameters.
+
+   \subsection { File Selection } {
+
+      \definition {
+
+         { Add Files... }
+         { Use the Add Files... button to add one or more files to the file list. It is possible to add several files in one step. Each file may contain several images (this is possible for example with FITS files). }
+
+         { Move Up, Move Down, Select All, Invert Selection, Toggle Selected, Remove Selected, Clear }
+         { These permit to manipulate the contents and the order of files in the list. }
+
+         { Full Paths }
+         { Toggle to see the full file paths instead of only the file name component for each file. }
+
+         { File List }
+         { Displays the list of image files. You may double click on a file name to open the file. Double clicking on the check mark/cross allows to deactivate/activate a file without removing it from the list. }
+      }
+   } % subsection
+
+   \subsection { Parameters } {
+
+      The parameters allow to tune the operation of GradientMergeMosaic.
+
+      \definition {
+
+         { Type of combination }
+         { Select between \e Average and \e Overlay type. See the definition in the introduction. }
+
+	      { Shrink Radius }
+	      { \center \image GradientMergeMosaic_Aliasing.png
+
+            Aligned mosaic frame images frequently have a border where pixels do not have their full values. This is frequently caused by aliasing during scaling and rotating, but also by convolutions and wavelet operations on an image. GradientMergeMosaic cannot successfully merge such images: usually, you will continue to see seams between regions in these cases. The shrink radius parameter defines a number of pixels that will be removed from the border of each image. If shrink radius is 1, pixels are removed if they have a maximum distance of 2 pixels from the true image border. The default value of 1 is sufficient for most images. }
+
+         { Feather Radius }
+         { \center \image GradientMergeMosaic_Feathering.png
+
+            If there are stars located just at the seams between two images, or if there are other strong discontinuities just there, this can lead to the artifacts shown on the left hand side of the above figure. Feathering smoothly transitions between the information contained in the contributing images, avoiding such artifacts, as demonstrated on the right hand side. Usually, the default value of 10 is sufficient. }
+
+         { Black Point }
+         { By default, GradientMergeMosaic assumes that the background of the registered images has zero pixel values. This, for instance, is the case with images produced by the StarAlignment process. Adjust this value only if zero is not your background level. GradientMergeMosaic will consider all pixels where all channel values are less than the black point to be background. }
+
+         { Generate Mask }
+         { \center \image GradientMergeMosaic_Mask.png
+
+            Toggle to get a visualization of the different image regions identified by GradientMergeMosaic (left). You may drop this image as a mask on the resulting merged image (right). This can be useful to identifiy issues with the raw data. The mask is generated in a bitwise fashion which uniquely identifies the images that contribute to each pixel, even in average mode: image 1 has value 2**(n-1), image 2 has value 2**(n-2), ..., image n has value 1. All values are added, and the resulting image is rescaled before presentation. }
+      } % definition
+   } % subsection
+
+   \subsection { Usage Hints } {
+
+	   GradientMergeMosaic usually works well with its default settings. If you experience any issues, consider the hints below:
+
+	   \definition {
+
+         { Use frame adaptation }
+         { Use the Frame Adaptation feature of the \tref StarAlignment StarAlignment tool. This removes the differences between images as is possible by using purely linear intensity transformations. This leaves only the remaining, slightly non-linear adjustments to GradientMergeMosaic. Alternatively, use the \tref LinearFit LinearFit tool.}
+
+	      { Cosmic rays, hot pixels, dead pixels }
+	      { GradientMergeMosaic has no tools for handling these. You should address these during image integration and/or preprocessing using other tools. }
+
+	      { Use of stretched images }
+	      { If you experiece strange artifacts when using GradientMergeMosaic, try using it on images \e after histogram stretch. Due to their reduced dynamic range stretched images are less prone to problems than linear images. }
+
+	      { Seams still visible }
+	      { If you still see seams in your merged image, try increasing the shrink radius parameter. }
+
+	      { Stars cause problems at seams }
+	      { Try increasing the feather radius parameter. If this still fails, try use with stretched images. If everything fails, use the manual clone stamp tool to remove the offending star from all but one of the contributing images. }
+
+	   } % definition
+   } % subsection
+} %usage
+
+\relatedtools { StarAlignment, ImageIntegration, LinearFit }
+
+\reference 1 { \xref http://www.umiacs.umd.edu/~aagrawal/ICCV2007Course/index.html { Amit Agrawal and Ramesh Raskar, \e { Gradient Domain Manipulation Techniques in Vision and Graphics } } }
+
+\reference 2 { \xref http://pixinsight.com/forum/index.php?topic=3295.0 { Georg Viehoever et. al., \e { Gradient Domain Operations } } }
+
+\reference 3 { \xref http://www.youtube.com/user/PixInsight?gl=US#p/u/2/H2r3ZYqCaP8 { Steve Allan, \e { Creating a Seamless Supermosaic } (video tutorial) } }
+
+\make[noauthors]

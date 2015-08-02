@@ -1,0 +1,91 @@
+% ChannelCombination tool
+
+\documentclass PIToolDoc
+
+\tool ChannelCombination
+
+\module ColorSpaces
+
+\categories {
+   ColorSpaces, ChannelManagement
+}
+
+\keywords {
+   color spaces, pixel channels, color components, channel combination, color component combination, image generation
+}
+
+\author {
+   Juan Conejero, PTeam
+}
+
+\copyright {
+   2011 Pleiades Astrophoto. All Rights Reserved.
+}
+
+\brief {
+   Combines several pixel channels or color space components into a RGB color image.
+}
+
+\description {
+
+   \image[float:left,marginRight:1.25em,marginBottom:0.5em] ChannelCombination.png
+
+   ChannelCombination can be used either to replace the color components or pixel channels of an existing image, or to generate a new image from existing channels or components. In the first case, ChannelCombination is executed on an existing main view. In the second case, ChannelCombination must be executed in the global context.\nf
+
+   ChannelCombination supports several color spaces for replacement and combination of color channels or components:
+
+   \list[spaced] {
+      { The RGB color space. The red (R), green (G) and blue (B) pixel channels are always the first, second and third nominal channels of a RGB color image, respectively. }
+      { The CIE XYZ linear color space. CIE Y is the linear \e luminance, while CIE X and CIE Z are two linear chrominance components. }
+      { The \xref http://en.wikipedia.org/wiki/CIE_L*a*b* {CIE L*a*b*} color space. CIE L*, or \e lightness, is a nonlinear function of the luminance (or CIE Y), while CIE a* and CIE b* are two nonlinear chrominance components. The CIE *a component represents the ratio between red and green for each pixel, and CIE b* represents the ratio between yellow and blue. }
+      { The CIE L*c*h* color space. CIE L* is, as above, the \e lightness component. \xref http://en.wikipedia.org/wiki/Colorfulness {CIE *c}, or \e colorfulness, represents color saturation, and \xref http://en.wikipedia.org/wiki/Hue {CIE h*} is the color \e hue. }
+      { The HSV color ordering system, or \e hue, \e saturation and \e value. }
+      { The HSI color ordering system, or \e hue, \e saturation and \e intensity. }
+   }
+
+   Luminance/chrominance separations performed using the CIE XYZ, CIE L*a*b* and CIE L*c*h* color spaces are computed in the current \xref http://brucelindbloom.com/index.html?WorkingSpaceInfo.html {RGB working space} of the target image, when the process is executed on a view context, or in the global RGB working space, when the tool is executed globally to generate a new image. RGB working spaces can be defined with the standard \tref RGBWorkingSpace RGBWorkingSpace tool.
+
+   In the HSV and HSI color ordering systems (they are not true color spaces in the colorimetric sense), note that the S component represents different color saturation functions, which we often denote as S\sub v and S\sub i, respectively, to differentiate them. As there seem to be no standardized definitions of HSV and HSI, we'll describe the equations that define these color ordering systems as we have implemented them on the PixInsight platform:
+
+   \center \image[marginTop:1em,marginBottom:0.5em] HSV_HSI_Components.svg
+
+   For all color spaces, \e all components and channels are expected in the normalized \[0,1\] range. The angular hue components CIE h* and H must be mapped linearly from the \[0&deg;,360&deg;\[ range to the normalized \[0,1\[ range. Out-of-range values will generate unpredictable (although stable) results.
+
+   As most tools that work on different color spaces in PixInsight, ChannelCombination performs color space conversions dynamically. For images managed through the graphical user interface, actual pixel data are always stored in the RGB color space and transformed or converted between different color spaces when required.
+}
+
+\usage {
+
+   \subsection { Color Space } {
+
+      Select a color space to perform a channel or component combination. When you select a particular color space in this section, the names of the three \e {source images} (see the next section) are updated to reflect the corresponding channels or color components. By default, the RGB color space is selected.
+   }
+
+   \subsection { Channels / Source Images } {
+
+      This section provides three \e {source image} slots where you can specify the images that will be used to import the channels or color components corresponding to the selected color space. Source images must be grayscale monochrome images with compatible geometries (all source images must have the same dimensions in pixels). Click one of the blue triangle buttons to open a view selection dialog where you can select an existing view.
+
+      Note that you don't have to specify the three source images; only one of them is strictly necessary. This means that you can use the ChannelCombination tool to replace a single channel or color component by unchecking two of the source images and applying the instance to a target image. For example, this feature is often used to replace the lightness component (CIE L*) of a color image.
+
+      When a source image is enabled (checked) and left with its default \e <Auto> identifier (actually, \e <Auto> is a special symbol used to signify an empty identifier), ChannelCombination automatically looks for a view whose identifier is the identifier of the target image plus a suffix corresponding to the selected color space component. Expected suffixes are as follows:
+
+      \list {
+         { _R, _G, _B for source RGB channels. }
+         { _X, _Y, _Z for source CIE XYZ components. }
+         { _L, _a, _b for source CIE L*a*b* components. }
+         { _L, _c, _h for source CIE L*c*h* components. }
+         { _H, _Sv, _V for source HSV components. }
+         { _H, _Si, _I for source HSI components. }
+      }
+
+      Note that the expected suffixes are exactly the same that the \tref ChannelExtraction {ChannelExtraction tool} applies when its target images are also left with their default \e <Auto> identifiers. In this way channels and components can be easily extracted and combined using both tools.
+
+      The \e Target view selection list can be used to automate selection of view identifiers. When a target view is specified, ChannelCombination will look for source images whose identifiers are composed of the identifier of the target image plus the suffixes enumerated in the list above. This feature facilitates automation of ChannelCombination operations.
+   }
+}
+
+\relatedtools {
+   ChannelExtraction, RGBWorkingSpace
+}
+
+\make[noauthors]

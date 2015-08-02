@@ -1,0 +1,462 @@
+\documentclass PIScriptDoc
+
+\script {
+   ManualImageSolver
+}
+
+\keywords {
+   coordinates, annotation
+}
+
+\author {
+   Andrés del Pozo
+}
+
+\copyright {
+   2013, Andrés del Pozo
+}
+
+\brief {
+   Script for solving the coordinates of an astronomical image using control points defined by the user.
+}
+
+\introduction{
+   The objective of \s{ManualImageSolver} is to solve the coordinates of images that \sref{ImageSolver}{ImageSolver}
+   can not solve. The script \sref{ImageSolver}{ImageSolver} is able to find the coordinates of an
+   astronomical image without more user interaction than a few starting parameters
+   (approximate image center and resolution).
+   The coordinates solution is stored in the image in keywords using the WCS convention \ref GreisenWCS \ref CalabrettaCelestial{.}
+
+   \sref{ImageSolver}{ImageSolver} works well with clean images of medium/high resolution.
+   However images with too much noise or a wide field are much harder to solve and
+   sometimes \sref{ImageSolver}{ImageSolver} can not do it.
+
+   ManualImageSolver is able to find the coordinates of astronomical images that can
+   not be solved by \sref{ImageSolver}{ImageSolver}.
+   This script uses a group of control points defined by the user that match points in
+   the image that is being solved (\s{Target image}) with the corresponding point in
+   an image with known coordinates (\s{Reference image}).
+   Given enough control points the script can determine the coordinates of the image
+   with quite good precision.
+   This script can support images with strong distortions.
+}
+
+\usage {
+   This script is used in three steps:
+   \list{
+      {\lref{ReferenceImage}{Creation of the reference image}.}
+      {Creation of the \lref{ControlPoints}{control points} using the process \tref{DynamicAlignment}{DynamicAlignment}.}
+      {\lref{RunScript}{Execution of ManualImageSolver}.}
+   }
+   \subsection {Reference image \label ReferenceImage}
+   {
+      ManualImageSolver requires a reference image that covers completely the target image.
+      This image should be of good quality, it must have enough stars in the whole area
+      of the target image and it must have a high quality coordinates solution.
+      Although a real image can be used, the best results are achieved using a synthetic
+      image generated using \sref{CatalogStarGenerator}{CatalogStarGenerator}.
+      CatalogStarGenerator can easily generate a good quality image of any part of the sky.
+
+      \center{ \image[width:100\%;height:auto]{ReferenceGeneration.png}}
+
+      These are a few suggestions for generating the reference image:
+      \list{
+         {
+            For wide field images the best catalog in CatalogStarGenerator is "BrightStars".
+            This catalog contains most stars with magnitude up to 7.
+         }
+         {
+            For higher resolution images the catalog PPMXL can be used, although it is necessary
+            to filter the maximum magnitude to adapt it to the magnitude of the image.
+            It is important to know that PPMXL shouldn't be used for wide field images because
+            it doesn't contain some bright stars and the downloads are very slow for big areas.
+         }
+         {
+            The script \sref{AnnotateImage}{AnnotateImage} can be used for drawing
+            lines or labels that simplify the recognition of the stars in the synthetic image.
+            For example, for wide field images is useful to draw the constellation lines on the
+            reference image. This should be done so that the markings don't interfere with the
+            star detection of \tref{DynamicAlignment}{DynamicAlignment}: you can not set a control point on a star if
+            it is covered by a label or line.
+         }
+      }
+      \center{ \image[width:100\%;height:auto]{ReferenceAnnotation.png}}
+   }
+   \subsection { Control points \label ControlPoints}
+   {
+      The control points are pairs of points in the reference and target images that correspond to the same coordinates,
+      usually the same star.
+      The control points can be defined using the process \tref{DynamicAlignment}{DynamicAlignment}.
+      After opening the reference and target images in PixInsight you have to launch the process \tref{DynamicAlignment}{DynamicAlignment}.
+      The reference image must be selected as "Source" (first) and the target image as the "Target" (second).
+      The process of selecting the control points is this:
+      \list{
+         {
+            Identify the same star in both images.
+         }
+         {
+            Click in the position of the star in the reference image.
+         }
+         {
+            Find the position of the new control point in the target image and move it to the position of the star.
+         }
+      }
+      The first step (identifying the same star in both images) is perhaps the hardest part of the process.
+      Fortunately, \tref{DynamicAlignment}{DynamicAlignment} can predict the approximate position of the
+      control points in the target image after the two or three first control points have been set.
+      Because of this, only the two first points are really difficult to match in both images.
+      After them, the rest of points can be matched using the prediction of \tref{DynamicAlignment}{DynamicAlignment}
+      and some common sense.
+
+      After selecting enough control points you have to save the \tref{DynamicAlignment}{DynamicAlignment} process to a process icon.
+      This is done dragging the triangle at the lower left corner of the interface window to the workspace.
+
+        \center{ \image{DynamicAlignment.png}}
+
+      These are a few suggestions for selecting the control points:
+      \list{
+         {
+            You should select control points covering the whole image.
+            There should be control points near the corners of the image.
+         }
+         {
+            The quality of the solution depends on the number of control points and their quality.
+            The necessary number of control points depends on the strength of the distortion of the image:
+            An image with no distortion can be solved with only three control points although it is better to use more control points.
+            An image with strong distortions can require 40 or more control points.
+         }
+         {
+            If the image has much noise it is advisable to select more control points.
+         }
+         {
+            After selecting the first two control points, \tref{DynamicAlignment}{DynamicAlignment} tries to predict the position of the
+            control point in the target image.
+            Sometimes this prediction fails and it selects a wrong position.
+            You have to be aware of this, check every control point and move them to the correct position when necessary.
+         }
+         {
+            The script can not detect if any of the control points has a wrong position
+            (i.e. a star misidentified in one of the images).
+            This case can be detected analyzing the residuals image that the script can optionally generate
+            (see \lref{residuals}{Generate residuals image}).
+            If a control point is wrong, its residuals (red line in the residuals image) will be much greater than
+            the residuals of the rest of the points.
+            After identifying the misplaced control point, you can fix (or delete) it and rerun the script.
+         }
+      }
+   }
+
+   \subsection {Execution of ManualImageSolver \label RunScript}
+   {
+      As the final step you have to run the script ManualImageSolver.
+      This script analyzes the control points and the reference image and calculates a solution for
+      the coordinates of the target window.
+
+      \center{ \image{ConfigDialog.png} }
+
+      ManualImageSolver works on the active window in PixInsight.
+      When you run the script it shows its configuration dialog:
+      \definition{
+         { Control points icon }
+         {
+            This parameter shows a list of the \tref{DynamicAlignment}{DynamicAlignment} icons available in the workspace.
+            You have to select the icon that contains the control points that you want to use for
+            solving the image.
+            This icon can be created using the process explained in the section \lref{ControlPoints}{Control points}.
+         }
+
+         { Reference image }
+         {
+            This parameter shows a list of all the images open in PixInsight that have coordinates defined.
+            You should select the image that was used for creating the control points icon or one with exactly the same
+            geometry.
+         }
+
+         { Polynomial degree \label degree}
+         {
+            This parameter configures the degree of the polynomials used for defining the solution.
+            When the image has no distortion or you only need an approximate solution you should use a value
+            of one (lineal solution).
+
+            Values greater than one can be used when the image has geometric distortions.
+            The best value can be found by trial and error.
+            The script shows in the console several statistics that can help to choose the correct value.
+            The \lref{residuals}{residuals image} can be helpful too.
+            For most common optical systems the polynomial degree can be 2 or 3, and very rarely values greater
+            than 5 are advisable.
+         }
+
+         { Generate residuals image \label residuals}
+         {
+            When this option is selected after finding the solution the script generates an image which shows the residuals
+            of the solution.
+            The image shows as green crosses the predicted position of the control points using the calculated solution.
+            Red lines from each control point join the predicted position to the actual position marked by the user.
+
+            This image can be used to analyze the errors of the solution.
+            In a good solution all the red lines should be very short (in a perfect solution the lines
+            should have degenerated to points).
+            When there is a control point with misplaced position its red arrow is much longer than
+            the rest of control points.
+            When most red lines are long you should increase the value of the \lref{degree}{degree of the polynomial}.
+         }
+
+         { Show distortion map }
+         {
+            When this option is activated the script creates a new window with a representation
+            of the distortions in the image.
+            The new image contains a grid with arrows at the center of each cell.
+            The arrows point to the point where the center of the cells would be located if the image didn't have optical aberrations.
+            Since usually the aberrations are quite small, the arrows are exaggerated ten times.
+
+            This option is only enabled when the polynomial degree is greater than one.
+            \figure{ \image[width:100\%;height:auto]{../ImageSolver/DistortionMap.png} }
+         }
+
+         { Generate distortion model }
+         {
+            This option is available when the polynomial degree is greater than one.
+            The script generates a CSV archive with a distortion model that consists in a list of points and their
+             displacement relative to an ideal image with no geometrical optical aberrations.
+            The points used in the model are the control points, so the control points should cover the whole image for best results.
+
+            The distortion model is compatible with \tref{StarAlignment}{StarAlignment} and \sref{ImageSolver}{ImageSolver}.
+         }
+      }
+
+      After running the script, the target image gets its coordinates solution and the console shows the values
+      of this solution.
+      The quality of the solution can be checked analyzing the value of the RMS error reported in the console,
+      analyzing the residuals image and using AnnotationScript for drawing a grid and the position of the
+      stars on the target image.
+   }
+}
+
+\section{Advanced tasks}
+{
+   \subsection{Solution optimization \label optimization}
+   {
+      \image[float:right;width:50\%;height:auto;margin-left:5px]{ImageSolverOptimize.png}
+      Since the process of defining the control points for ManualImageSolver is quite slow and tedious,
+      the user usually will not want to define more than 30-40 control points.
+      Although this number is enough for calculating a good solution for most images,
+      the quality of the solution is not comparable to the solutions calculated
+      by \sref{ImageSolver}{ImageSolver} which can use several hundreds of samples.
+
+      The solutions calculated by ManualImageSolver can be optimized using \sref{ImageSolver}{ImageSolver}.
+      Although \sref{ImageSolver}{ImageSolver} can not solve many images, when these images are already solved,
+      \sref{ImageSolver}{ImageSolver} can be used for further improving the solution.
+
+      After solving the image using ManualImageSolver you can run \sref{ImageSolver}{ImageSolver} selecting the option
+      "Only apply optimization" which is available at the "Advanced parameters" section.
+      It is important to configure correctly the degree of the polynomials of the solution and the catalog filter in
+      order to extract enough (but not too many) stars.
+
+      The possibility of optimizing the solutions using \sref{ImageSolver}{ImageSolver} allows to
+      use ManualImageSolver to get an approximate solution using only a few control points and then
+      get a precise solution using \sref{ImageSolver}{ImageSolver}.
+   }
+
+   \subsection{Manual solving of many images}
+   {
+      The process of solving images using ManualImageSolver is quite tedious because the user has to define
+      the control points one by one. When you want to solve many images, this get old fast.
+
+      There are several strategies than can be used for accelerating this process.
+      The next sections explain them, from the fastest/easiest to the slowest.
+
+      \division{Method 1 - Distortion model}
+      {
+         Both \sref{ImageSolver}{ImageSolver} and \sref{ManualImageSolver}{ManualImageSolver} can generate
+         distortion models for solved images. The distortion models can be used in ImageSolver for assisting
+         in the process of matching the stars of the image against a catalog.
+         This allows ImageSolver to solve images that it would not be able to solve without a distortion model.
+
+         You can use in an image the distortion model generated from another when both have been taken with the
+         same equipment and parameters: same camera, lenses/telescope, focal length and aperture.
+
+         When you need to manually solve many images taken with the same optical system,
+         you can use distortion models to speed up the process.
+
+         First you have to create the distortion model.
+         The documentation of \sref{ImageSolver}{ImageSolver} has a section describing how to generate a distortion model.
+
+         When you have a good distortion model, the images can be solved using the following procedure:
+         \list{
+            {
+               Launch the script \sref{ImageSolver}{ImageSolver}.
+            }
+            {
+               Configure the \s{Image parameters} section the best you can.
+               You can use the focal or resolution of the image that you solved for generating the distortion model.
+               The center can be estimated using a star chart.
+            }
+            {
+               Configure the catalog, magnitude, star sensitivity and polynomial degree following the instructions of
+               \sref{ImageSolver}{ImageSolver}.
+            }
+            {
+               In the field \s{Distortion model} select the path of the distortion model.
+               This option is only active when "Only apply optimization"
+               is not selected.
+            }
+            {
+               Press Ok for solving the image.
+               If everything works, the script should solve the target image successfully.
+            }
+         }
+
+         There are a few tests that can be done for checking if the solution is correct:
+         \list
+         {
+            {
+               You can analyze the \e{distortion map} that \sref{ImageSolver}{ImageSolver} generates.
+               It should be nearly identical to the distortion map image that you got when you generated
+               the distortion model.
+            }
+            {
+               You can also analyze the \e{residuals image}.
+               There should be detected stars (green crosses) across the whole image and the residuals must be
+               small (very short red lines from the center of the green crosses).
+               When the residuals are large (long red lines) or there are few detected stars the solution is probably
+               wrong.
+            }
+            {
+               The two previous tests are probably enough, although you can also use AnnotateImage to mark the
+               position of known features on the image.
+            }
+         }
+         If an image can not be solved using this method you have to use the second method.
+      }
+
+      \division{Method 2 - Distortion model and a few control points}
+      {
+         This method is very similar to the previous one but it needs more work.
+         It requires to get a \lref{DistortionModel}{distortion model} the same way as explained in the previous section.
+
+         For each image you have to do this:
+         \list
+         {
+            {
+               Using \tref{DynamicAlignment}{DynamicAlignment} and ManualImageSolver solve the image using 4-5 control points.
+               This produces an approximate solution of very low precision.
+               Although this requires some effort, this is much faster than generating the 30-40 control points
+               necessary for a good solution.
+            }
+            {
+               Launch \sref{ImageSolver}{ImageSolver}.
+               Since the target image is already solved, the dialog fills its "Image Parameters"
+               section using the values already stored in the image.
+               This sets a very good starting point for the algorithm and it is much more probable that it can
+               find a solution.
+            }
+            {
+               Configure the rest of parameters (catalog magnitude, star sensitivity, polynomial degree) and
+               \u{select the \e{distortion model}}.
+            }
+            {
+               Press Ok for solving the image.
+               If everything works, the script should solve the target image successfully.
+            }
+         }
+         If the solver finishes without errors you can check the quality of the solution the same way
+         as the previous method (distortion map, residuals image, annotation).
+
+         If this method can not still solve any of the images you have to use the next method on them.
+      }
+
+      \division{Method 3 - Manual solve and optimize}
+      {
+         This method consists in calculating a medium precision solution using ManualImageSolver and then
+         optimizing the solution with \sref{ImageSolver}{ImageSolver}:
+
+         \list{
+            {
+               Create a \tref{DynamicAlignment}{DynamicAlignment} icon with enough control points to get fair approximation to the solution.
+               Usually you would need (depending on the distortions of the image) about 15-30 points.
+               With so few control points you should not use a high value for the polynomial degree.
+               A value of 2 or 3 should be enough.
+            }
+            {
+               Launch \sref{ImageSolver}{ImageSolver} and select the option "Only apply optimization".
+               You can use (if necessary) a higher value for the polynomial degree.
+            }
+         }
+
+         Even if \sref{ImageSolver}{ImageSolver} still could not solve the image, the first step (ManualImageSolver) has calculated
+         a solution good enough for most purposes.
+         In this extreme case you should add more control points to ManualImageSolver for improving the solution.
+      }
+   }
+}
+
+\section{Algorithm}
+{
+   The algorithm of ManualImageSolver is this:
+   \list[ordered]
+   {
+      {
+         The script reads the control points from the DynamicAlignment icon.
+         For each point it gets the pixel coordinates of the same star in both images.
+      }
+      {
+         Using the solution of the reference image it converts for each control point the pixel coordinates to AR/Dec coordinates.
+      }
+      {
+         Now for each control point it has the celestial coordinates and the pixel coordinates in the target image.
+      }
+      {
+         The script computes an approximation to the celestial coordinates of the center of the image and creates a Gnomonic projection with origin at the center of the image.
+      }
+      {
+         Then it projects the celestial coordinates of the control points using the Gnomonic projection to a flat space (we can call it G).
+      }
+      {
+         Using a multiple linear regression it calculates the polynomials that transform the pixel coordinates of the control points to G.
+      }
+      {
+         The projection and the polynomials define a solution.
+         Since it used an approximation of the celestial coordinates of the center of the image, the solution is not optimal yet.
+      }
+      {
+         The solution is refined calculating a new approximation to the center of the image using the new solution.
+         The steps 5-7 are repeated until it converges.
+      }
+   }
+}
+
+\section{Limitations}
+{
+   ManualImageSolver has the following limitations:
+   \list
+   {
+      {
+         ManualImageSolver supposes that the image can be modelled by a Gnomonic projection.
+         This is true for images taken with most common optical systems:
+         optical telescopes, photographic lenses, etc.
+      }
+      {
+         ManualImageSolver can not solve with precision images that are the result of
+         the stitching of a mosaic if this has not be done preserving the geometric characteristics
+         of the original images.
+         Mosaics can have \e{jumps} result of a sloppy join of two tiles and usually
+         don't preserve the capability of be modelled by the Gnomonic projection.
+      }
+      {
+         The result is as good as the quality of the control points used in the process.
+         If the control points are misplaced or don't cover the whole image the result
+         won't be correct.
+      }
+   }
+}
+
+\reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
+
+\reference CalabrettaCelestial {  M. R. Calabretta, E. W. Greisen (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of Celestial Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1077-1122}
+
+\relatedscript ImageSolver
+\relatedscript AnnotateImage
+\relatedscript CatalogStarGenerator
+\relatedtool DynamicAlignment
+
+\make[noauthors]

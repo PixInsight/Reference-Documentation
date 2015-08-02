@@ -1,0 +1,13 @@
+Integration of 15 images:
+Pixel combination ......... average
+Output normalization ...... additive + scaling
+Weighting mode ............ noise evaluation
+Scale estimator ........... iterative k-sigma / BWMV
+Range rejection ........... range_low=0.000000 range_high=0.980000
+Pixel rejection ........... Winsorized sigma clipping
+Rejection normalization ... scale + zero offset
+Rejection clippings ....... low=yes high=yes
+Rejection parameters ...... sigma_low=6.000 sigma_high=4.200
+
+* Using 2048 concurrent pixel stack(s) = 736.00 MB
+Integrating pixel rows:     0 ->  2047: done

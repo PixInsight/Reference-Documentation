@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="440"
+   height="365"
+   viewBox="0 0 440 365"
+   id="svg100788">
+  <desc
+     id="desc100790">Produced by GNUPLOT 4.4 patchlevel 0 </desc>
+  <metadata
+     id="metadata101006">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs100792">
+    <circle
+       cx="0"
+       cy="0"
+       r="0.5"
+       id="gpDot"
+       style="stroke-width:0.5" />
+    <path
+       d="M -1,0 H 1 M 0,-1 v 2"
+       id="gpPt0"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <path
+       d="M -1,-1 1,1 M 1,-1 -1,1"
+       id="gpPt1"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <path
+       d="M -1,0 1,0 M 0,-1 0,1 m -1,-2 2,2 m -2,0 2,-2"
+       id="gpPt2"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <rect
+       width="2"
+       height="2"
+       x="-1"
+       y="-1"
+       id="gpPt3"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <rect
+       width="2"
+       height="2"
+       x="-1"
+       y="-1"
+       id="gpPt4"
+       style="fill:currentColor;stroke:currentColor;stroke-width:0.222" />
+    <circle
+       cx="0"
+       cy="0"
+       r="1"
+       id="gpPt5"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <use
+       id="gpPt6"
+       style="fill:currentColor;stroke:none"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt5" />
+    <path
+       d="m 0,-1.33 -1.33,2 2.66,0 z"
+       id="gpPt7"
+       style="stroke:currentColor;stroke-width:0.222" />
+    <use
+       id="gpPt8"
+       style="fill:currentColor;stroke:none"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt7" />
+    <use
+       transform="scale(-1,-1)"
+       id="gpPt9"
+       style="stroke:currentColor"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt7" />
+    <use
+       id="gpPt10"
+       style="fill:currentColor;stroke:none"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt9" />
+    <use
+       transform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,0,0)"
+       id="gpPt11"
+       style="stroke:currentColor"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt3" />
+    <use
+       id="gpPt12"
+       style="fill:currentColor;stroke:none"
+       x="0"
+       y="0"
+       width="600"
+       height="480"
+       xlink:href="#gpPt11" />
+  </defs>
+  <g
+     transform="translate(-68.081874,-68.670729)"
+     id="g100808"
+     style="color:#ffffff;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter" />
+  <g
+     transform="translate(-68.081874,-68.670729)"
+     id="g100810"
+     style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter" />
+  <g
+     transform="matrix(0.8,0,0,0.8,-26.455859,-8.5106641)"
+     id="g101603">
+    <g
+       id="g101403"
+       style="color:#ffffff;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter" />
+    <g
+       id="g101405"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter" />
+    <g
+       id="g101407"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,405.2 516.9,0"
+         id="path101409" />
+    </g>
+    <g
+       id="g101411"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,405.2 9,0 m 507.9,0 -9,0"
+         id="path101413" />
+      <g
+         transform="translate(53.9,409.7)"
+         id="g101415"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101417">0</text>
+      </g>
+    </g>
+    <g
+       id="g101419"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,327.5 516.9,0"
+         id="path101421" />
+    </g>
+    <g
+       id="g101423"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,327.5 9,0 m 507.9,0 -9,0"
+         id="path101425" />
+      <g
+         transform="translate(53.9,332)"
+         id="g101427"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101429">0.2</text>
+      </g>
+    </g>
+    <g
+       id="g101431"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,249.8 516.9,0"
+         id="path101433" />
+    </g>
+    <g
+       id="g101435"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,249.8 9,0 m 507.9,0 -9,0"
+         id="path101437" />
+      <g
+         transform="translate(53.9,254.3)"
+         id="g101439"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101441">0.4</text>
+      </g>
+    </g>
+    <g
+       id="g101443"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,172.1 516.9,0"
+         id="path101445" />
+    </g>
+    <g
+       id="g101447"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,172.1 9,0 m 507.9,0 -9,0"
+         id="path101449" />
+      <g
+         transform="translate(53.9,176.6)"
+         id="g101451"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101453">0.6</text>
+      </g>
+    </g>
+    <g
+       id="g101455"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,94.4 516.9,0"
+         id="path101457" />
+    </g>
+    <g
+       id="g101459"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,94.4 9,0 m 507.9,0 -9,0"
+         id="path101461" />
+      <g
+         transform="translate(53.9,98.9)"
+         id="g101463"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101465">0.8</text>
+      </g>
+    </g>
+    <g
+       id="g101467"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,16.7 516.9,0"
+         id="path101469" />
+    </g>
+    <g
+       id="g101471"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,16.7 9,0 m 507.9,0 -9,0"
+         id="path101473" />
+      <g
+         transform="translate(53.9,21.2)"
+         id="g101475"
+         style="font-size:15px;text-anchor:end;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101477">1</text>
+      </g>
+    </g>
+    <g
+       id="g101479"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,444 0,-427.3"
+         id="path101481" />
+    </g>
+    <g
+       id="g101483"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,444 0,-9 m 0,-418.3 0,9"
+         id="path101485" />
+      <g
+         transform="translate(62.2,466.5)"
+         id="g101487"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101489">-2</text>
+      </g>
+    </g>
+    <g
+       id="g101491"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 126.8,444 0,-427.3"
+         id="path101493" />
+    </g>
+    <g
+       id="g101495"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 126.8,444 0,-9 m 0,-418.3 0,9"
+         id="path101497" />
+      <g
+         transform="translate(126.8,466.5)"
+         id="g101499"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101501">-1.5</text>
+      </g>
+    </g>
+    <g
+       id="g101503"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 191.4,444 0,-427.3"
+         id="path101505" />
+    </g>
+    <g
+       id="g101507"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 191.4,444 0,-9 m 0,-418.3 0,9"
+         id="path101509" />
+      <g
+         transform="translate(191.4,466.5)"
+         id="g101511"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101513">-1</text>
+      </g>
+    </g>
+    <g
+       id="g101515"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="M 256,444 256,16.7"
+         id="path101517" />
+    </g>
+    <g
+       id="g101519"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 256,444 0,-9 m 0,-418.3 0,9"
+         id="path101521" />
+      <g
+         transform="translate(256,466.5)"
+         id="g101523"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101525">-0.5</text>
+      </g>
+    </g>
+    <g
+       id="g101527"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 320.7,444 0,-427.3"
+         id="path101529" />
+    </g>
+    <g
+       id="g101531"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 320.7,444 0,-9 m 0,-418.3 0,9"
+         id="path101533" />
+      <g
+         transform="translate(320.7,466.5)"
+         id="g101535"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101537">0</text>
+      </g>
+    </g>
+    <g
+       id="g101539"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 385.3,444 0,-427.3"
+         id="path101541" />
+    </g>
+    <g
+       id="g101543"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 385.3,444 0,-9 m 0,-418.3 0,9"
+         id="path101545" />
+      <g
+         transform="translate(385.3,466.5)"
+         id="g101547"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101549">0.5</text>
+      </g>
+    </g>
+    <g
+       id="g101551"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 449.9,444 0,-427.3"
+         id="path101553" />
+    </g>
+    <g
+       id="g101555"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 449.9,444 0,-9 m 0,-418.3 0,9"
+         id="path101557" />
+      <g
+         transform="translate(449.9,466.5)"
+         id="g101559"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101561">1</text>
+      </g>
+    </g>
+    <g
+       id="g101563"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 514.5,444 0,-427.3"
+         id="path101565" />
+    </g>
+    <g
+       id="g101567"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 514.5,444 0,-9 m 0,-418.3 0,9"
+         id="path101569" />
+      <g
+         transform="translate(514.5,466.5)"
+         id="g101571"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101573">1.5</text>
+      </g>
+    </g>
+    <g
+       id="g101575"
+       style="color:#808080;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 579.1,444 0,-427.3"
+         id="path101577" />
+    </g>
+    <g
+       id="g101579"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 579.1,444 0,-9 m 0,-418.3 0,9"
+         id="path101581" />
+      <g
+         transform="translate(579.1,466.5)"
+         id="g101583"
+         style="font-size:15px;text-anchor:middle;fill:#000000;stroke:none;font-family:Arial">
+        <text
+           id="text101585">2</text>
+      </g>
+      <path
+         d="m 62.2,16.7 0,427.3 516.9,0 0,-427.3 -516.9,0 z"
+         id="path101587" />
+    </g>
+    <a
+       xlink:title="Plot #1"
+       id="a101589">
+      <g
+         id="g101591"
+         style="color:#ff0000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+        <path
+           d="m 62.2,405.2 5.2,0 5.2,-0.1 5.3,-0.1 5.2,-0.1 5.2,-0.3 5.2,-0.4 5.2,-0.5 5.3,-0.7 5.2,-1 5.2,-1.1 5.2,-1.4 5.3,-1.7 5.2,-2 5.2,-2.4 5.2,-2.7 5.2,-3 5.3,-3.5 5.2,-4 5.2,-4.3 5.2,-4.9 5.2,-5.4 5.3,-5.9 5.2,-6.5 5.2,-7.1 5.2,-7.7 5.3,-8.3 5.2,-8.8 5.2,-9.3 5.2,-9.7 5.2,-10 5.3,-10.2 5.2,-10.4 5.2,-10.4 5.2,-10.5 5.2,-10.3 5.3,-10.3 5.2,-10 5.2,-9.6 5.2,-9.3 5.2,-8.9 5.3,-8.3 5.2,-7.6 5.2,-7 5.2,-6.3 5.3,-5.3 5.2,-4.5 5.2,-3.5 5.2,-2.3 5.2,-1.3 5.3,0 5.2,1.3 5.2,2.3 5.2,3.5 5.2,4.5 5.3,5.3 5.2,6.3 5.2,7 5.2,7.6 5.3,8.3 5.2,8.9 5.2,9.3 5.2,9.6 5.2,10 5.3,10.3 5.2,10.3 5.2,10.5 5.2,10.4 5.2,10.4 5.3,10.2 5.2,10 5.2,9.7 5.2,9.3 5.2,8.8 5.3,8.3 5.2,7.7 5.2,7.1 5.2,6.5 5.3,5.9 5.2,5.4 5.2,4.9 5.2,4.3 5.2,4 5.3,3.5 5.2,3 5.2,2.7 5.2,2.4 5.2,2 5.3,1.7 5.2,1.4 5.2,1.1 5.2,1 5.3,0.7 5.2,0.5 5.2,0.4 5.2,0.3 5.2,0.1 5.3,0.1 5.2,0.1 5.2,0"
+           id="path101593" />
+      </g>
+    </a>
+    <g
+       id="g101595"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter">
+      <path
+         d="m 62.2,16.7 0,427.3 516.9,0 0,-427.3 -516.9,0 z"
+         id="path101597" />
+    </g>
+  </g>
+</svg>

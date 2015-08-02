@@ -1,0 +1,255 @@
+%% ****************************************************************************
+%% FlatSNREstimator.pidoc - Released 2014/12/19 00:00:00 UTC
+%% ****************************************************************************
+%%
+%% This file is part of FlatSNREstimator Script version 0.15
+%%
+%% Copyright (C) 2012-2014 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2014 Pleiades Astrophoto S.L. All Rights Reserved.
+%% ****************************************************************************
+
+\documentclass PIScriptDoc
+
+\script FlatSNREstimator
+
+\keywords {
+   signal to temporal noise ratio estimation, gain estimation, frame quality evaluation, detector characterization
+}
+
+\author {
+   Mike Schuster
+}
+
+\copyright {
+   2012-2014 Mike Schuster. All Rights Reserved.
+}
+
+\brief {
+   Estimates the signal to temporal noise ratio and gain of flat subframes or integrations.
+}
+
+\description {
+   This script estimates the signal to temporal noise ratio and gain of flat subframes or integrations. The information is useful for flat frame quality evaluation and detector characterization.
+
+   This script requires as inputs two flats and, if the flats are uncalibrated (i.e. not flat dark or bias subtracted), either a flat dark or a bias, all equally sized, single channel subframes or integrations, and a foreground quantile parameter. Flat subframes must be similarly exposed within the linear operating region of the detector. Flat integrations must be similar combinations of the same number of similarly exposed subframes. The flats and flat dark or bias may be monochrome detector images, raw Bayer CFA detector images, or a CFA channel extracted from raw Bayer CFA detector images. Estimation accuracy will be compromised on RGB channels extracted from de-Bayered CFA images due to channel interpolation.
+
+   The foreground quantile parameter specifies the brightest quantile of local regions in the flats used to estimate the signal to temporal noise ratio and gain.
+
+   The signal component of the estimated signal to temporal noise ratio is an estimate of the typical exposure of the flats. Spurious signal noise (e.g. cosmic-ray hits and stars in sky flats) is discounted from the signal estimation by measuring the typical median of local regions in the normalized sum of the flat dark or bias subtracted, if uncalibrated, flats.
+
+   The temporal noise component of the estimated signal to temporal noise ratio is an estimate of the typical standard deviation of temporal noise (e.g. photon noise, read noise, and dark noise) in the flats. Spatial noise (e.g. offset, sensitivity, and dark current nonuniformity) and spurious signal noise (e.g. cosmic-ray hits and stars in sky flats) are discounted from the temporal noise estimation by measuring the typical normalized Rousseeuw and Croux S\sub{n} scale estimate \ref Rousseeuw_1993\sup{,} \ref Croux_1992 of local regions in the normalized difference between the flats.
+
+   Gain is estimated by the signal to squared temporal noise ratio of the flats. For flat subframes, gain is an estimate of detector gain. For flat integrations, gain is an estimate of the product of detector gain and the number of subframes combined in the integrations.
+}
+
+\usage {
+   \image flat_result.png
+
+   \subsection { Parameters } {
+      \definition {
+         { Flat 1 } {
+            Specifies a flat subframe or integration.
+         }
+
+         { Flat 2 } {
+            Specifies a flat subframe or integration.
+         }
+
+         { Flat dark or bias } {
+            If the flats are uncalibrated (i.e. not flat dark or bias subtracted), specifies a flat dark or bias subframe or integration.
+
+            If the flats are calibrated (i.e. flat dark or bias subtracted), no view must be selected.
+         }
+
+         { Foreground quantile } {
+            Foreground quantile specifies the brightest quantile of local regions in the flats used to estimate the signal to temporal noise ratio and gain.
+
+            To use all local regions in the estimation, set this parameter to 100\%.
+         }
+      }
+   }
+
+   \subsection { Results } {
+      \definition {
+         { Signal } {
+            Signal is an estimate of the exposure of the flats, in data number (DN 16-bit \[0,65535\]) units.
+         }
+
+         { Temporal noise } {
+            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. photon noise, read noise, and dark noise) in the flats, in data number (DN 16-bit \[0,65535\]) RMS units.
+         }
+
+         { SNR } {
+            SNR is an estimate of the signal to temporal noise ratio of the flats.
+         }
+
+         { Gain } {
+            Gain is an estimate of the gain of the flats, defined by the signal to squared temporal noise ratio of the flats, in electron per data number (e-/DN 16-bit \[0,65535\]) units. For flat subframes, Gain is an estimate of detector gain. For flat integrations, Gain is an estimate of the product of detector gain and the number of subframes combined in the integrations.
+         }
+      }
+   }
+
+   \subsection { Push buttons } {
+      \definition {
+         { Browse Documentation } {
+            Opens a browser to view the script's documentation.
+         }
+
+         { Reset } {
+            Resets the dialog's parameters.
+         }
+
+         { Estimate } {
+            Estimates the signal to temporal noise ratio and gain of the flats.
+         }
+
+         { Generate Mask } {
+            \image flat_mask.png
+
+            Generates a foreground mask, which identifies the brightest quantile of local regions in the flats used to estimate the signal to temporal noise ratio and gain.
+         }
+
+         { Dismiss/Abort } {
+            Dismisses the dialog or aborts the estimation.
+         }
+      }
+   }
+}
+
+\section { Applications } {
+   \subsection { Detector gain in e-/DN estimation } {
+      Figure 1 show results for flat subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds with a 3nm Ha filter at -20{\deg}C. The gain result provides an estimate of detector gain in e-/DN, which is computed as follows. For an estimated signal in DN, an estimated noise in DN RMS, and some unknown gain in e-/DN, signal in e- equals signal * gain, and noise in e- RMS equals noise * gain. Photon statistics says that noise in e- RMS equals the square root of signal in e-. Hence noise * gain = (signal * gain)^0.5. Solving this equation for gain gives gain = signal / noise^2 in e-/DN. This solution provides the estimate of 1.055 e-/DN that is within 1\% of the the camera vendor's supplied specification of 1.059 e-/DN.
+
+      \figure [float:left] {
+         \image flat_result.png
+      }
+   }
+
+   \subsection { Bayer CFA detector channel SNR and gain estimation } {
+      Figures 2, 3, 4, and 5 show results for the four CFA channels of raw Bayer CFA flat subframes from a 14-bit \[0,16383\] Canon EOS Rebel T3i DLSR camera, exposed 1/22 second at ISO 1600. The results are summarized in Table 1. The results for the two G channels are nearly equal as expected. The exposures of the R and B channels are smaller than the G channels due to the spectrum of the flat illumination and the differences in Bayer CFA filter bandwidth. The SNR estimates of the R and B channel are correspondingly lower than those of the G channels. On the other hand the gain estimates of all channels are nearly equal, as would be expected for currently manufactured Bayer CFA detector architectures.
+
+      \table [header:2] {
+         {
+            {Channel} {Signal} {Temporal noise} {SNR} {Gain}
+         }
+         {
+            {} {DN} {DN RMS} {} {e-/DN}
+         }
+         {
+            {CFA_0 R} {4674.50} {183.21} {25.5} {0.139}
+         }
+         {
+            {CFA_1 G} {7102.81} {226.64} {31.3} {0.138}
+         }
+         {
+            {CFA_2 G} {7146.31} {228.11} {31.3} {0.137}
+         }
+         {
+            {CFA_3 B} {4280.63} {176.25} {24.3} {0.138}
+         }
+      }
+
+      \figure [float:left] {
+         \image cfa_0_result.png
+      }
+
+      \nf
+      \figure [float:left] {
+         \image cfa_1_result.png
+      }
+
+      \nf
+      \figure [float:left] {
+         \image cfa_2_result.png
+      }
+
+      \nf
+       \figure [float:left] {
+         \image cfa_3_result.png
+      }
+   }
+
+   \subsection { Subframe integration efficiency and quality estimation } {
+      Figures 6 and 7 show results for flat subframes and integrations from a Kodak KAF-8300 detector. The integrations are average combinations of 64 subframes with permissive outlier rejection. No flat dark or bias was specified in the integration analysis because the subframes were flat dark subtracted prior to the combination. All subframes were binned 2x2 and exposed 24 seconds with a 3nm Ha filter at -20{\deg}C. The integration to subframe SNR ratio equals 1345.9 / 169.1 = 7.96, which is nearly equal to the expected square root of 64. The integration to subframe gain ratio equals 66.874 / 1.055 = 63.4, which is nearly equal to the expected 64. The gain increase is due to frame averaging, each DN unit corresponds to more e- units in an integration than in a subframe. These results indicate that the noise reduction achieved by the integration combination is near optimal. The SNR of the integration exceeds 1000, which is a good rule of thumb target for high quality flat masters.
+
+      \figure [float:left] {
+         \image flat_result.png
+      }
+
+      \nf
+      \figure [float:left] {
+         \image flat_integration_result.png
+      }
+   }
+}
+
+\section { Algorithm } {
+   The algorithm computes the normalized sum and difference of the input images, measures the location and scale of local regions in the combinations, and finally estimates the location of these region measurements.
+
+   \list [ordered] {
+      {
+         Given flat images \e{f\sub{1}} and \e{f\sub{2}} and the optional flat dark or bias image \e{f\sub{db}}, compute the two channel combination image \e{sd}, with a normalized sum channel \e{s} equal to 0.5 * (\e{f\sub{1}} + \e{f\sub{2}}) - \e{f\sub{db}} if \e{f\sub{db}} is specified or 0.5 * (\e{f\sub{1}} + \e{f\sub{2}}) if \e{f\sub{db}} is not specified and a normalized difference channel \e{d} equal to 0.5\sup{0.5} * (\e{f\sub{1}} - \e{f\sub{2}}).
+      }
+      {
+         Partition the combination image \e{sd} into a grid of 8 x 8 pixel blocks.
+      }
+      {
+         For each block of the partition, compute the statistics pair \e{ls}, with a location component \e{l} equal to the median of the \e{s} channel of the block and a scale component \e{s} equal to the normalized Rousseeuw and Croux S\sub{n} scale parameter of the \e{d} channel of the block.
+      }
+      {
+         Select the set of statistics pairs \e{ls} whose \e{l} component lies within the brightest quantile of \e{l} components as specified by the foreground quantile parameter.
+      }
+      {
+         Compute a partition location estimate \e{l} equal the median of the \e{l} component of the selected statistics pairs \e{ls}.
+      }
+      {
+         Compute a partition scale estimate \e{s} equal to the median of the \e{s} component of the selected statistics pairs \e{ls}.
+      }
+      {
+         Iterate steps 2, 3, 4, 5, and 6, each iteration with a distinct, shifted partitioning grid on the combination image \e{sd}.
+      }
+      {
+         The Signal estimate equals the mean of the partition location estimates \e{l}.
+      }
+      {
+         The Temporal noise estimate equals the mean of the partition scale estimates \e{s}.
+      }
+      {
+         The SNR estimate equals the Signal to Temporal noise ratio.
+      }
+      {
+         The Gain estimate equals the Signal to squared Temporal noise ratio.
+      }
+   }
+}
+
+\section { Limitations } {
+   \list {
+      {
+         The script assumes that spatial noise in the flats is equal, otherwise spatial noise will not be properly discounted from the temporal noise estimate. The images should be captured within a time period short enough to guarantee negligible spatial noise drift.
+      }
+      {
+         Estimation accuracy may be compromised if flat exposures are not similar.
+      }
+      {
+         Flats and flat dark or bias for Bayer CFA detectors should be either raw Bayer CFA images or a CFA channel extracted from raw Bayer CFA images. Estimation accuracy will be compromised for RGB channels extracted from de-Bayered CFA images due to channel interpolation.
+      }
+   }
+}
+
+\relatedscripts {
+   DarkBiasNoiseEstimator
+}
+
+\relatedtools {
+}
+
+\reference Rousseeuw_1993 {
+   P.J. Rousseeuw and C. Croux (1993), \e {Alternatives to the Median Absolute Deviation}, Journal of the American Statistical Association, Vol. 88, pp. 1273-1283.
+}
+
+\reference Croux_1992 {
+   C. Croux and P.J. Rousseeuw (1992), \e {Time-Efficient Algorithms for Two Highly Robust Estimators of Scale}, Computational Statistics, Vol. 1, pp. 411-428.
+}
+
+\make

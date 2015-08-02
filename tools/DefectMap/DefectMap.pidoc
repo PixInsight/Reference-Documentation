@@ -1,0 +1,130 @@
+% NotchFilter process
+
+\documentclass PIToolDoc
+
+\tool DefectMap
+
+\module ImageCalibration
+
+\categories { ImageCalibration }
+
+\keywords { image calibration, hot pixels, cool pixels, defects, bad pixels, bad columns, noise }
+
+\author { Carlos Milovic F., PTeam. }
+
+\copyright { 2012 Pleiades Astrophoto S.L. All Rights Reserved. }
+
+\brief { Replace pixel values using a defect map image. }
+
+\description {
+
+   \image[float,marginRight:1.25em,marginBottom:0.5em] DefectMap.png
+
+   Noise in images can be the result of several phenomena. From photonic noise due the low amount of incoming light, to thermal and electronic noise. Thermal and electronic noise are commonly handled by \e {bias} and \e {darks}, frames that modelate the signal from both sources. Due the nonlinear nature of extremelly bright or dark pixels, they are not corrected with this procedure, and remain after calibration. Hot pixels, dead pixels, defective columns, and others, do not contain valid information, and must be replaced with data from their neighbors.
+
+   DefectMap is a process that uses an image as a map indicating those defective pixels that need to be replaced. For each bad pixel, a neighbourhood is defined, and a user defined operation is performed to calculate the value that will stored at that location.
+
+   This process may handle normal grayscale or composed color images, as well as bayered (CFA matrix) one shot images (either grayscale or sepparated in color channels).
+}
+
+\parameter { Defect map } {
+
+   This is the identifier of a main view that holds the information of the pixels that are going to be replaced by the DefectMap process. This image may be grayscale or color. As convention, black pixels are considered as defective pixels, and thus will be replaced. Other pixel values are incorporated in different ways, depending on the Operation parameter.
+}
+
+\parameter { Operation } {
+
+    Select the algorithm that is used to calculate the new pixel values. Avalaible operations are:
+
+   \definition {
+
+      { Mean }
+      { This operation takes the average value of the neighbor pixels. Pixel values on the defect map are used as weighting values. White pixels (with value of 1.0) are fully incorporated in the averaging operation. }
+
+      { Gaussian }
+      { This operation is similar to the previous. Pixels are averaged following a gaussian distribution. Pixel values on the defect map are used as an extra weight, multiplied to the gaussian distribution value.}
+
+      { Minimum }
+      { This operation replaces pixels with the minimum value of its neighbors. Black pixels are replaced, and white or gray pixels in the neighbourhood are included in the operation.}
+
+      { Maximum }
+      { This operation replaces pixels with the maximum value of its neighbors. Black pixels are replaced, and white or gray pixels in the neighbourhood are included in the operation. }
+
+      { Median }
+      { This operation replaces pixels with the median value of its neighbors. Black pixels are replaced, and white or gray pixels in the neighbourhood are included in the operation. If an even number of pixels is used as neighbors, the mean value of the central couple in the distribution is used.}
+  }
+}
+
+\parameter { Structure } {
+
+   This parameter defines the neighbourhood of pixels that are included in the calculation of the new value. A:
+
+   \definition {
+
+      { Square }
+      { Pixels in a square neighbourhood are selected. }
+
+      { Circular }
+      { Only pixels whose eucludic distance is less or equal than a certain value are selected (inside a defined radius). }
+
+      { Horizontal }
+      { Only pixels in the same row are selected. }
+
+      { Vertical }
+      { Only pixels in the same column are selected. }
+  }
+
+  The size of the structure is automatically determined by NotchFilter to provide enough amount of samples to be statistically representative.
+}
+
+
+\parameter { Is CFA } {
+    Use this parameter to force DefectMap to use only pixels that contains the same color information only. In grayscale bayered images, DefectMap will skip neighbors containing information of other channels. In RGB channel decomposed bayered images, this will help the algorithm to avoid zero values to contaminate the statistics or calculations.
+}
+
+\usage {
+
+   \subsection { Defect Map } {
+
+      Building the correct defect map to be used by this process is often possible with the aid of master calibration frames. Darks are ussually the most important source to propperlly segment bad pixels.
+
+      Several methods may be used to create a propper Defect Map:
+
+      \list {
+      { Use the \tref Binarize Binarize process to apply a threshold to the master dark frame. Since hot pixels are usually much brighter than the dark current, this will isolate these kind of defective pixels. To use the binarized image as a defect map, invert the result to follow the convention used in this process (zero values mean defective pixels). }
+      { Use a photo editing software like \e {The Gimp} to paint black over the desired pixels. A threshold slighty over zero should isolate them and leave the other pixels white. Before exporting to another program, may be a good idea to add a small pedestal, to avoid spurious data in the thresholding process.}
+      { Use \tref PixelMath PixelMath to create black lines or single black pixels over a white image of the same dimensions as the target image. See the \e {XValue(), YValue() and iif()} functions, and \tref PixelMath PixelMath's documentation for more information. }
+
+      }
+
+      \figure {
+         \imageselect[menuPos:right] {
+            raw.png  	{Original RAW image, debayered.}
+            calibrated.png    {Result of Bias and Darks calibration.}
+            corrected.png   {Removal of defects.}
+            dm.png       	{Defect map used, Is CFA enabled.}
+         }
+         \vs[length:0.5em]
+         \s {This is crop section of a image taken with a Canon 300D camera. As seeing in the RAW image, it contains a lot of noise, at this level of stretching. Subtraction of Bias and Dark frames cleans significantly the image, but some hot pixels were overcorrected, creating dark holes in the image. Build of a \s {defect map} was done using the master dark frame as starting point, and thresholding with the Binarize process at a level were all of the hot pixels were selected. It is shown the result of applying DefectMap with default \s {Operation} and \s {Structure} parameters, and the \s {Is CFA} option enabled. At last, is the \s {defect map} used. Image courtesy of Carlos Milovic (PTeam).}
+      }
+
+   }
+
+   \subsection { Operation } {
+
+      Usually, Mean and Median operators yield similar results. Gaussian weighting adds more weights to pixels closer to the selected ones, so it may be usefull if the neighbourhood of the pixels will contain several black pixels (not included in the calculation), and thus, the automatic growth of the structure has to incorporate pixels far from the current location.
+
+      Minimum and maximum operations are included for completitude. For normal applications, the previous operation methods are suggested.
+
+   }
+
+   \subsection { Structure } {
+
+      The structure selection should correspond to the information in the defect map. If several pixels are selected in the same row, a vertical structure is suggested. Circular structures are more restrictive than square ones, and thus the automatic growth may use larger structures to find sufficient pixel samples.
+
+   }
+}
+
+\relatedtools { NotchFilter, ImageCalibration }
+
+\make[noauthors]

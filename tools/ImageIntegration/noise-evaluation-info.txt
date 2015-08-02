@@ -1,0 +1,11 @@
+MRS noise evaluation: done.
+Computing noise scaling factors: done.
+
+Gaussian noise estimates:
+σs = 1.203e-04
+
+Reference SNR increments:
+Δσs0 = 3.8460
+
+Average SNR increments:
+Δσs = 3.6573

@@ -1,0 +1,53 @@
+Pixel rejection counts:
+/home/pteam/test-images/raws/m81m82L/registered/m81n-004L.cal_r.fit
+    1 :     17775   0.424% (     9730 +      8045 =   0.232% +   0.192%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-005L.cal_r.fit
+    2 :     19014   0.453% (    12596 +      6418 =   0.300% +   0.153%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-006L.cal_r.fit
+    3 :     22498   0.536% (    16165 +      6333 =   0.385% +   0.151%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-007L.cal_r.fit
+    4 :     25059   0.597% (    19649 +      5410 =   0.468% +   0.129%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-008L.cal_r.fit
+    5 :     27512   0.656% (    23077 +      4435 =   0.550% +   0.106%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-009L.cal_r.fit
+    6 :     29752   0.709% (    25806 +      3946 =   0.615% +   0.094%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-010L.cal_r.fit
+    7 :     31031   0.740% (    28194 +      2837 =   0.672% +   0.068%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-011L.cal_r.fit
+    8 :     33563   0.800% (    30717 +      2846 =   0.732% +   0.068%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-012L.cal_r.fit
+    9 :     35455   0.845% (    32564 +      2891 =   0.776% +   0.069%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-013L.cal_r.fit
+   10 :     36886   0.879% (    34166 +      2720 =   0.815% +   0.065%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-014L.cal_r.fit
+   11 :     38776   0.924% (    36168 +      2608 =   0.862% +   0.062%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-015L.cal_r.fit
+   12 :     40257   0.960% (    37810 +      2447 =   0.901% +   0.058%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-016L.cal_r.fit
+   13 :     56781   1.354% (    30059 +     26722 =   0.717% +   0.637%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-017L.cal_r.fit
+   14 :     48782   1.163% (    27992 +     20790 =   0.667% +   0.496%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-018L.cal_r.fit
+   15 :     47652   1.136% (    26807 +     20845 =   0.639% +   0.497%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-019L.cal_r.fit
+   16 :     51066   1.218% (    27218 +     23848 =   0.649% +   0.569%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-020L.cal_r.fit
+   17 :     48111   1.147% (    27158 +     20953 =   0.647% +   0.500%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-021L.cal_r.fit
+   18 :     48920   1.166% (    27889 +     21031 =   0.665% +   0.501%)
+/home/pteam/test-images/raws/m81m82L/registered/m81n-023L.cal_r.fit
+   19 :     54691   1.304% (    30833 +     23858 =   0.735% +   0.569%)
+
+Total :    713581   0.895% (   504598 +    208983 =   0.633% +   0.262%)
+
+MRS noise evaluation: done.
+Computing noise scaling factors: done.
+
+Gaussian noise estimates:
+σs = 1.203e-04
+
+Reference SNR increments:
+Δσs0 = 3.8460
+
+Average SNR increments:
+Δσs = 3.6573
