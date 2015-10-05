@@ -1,0 +1,2878 @@
+%% ****************************************************************************
+%% WavefrontEstimator.pidoc - Released 2015/10/05 00:00:00 UTC
+%% ****************************************************************************
+%%
+%% This file is part of WavefrontEstimator Script Version 1.16
+%%
+%% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
+%%
+%% Redistribution and use in both source and binary forms, with or without
+%% modification, is permitted provided that the following conditions are met:
+%%
+%% 1. All redistributions of source code must retain the above copyright
+%%    notice, this list of conditions and the following disclaimer.
+%%
+%% 2. All redistributions in binary form must reproduce the above copyright
+%%    notice, this list of conditions and the following disclaimer in the
+%%    documentation and/or other materials provided with the distribution.
+%%
+%% 3. Neither the names "PixInsight" and "Pleiades Astrophoto", nor the names
+%%    of their contributors, may be used to endorse or promote products derived
+%%    from this software without specific prior written permission. For written
+%%    permission, please contact info@pixinsight.com.
+%%
+%% 4. All products derived from this software, in any form whatsoever, must
+%%    reproduce the following acknowledgment in the end-user documentation
+%%    and/or other materials provided with the product:
+%%
+%%    "This product is based on software from the PixInsight project, developed
+%%    by Pleiades Astrophoto and its contributors (http://pixinsight.com/)."
+%%
+%%    Alternatively, if that is where third-party acknowledgments normally
+%%    appear, this acknowledgment must be reproduced in the product itself.
+%%
+%% THIS SOFTWARE IS PROVIDED BY PLEIADES ASTROPHOTO AND ITS CONTRIBUTORS
+%% "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+%% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+%% PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL PLEIADES ASTROPHOTO OR ITS
+%% CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+%% EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS
+%% INTERRUPTION; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; AND LOSS OF USE,
+%% DATA OR PROFITS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+%% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+%% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+%% POSSIBILITY OF SUCH DAMAGE.
+%% ****************************************************************************
+
+\documentclass PIScriptDoc
+
+\script WavefrontEstimator
+
+\keywords {
+   telescope testing, on-axis optical quality, optical wavefront estimation, wavefront aberrations, wavefront error, Strehl ratio, Strehl diameter, Zernike aberrations, interferogram, point spread function, encircled energy function, modulation transfer function
+}
+
+\author {
+   Mike Schuster
+}
+
+\copyright {
+   2012-2015 Mike Schuster. All Rights Reserved.
+}
+
+\brief {
+   Script for testing the on-axis optical quality of telescopes.
+}
+
+\description {
+   WavefrontEstimator estimates the on-axis optical wavefront of a telescope from long-exposure defocused stellar images. Exposure differences between an intra-focal image and an inverted (rotated by 180\deg) extra-focal image of the same bright star reflect local changes in the curvature of the wavefront.\ref{Roddier_1993a}\ref{Roddier_1991}\ref{Suiter_2009}\ref{Lequevre_2011} WavefrontEstimator measures the defocused image exposure differences, reconstructs the wavefront, and provides a diagnosis of wavefront aberrations. WavefrontEstimator relies on long combined exposures of at least 100 seconds and 100,000 e- to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio. The telescope must be in thermal equilibrium. Please review the \lref requirements_recommendations {Requirements and recommendations} and \lref frequently_asked_questions {Frequently asked questions} sections. This document describes WavefrontEstimator Version 1.16.
+
+   The estimated wavefront defines a map of optical phase on the aperture plane, normalized to zero mean phase. Non-zero estimates correspond to wavefront aberrations and lower image quality. An estimate \e{d} in meters at a point in the wavefront defines a phase of -\e{k} \e{d} radians at the corresponding point on the aperture plane, with wavenumber \e{k} given by 2\pi / \e{λ} radians per meter, where \e{λ} is the observation wavelength in meters.
+
+   WavefrontEstimator resolves wavefront deformations or corrugations at a maximum spatial frequency that depends on the degree of defocus, the aperture diameter and focal length of the telescope, and the observation wavelength. The maximum corrugation spatial frequency measured is denoted the \lref corrugation_resolution {corrugation resolution}. Typical values range from 10 to 15 cycles per aperture diameter.
+
+   \subsection { Intra-focal and extra-focal images } {
+
+      Figures \fignum {intra_focal_image_1} and \fignum {extra_focal_image_1} show on-axis, combined intra-focal and extra-focal images of Capella obtained with a Takahashi FSQ-106EDX 106 mm f/5 refractor, a monochrome Kodak KAF-8300 detector, and an Astrodon E-Series Gen 2 G-band filter. The images are crops of average combinations of 16 bias-subtracted frames, each of which is a 5 second exposure at a defocus distance of 3.3 mm. The thresholded diameter of the defocused images equals approximately 126 pixels. The median exposure of the combined defocused images equals approximately 180,000 e-.
+
+      \figure [numbered:intra_focal_image_1, float:left, marginleft:36pt] {
+         \figtag 3.3 mm intra-focal image
+
+         \image [margintop:6pt] Output/intra_focal_combined.png
+      }
+
+      \figure [numbered:extra_focal_image_1, float:left, marginleft:36pt] {
+         \figtag 3.3 mm extra-focal image
+
+         \image [margintop:6pt] Output/extra_focal_combined.png
+      }
+
+      \nf
+
+      Figure \fignum {image_stack_1} shows the intra-focal and inverted (rotated by 180\deg) extra-focal images in a stack from which only one is visible at a time for efficient image comparison. Exposure differences are predominantly radially symmetric. The outer Fresnel ring is brighter in the extra-focal image than in the intra-focal image. Inner Fresnel rings are brighter in the intra-focal image. These exposure differences are indicative of spherical aberration.
+
+      \figure [numbered:image_stack_1, float:left, marginleft:36pt] {
+         \figtag 3.3 mm intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Output/intra_focal_combined.png
+            { 3.3 mm intra-focal image }
+            Output/extra_focal_combined_inverted.png
+            { 3.3 mm inverted extra-focal image }
+         }
+      }
+
+      \nf
+   }
+
+   \subsection { Exposure estimation and measurement } {
+
+      WavefrontEstimator provides a tool that estimates defocused exposure parameters. To use the tool, telescope, detector, and filter parameters must be specified. Parameters for the Takahashi FSQ-106EDX are shown in figure \fignum {telescope_detector_filter_parameters_1}. The 526 nm wavelength within the Astrodon E-Series Gen 2 G-band is selected as the observation wavelength.
+
+      \figure [numbered:telescope_detector_filter_parameters_1, float:left, marginleft:36pt] {
+         \figtag Telescope, detector, and filter parameters
+
+         \image [margintop:6pt] Usage/telescope_detector_filter_parameters.png
+      }
+
+      \nf
+
+      Figure \fignum {exposure_estimate_1} shows the exposure estimation tool that estimates parameters for a specified defocused image exposure. A defocused image exposure of approximately 50\% of the detector's full-well capacity or 10,000 e- is selected for the Kodak KAF-8300 detector. An observation bandwidth of ~50-100 nm is selected for the Astrodon E-Series Gen 2 G-band. Given a fixed exposure time, increasing defocus distance increases the method's ability to resolve wavefront corrugations,\ref{Malacara_2005} but decreases the signal-to-noise ratio of the enlarged image. For this telescope, mechanical backfocus limitations restrict defocus distance to a maximum of 3.5 mm. A maximum wavefront corrugation spatial frequency to be measured of 11.3 cycles per aperture diameter is selected to obtain a defocus distance near the upper limit. The resulting defocused image diameter of about 124 pixels is within the supported range of 48 to 320 pixels. An exposure time of 5 seconds results in a required star apparent magnitude of 1.0. Longer exposures reduce the effects of atmospheric turbulence, but for this telescope defocusing the image also defocuses the tracking system, and 5 seconds was chosen so that tracking errors remain negligible. To average out the effects of atmospheric turbulence and achieve the required exposure of at least 100 seconds and 100,000 e-, multiple 5 second frames must be exposed and combined.
+
+      \figure [numbered:exposure_estimate_1, float:left, marginleft:36pt] {
+         \figtag Exposure estimation tool
+
+         \image [margintop:6pt] Usage/exposure_estimation.png
+      }
+
+      \nf
+
+      Figure \fignum {intra_g_001_c_1} shows an on-axis 5 second bias-subtracted intra-focal frame of Capella with linear stretch. Figure \fignum {intra_g_001_c_nonlinear_1} shows the same frame with non-linear stretch that presents defocused images of dimmer field stars.
+
+      \figure [numbered:intra_g_001_c_1, float:left, marginleft:36pt] {
+         \figtag 5 second intra-focal frame with linear stretch
+
+         \image [margintop:6pt] Output/intra_g-001_c.png
+      }
+
+      \nf
+
+      \figure [numbered:intra_g_001_c_nonlinear_1, float:left, marginleft:36pt] {
+         \figtag 5 second intra-focal frame with non-linear stretch
+
+         \image [margintop:6pt] Output/intra_g-001_c_nonlinear.png
+      }
+
+      \nf
+
+      WavefrontEstimator provides a tool that measures defocused frame exposure parameters. Figure \fignum {exposure_measurement_1} shows the result for the frame shown in figures \fignum {intra_g_001_c_1} and \fignum {intra_g_001_c_nonlinear_1}. Measurements include defocus distance, defocused image diameter, and median defocused image exposure. Measurements will vary from the predictions of the exposure measurement tool due to the various approximations used by the tool. Factors affecting accuracy include telescope optical efficiency, detector quantum efficiency, filter transmissivity, star spectral type, and atmospheric extinction variations.
+
+      \figure [numbered:exposure_measurement_1, float:left, marginleft:36pt] {
+         \figtag Exposure measurement tool
+
+         \image [margintop:6pt] Usage/exposure_measurement.png
+      }
+
+      \nf
+   }
+
+   \subsection { Image registration and combination } {
+
+      To met the long exposure requirement for averaging out the effects of atmospheric turbulence, WavefrontEstimator provides a frame combination facility. The frame registration and average combination operations are performed in a manner that conserves local defocused image exposure. Intra-focal and extra-focal frames selected for combination are included in separate lists as shown in figures \fignum {intra_focal_frames_1} and \fignum {extra_focal_frames_1}. The frames must be bias-subtracted and must not be otherwise processed.
+
+      \figure [numbered:intra_focal_frames_1, float:left, marginleft:36pt] {
+         \figtag Intra-focal frames selected for combination
+
+         \image [margintop:6pt] Usage/intra_focal_frames.png
+      }
+
+      \nf
+
+      \figure [numbered:extra_focal_frames_1, float:left, marginleft:36pt] {
+         \figtag Extra-focal frames selected for combination
+
+         \image [margintop:6pt] Usage/extra_focal_frames.png
+      }
+
+      \nf
+
+      Frame combination parameters, shown in Figure \fignum {image_combination_parameters_1}, specify a rejection method that excludes pixel outliers from the set of pixels to be combined. Pixel rejection reduces the effects of atmospheric turbulence and removes spurious image structures from the combination. The rejection method specification includes a rejection scale coefficient. Pixels whose distance from the pixel set location exceeds the product of the rejection scale coefficient and the pixel set scale will be rejected. The location and scale measures are defined by the median and Rousseeuw/Croux S\sub{n} scale parameter, respectively.\ref{Rousseeuw_1993}\ref{Croux_1992}
+
+      \figure [numbered:image_combination_parameters_1, float:left, marginleft:36pt] {
+         \figtag Frame combination parameters
+
+         \image [margintop:6pt] Usage/frame_combination_parameters.png
+      }
+
+      \nf
+
+      WavefrontEstimator generates rejection maps for the cropped intra-focal and extra-focal combinations as shown in figures \fignum {intra_focal_rejection_1} and \fignum {extra_focal_rejection_1} with linear stretch. For these data, with the rejection scale coefficient set to 2 scale units, approximately 5\% of the pixels in each of the intra-focal and extra-focal frame sets are rejected.
+
+      \figure [numbered:intra_focal_rejection_1, float:left, marginleft:36pt] {
+         \figtag Intra-focal combination rejection map
+
+         \image [margintop:6pt] Output/intra_focal_rejection.png
+      }
+
+      \figure [numbered:extra_focal_rejection_1, float:left, marginleft:36pt] {
+         \figtag Extra-focal combination rejection map
+
+         \image [margintop:6pt] Output/extra_focal_rejection.png
+      }
+
+      \nf
+   }
+
+   \subsection { Wavefront estimation } {
+
+      A summary of the estimated wavefront characteristics are shown in figure \fignum {wavefront_estimate_1}. The RMS error in the wavefront is 23.3 nm, which corresponds to a \lref strehl_ratio {Strehl ratio} of 0.925 and a \lref strehl_diameter {Strehl diameter} of 3.49 μm or 1.36 arcsec at the 526 nm observation wavelength. The estimated defocus distance and the maximum wavefront corrugation spatial frequency measured are also presented.
+
+      \figure [numbered:wavefront_estimate_1, float:left, marginleft:36pt] {
+         \figtag Wavefront estimate
+
+         \image [margintop:6pt] Usage/wavefront_estimate.png
+      }
+
+      \nf
+
+      Figures \fignum {wavefront_1} and \fignum {wavefront_contour_plot_1} show the estimated wavefront with linear stretch and as a contour plot with contour levels labeled in nm. The wavefront corrugations are predominantly radially symmetric and reflect the similarly structured exposure differences shown in figure \fignum {image_stack_1}. Figure \fignum {wavefront_domain_1} shows a normalized coordinate domain over which the wavefront estimate is defined, with a coordinate mesh and mask encoded in color channels. The domain may be useful for wavefront post-processing.
+
+      \figure [numbered:wavefront_1, float:left, marginleft:36pt] {
+         \figtag Estimated wavefront
+
+         \image [margintop:6pt] Output/wavefront.png
+      }
+
+      \figure [numbered:wavefront_domain_1, float:left, marginleft:36pt] {
+         \figtag Estimated wavefront domain
+
+         \image [margintop:6pt] Output/wavefront_domain.png
+      }
+
+      \nf
+
+      \figure [numbered:wavefront_contour_plot_1, float:left, marginleft:36pt] {
+         \figtag Estimated wavefront contour plot
+
+         \image [margintop:6pt] Output/wavefront_plot.png
+      }
+
+      \nf
+
+      Figures \fignum {interferogram_sagittal_plot_1} and \fignum {interferogram_meridional_plot_1} show the corresponding synthetic interferogram with fringes perpendicular to the sagittal and meridional planes, respectively. Positive wavefront estimate values shift fringes rightward and upward, respectively. Negative wavefront values shift fringes in the opposite directions. The number of fringes equals the corrugation resolution scaled by \lref fringe_count_scale { Fringe count scale } and rounded to an even integer.
+
+      \figure [numbered:interferogram_sagittal_plot_1, float:left, marginleft:36pt] {
+         \figtag Synthetic interferogram sagittal
+
+         \image [margintop:6pt] Output/interferogram_sagittal_plot.png
+      }
+
+      \nf
+
+      \figure [numbered:interferogram_meridional_plot_1, float:left, marginleft:36pt] {
+         \figtag Synthetic interferogram meridional
+
+         \image [margintop:6pt] Output/interferogram_meridional_plot.png
+      }
+
+      \nf
+   }
+
+   \subsection { Aberration estimation } {
+
+      Figure \fignum {aberration_estimate_1} shows the results of a least squares fit by a system of 18 orthogonal, circular Zernike aberration polynomials Z5, Z6, ..., and Z22 to the estimated wavefront. The rows in the table are sorted in decreasing coefficient magnitude order. The polynomials with coefficient magnitude larger than the residual are Z11 (4, 0) Primary spherical, Z22 (6, 0) Secondary spherical, Z7 (3, -1) Primary coma vertical, and Z5 (2, -2) Primary astigmatism oblique. The fraction of wavefront error variance explained (FVE) by the polynomial is listed in the \% FVE column. The cumulative fraction of wavefront error variance explained (CVE) by the polynomials is listed in the \% CVE column. Wavefront aberration is predominately spherical in nature. The Z11 and Z22 spherical aberrations together explain 70.0\% of the wavefront error variance. The residual aberration not explained by the least squares fit equals 4.8 nm RMS.
+
+      Zernike polynomials are labeled Z\e{S} (\e{n}, \e{m}), where \e{S} is Noll's sequential index, \e{n} is the polynomial order, and \e{m} is the angular frequency.\ref{Noll_1976}\ref{Mahajan_1981a}\ref{Mahajan_1981b} See sections \lref unobstructed_telescope_aberrations {Estimation of unobstructed telescope aberrations} and \lref obstructed_telescope_aberrations {Estimation of obstructed telescope aberrations} for more information.
+
+      \figure [numbered:aberration_estimate_1, float:left, marginleft:36pt] {
+         \figtag Aberration estimate
+
+         \image [margintop:6pt] Usage/aberration_estimate.png
+      }
+   }
+
+   \subsection { Point spread function } {
+
+      Figure \fignum {point_spread_function_1} shows an estimate of the telescope's point spread function at the observation wavelength with non-linear stretch. The point spread function is the estimated response of the focused telescope to a point source. The resolution of the image is approximately 0.161 microns per pixel. The diameter of the first minimum of the airy disk is approximately 40 pixels or 6.8 microns.
+
+      \figure [numbered:point_spread_function_1, float:left, marginleft:36pt] {
+         \figtag Estimated point spread function
+
+         \image [margintop:6pt] Output/point_spread_function.png
+      }
+
+      \nf
+   }
+
+   \subsection { Encircled energy function } {
+
+      Figure \fignum {encircled_energy_function_1} shows estimated encircled energy functions for the telescope and an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture, both at the observation wavelength. The plot shows the fractional concentration of encircled energy in the point spread function as a function of diameter. The horizontal axes are diameter labeled in microns on the lower axis and arcseconds on the upper axis. The vertical axis is fractional encircled energy in the corresponding point spread function. The vertical dashed line marked EE 50\% shows that 50\% of energy in the telescope's point spread function is encircled within a diameter of 3.0 μm and 1.2 arcsec. Similarily, 80\% of energy is encircled within a diameter of 8.2 μm and 3.2 arcsec. The line marked SD shows the Strehl diameter.
+
+      \figure [numbered:encircled_energy_function_1, float:left, marginleft:36pt] {
+         \figtag Estimated encircled energy function
+
+         \image [margintop:6pt] Output/encircled_energy_function_plot.png
+      }
+
+      \nf
+   }
+
+   \subsection { Modulation transfer function } {
+
+      Figure \fignum {modulation_transfer_function_plot_1} shows two sets of modulation transfer functions, one set for the telescope only and one set for the combined telescope and detector system, both at the observation wavelength. Each set includes three functions, two functions for the telescope's sagittal and meridional structures, and a third function for an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture. The plot shows the fractional modulation transfer in the point spread function as a function of spatial frequency in line-pairs per millimeter (lp/mm). At the spatial frequency of 40 lp/mm, the sagittal and meridional modulation equal approximately 83\% for the telescope, and 77\% for the telescope and detector. In both cases the loss of modulation due to aberrations when compared to the ideal system is about 4\%.
+
+      The maximum spatial frequency in the point spread function of the ideal optics is defined as 0.001 / (\e{λ} \e{f} / \e{a}) lp/mm, where \e{λ} is observation wavelength, \e{f} is focal length, and \e{a} is aperture diameter in meters.\ref {Shepherd_2012} The maximum spatial frequency in the point spread function of the detector is defined as 0.001 / \e{p} lp/mm, where \e{p} is the pixel size of the detector in meters.
+
+      \figure [numbered:modulation_transfer_function_plot_1, float:left, marginleft:36pt] {
+         \figtag Estimated modulation transfer function plot
+
+         \image [margintop:6pt] Output/modulation_transfer_function_plot.png
+      }
+
+      \nf
+
+      Figure \fignum {modulation_transfer_function_1} shows the estimated modulation transfer function of the telescope in two-dimensional form with linear stretch. The horizontal and vertical spatial frequency axes correspond to the sagittal and meridional structure functions in Figures \fignum {modulation_transfer_function_plot_1}, respectively. The resolution of the image is approximately 3.04 lp/mm per pixel
+
+      \figure [numbered:modulation_transfer_function_1, float:left, marginleft:36pt] {
+         \figtag Estimated modulation transfer function
+
+         \image [margintop:6pt] Output/modulation_transfer_function.png
+      }
+
+      \nf
+   }
+
+   \subsection { Accuracy of wavefront estimation } {
+
+      To quantify the accuracy of the wavefront estimation for the Takahashi FSQ-106EDX refractor, intra-focal and extra-focal images were simulated for the telescope with known wavefronts at a 3.3 mm defocus distance and a 5.4 micron sampling interval in G-band. The wavefronts were constructed by summing the Zernike polynomials Z5, Z6, ..., and Z22 with random coefficients weighted by the factor 1 / \e{f}\wt\sup{1.5}, where \e{f} equals the sum of the associated polynomial's order and angular frequency magnitude. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+
+      Table \tblnum {wavefront_estimation_accuracy_1} shows the results of the simulations for known 20 and 40 nm RMS error wavefronts, which correspond to Strehl ratios of approximately 0.94 and 0.80, respectively, at the 526 nm observation wavelength. Columns show the known wavefront RMS error of the simulations, the mean estimated wavefront RMS error, the RMS error in the difference between the estimated and the known wavefront RMS errors, the RMS error in the difference between the estimated and known coefficients, and the relative error of the estimation. The relative error, defined as the ratio between the RMS error in the wavefront difference and the known wavefront RMS error, equals 5\% to 6\%.
+
+      \table [numbered:wavefront_estimation_accuracy_1, caption, header:1, marginleft:36pt] {
+         { \tbltag Wavefront estimation accuracy }
+
+         { {Known wavefront \n nm RMS error} {Mean wavefront \n nm RMS error} {Difference wavefront \n nm RMS error} {Difference coefficient \n nm RMS error} {Relative \n error} }
+         { {20} {20.2} {1.1} {0.8} {6\%} }
+         { {40} {40.5} {2.2} {1.7} {5\%} }
+      }
+
+   Figures \fignum {circular_20nm_intra_extra} and \fignum {circular_20nm_estimated_wavefront} show the associated simulated images, the estimated wavefront with linear stretch, and the estimated point spread function with non-linear stretch for one of the simulated 20 nm RMS error wavefronts.
+
+      \figure [numbered:circular_20nm_intra_extra, float:left, marginleft:36pt] {
+         20 nm RMS error intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Accuracy/Circular/circular_R49_intra_focal_combined.png
+            { Intra-focal image }
+            Accuracy/Circular/circular_R49_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [numbered:circular_20nm_estimated_wavefront, float:left, marginleft:36pt] {
+         Estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Accuracy/Circular/circular_R49_wavefront.png
+            { Wavefront 19.6 nm RMS }
+            Accuracy/Circular/circular_R49_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+      \nf
+
+   Figures \fignum {circular_40nm_intra_extra} and \fignum {circular_40nm_estimated_wavefront} show the associated simulated images, the estimated wavefront with linear stretch, and the estimated point spread function with non-linear stretch for one of the simulated 40 nm RMS error wavefronts.
+
+      \figure [numbered:circular_40nm_intra_extra, float:left, marginleft:36pt] {
+         40 nm RMS error intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Accuracy/Circular/circular_R57_intra_focal_combined.png
+            { Intra-focal image }
+            Accuracy/Circular/circular_R57_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [numbered:circular_40nm_estimated_wavefront, float:left, marginleft:36pt] {
+         Estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Accuracy/Circular/circular_R57_wavefront.png
+            { Wavefront 39.0 nm RMS }
+            Accuracy/Circular/circular_R57_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+      \nf
+   }
+
+   \subsection { Effects of atmospheric turbulence } {
+
+      Figure \fignum {atmosphere_1} shows the effects of atmospheric turbulence on Strehl ratio estimation for the Takahashi FSQ-106EDX refractor. Each box-and-whisker column shows Strehl ratio statistics for a set of intra-focal and extra-focal images each with combined exposure time specified by the column label. The intra-focal and extra-focal images used in these estimations are combinations of random subsets of frames selected in figures \fignum {intra_focal_frames_1} and \fignum {extra_focal_frames_1}. In each column, the white line corresponds to the median of the Strehl ratio estimates, the bottom and top of the box correspond to the 25\% and 75\% quantiles, and the lower and upper fence correspond to the minimum and maximum estimates. The 80 second column corresponds to the single Strehl ratio estimate shown in figure \fignum {wavefront_estimate_1}. Increasing combined exposure time reduces the effects of atmospheric turbulence, which reduces variance and provides a higher median Strehl ratio estimate.
+
+%      \figure [numbered:atmosphere_1, float:left, marginleft:36pt, width:400pt, height:270pt] {
+%         \figtag Strehl ratio estimates versus combined exposure time
+%
+%         \image [margintop:6pt] Atmosphere/atmosphere.svg
+%      }
+      \figure [numbered:atmosphere_1, float:left, marginleft:36pt] {
+         \figtag Strehl ratio estimates versus combined exposure time
+
+         \image [margintop:6pt] Atmosphere/atmosphere.png
+      }
+
+      \nf
+   }
+}
+
+\usage {
+   \subsection { \label parameters_tab Parameters tab } {
+      \image [marginleft:36pt] Usage/parameters_tab.png
+
+      \division { Telescope } {
+         \image [marginleft:36pt] Usage/telescope_parameters.png
+
+         \definition {
+            { Aperture diameter } {
+               The aperture diameter of the telescope in mm. Aperture diameter must be at most 1,000 mm.
+            }
+
+            { Focal length } {
+               The focal length of the telescope in mm. Focal length must be at most 10,000 mm.
+            }
+         }
+      }
+
+      \division { Detector } {
+         \image [marginleft:36pt] Usage/detector_parameters.png
+
+         \definition {
+            { Detector type } {
+               The type of the detector, either monochrome or Bayer RGB.
+
+               \list {
+                  {
+                     Monochrome
+                  }
+
+                  {
+                     Bayer RGB
+                  }
+               }
+            }
+
+            { Gain } {
+               The gain of the detector in e-/DN. Gain must be at most 100 e-/DN.
+
+               If detector binning is used for the observation, gain must be set to the detector's binned gain.
+
+               If the detector supports multiple ISO values, gain must be set to the gain of the observation ISO.
+
+               If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script may be used to estimate its value.
+            }
+
+            { Pixel size } {
+               The pixel size of the detector in μm. Pixel size must be at most 50 μm.
+
+               If detector binning is used for the observation, pixel size must be set to the detector's binned pixel size.
+            }
+         }
+      }
+
+      \division { Filter } {
+         \image [marginleft:36pt] Usage/filter_parameters.png
+
+         \definition {
+            { Observation wavelength } {
+               The wavelength of the observation in nm, typically equal to the central wavelength of the observation band. Observation wavelength must be between 300 and 800 nm.
+            }
+
+            { Wavelengths } {
+               Typical observation wavelengths for selected filters in nm.
+
+               \list {
+                  {
+                     L-band 546.0 nm
+                  }
+
+                  {
+                     R-band 656.0 nm
+                  }
+
+                  {
+                     G-band 526.0 nm
+                  }
+
+                  {
+                     B-band 456.0 nm
+                  }
+               }
+            }
+         }
+      }
+
+      \division { Frame combination } {
+         \image [marginleft:36pt] Usage/frame_combination_parameters.png
+
+         \definition {
+            { \label rejection_method {Rejection method} } {
+               The pixel rejection method used to exclude outliers from the set of pixels that are to be combined.
+
+               \list [spaced] {
+                  {
+                     \s{No rejection}. No pixel rejection will be performed.
+                  }
+
+                  {
+                     \s{Scale rejection}. Pixels whose distance from the pixel set location exceeds a prescribed value in pixel set scale units are rejected. The location and scale measures are defined by the median and Rousseeuw/Croux S\sub{n} scale parameter, respectively.\ref{Rousseeuw_1993}\ref{Croux_1992} The scale rejection method requires a set of 5 or more frames.
+                  }
+               }
+            }
+
+            { Rejection scale } {
+               The pixel outlier rejection coefficient, in units of the scale of the set of pixels to be combined. Pixels whose distance from the pixel set location exceeds the product of the coefficient and the pixel set scale will be rejected. Rejection scale must be between 0.5 and 5.
+            }
+         }
+      }
+
+      \division { Visualization } {
+         \image [marginleft:36pt] Usage/visualization_parameters.png
+
+         \definition {
+            { Identifier prefix } {
+               A prefix that will be prepended to all output view identifiers and file names.
+            }
+
+            { \label fringe_count_scale { Fringe count scale } } {
+               The interferogram fringe count scaling coefficient. Set the coefficient to a value less than (or greater than) 1 to reduce (or increase) the number of fringes in interferograms. Fringe count scale must be between 0.25 and 4.
+
+               The number of fringes equals the product of the coefficient and the estimated corrugation resolution, rounded to an even integer.
+            }
+
+            { Generate views } {
+               If this option is enabled, views of output images and plots will be generated.
+            }
+         }
+      }
+   }
+
+   \subsection { \label frames_tab {Frames tab} } {
+      \image [marginleft:36pt] Usage/frames_tab.png
+
+      \division { Intra-focal frames } {
+         \image [marginleft:36pt] Usage/intra_focal_frames.png
+
+         \definition {
+            { Intra-focal frames list } {
+               The list of intra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed.
+            }
+
+            { Add frames } {
+               Add frames to the list of intra-focal frames.
+            }
+
+            { Remove selected } {
+               Removes currently selected intra-focal frames from the list.
+            }
+
+            { Clear } {
+               Clear the list of intra-focal frames.
+            }
+
+            { Full paths} {
+               Show full paths for the intra-focal and extra-focal frames.
+            }
+         }
+      }
+
+      \division { Extra-focal frames } {
+         \image [marginleft:36pt] Usage/extra_focal_frames.png
+
+         \definition {
+            { Extra-focal frames list } {
+               The list of extra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed.
+            }
+
+            { Add frames } {
+               Add frames to the list of extra-focal frames.
+            }
+
+            { Remove selected } {
+               Removes currently selected extra-focal frames from the list.
+            }
+
+            { Clear } {
+               Clear the list of extra-focal frames.
+            }
+         }
+      }
+
+      \division { Output directory } {
+         \image [marginleft:36pt] Usage/output_directory.png
+
+         \definition {
+            { Output directory } {
+               If specified, output images, plots, csv files, and the log file will be saved in this directory.
+            }
+
+            { Select directory } {
+               Select an output directory.
+            }
+
+            { Clear } {
+               Clear the selection of an output directory.
+            }
+
+            { Full path } {
+               Show full path for the output directory.
+            }
+         }
+      }
+   }
+
+   \subsection { Wavefront tab } {
+      \image [marginleft:36pt] Usage/wavefront_tab.png
+
+      \division { Wavefront estimate } {
+         \image [marginleft:36pt] Usage/wavefront_estimate.png
+
+         \definition {
+            { Defocus distance } {
+               The estimated defocus distance in mm.
+            }
+
+            { \label corrugation_resolution {Corrugation resolution} } {
+               The maximum wavefront corrugation spatial frequency in cycles per aperture diameter measured by the wavefront estimation, defined as
+
+               \e{a} / sqrt(\e{d} / (2 \e{λ} \e{f} (\e{f} - \e{d}))),\ref{Malacara_2005}
+
+               where \e{a} is aperture diameter, \e{d} is defocus distance, \e{λ} is observation wavelength, and \e{f} is focal length in meters.
+            }
+
+            { Wavefront error } {
+               The wavefront error in nm RMS and as a fraction of the observation wavelength RMS.
+            }
+
+            { \label strehl_ratio {Strehl ratio} } {
+               The Strehl ratio at the observation wavelength, defined as the ratio of the peak aberrated image exposure from a point source compared to the maximum obtainable exposure using an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture.
+
+            The Strehl ratio indicates the degree of image quality in the presence of wavefront aberrations. The conventional maximum acceptable level of wavefront aberrations, the \e{diffraction-limited} level, is set at 0.8.
+
+            }
+
+            { \label strehl_diameter {Strehl diameter} } {
+               The Strehl diameter at the observation wavelength in μm and in arcseconds, defined as
+               the diameter of a uniformly illuminated disk with the same peak exposure and the
+               same total energy as the aberrated point spread function.
+
+               The Strehl diameter of an ideal optical system limited only by diffraction over the system's aperture is defined as
+
+               4 \e{f} \e{λ} / (π sqrt(\e{a}\sup{2} - \e{b}\sup{2})),
+
+               where \e{f} is focal length, \e{λ} is observation wavelength, \e{a} is aperture diameter, and \e{b} is obstruction diameter in meters.
+            }
+         }
+      }
+
+      \division { Aberration estimate } {
+         \image [marginleft:36pt] Usage/aberration_estimate.png
+
+         \definition {
+            { Zernike aberration } {
+               A table of orthogonal Zernike aberration polynomial coefficients in nm RMS, the fraction of wavefront error variance explained (FVE) by the coefficients, and the cumulative fraction of wavefront error variance explained (CVE) by the coefficients.
+
+               The table shows the coefficients of a least squares fit of a system of 18 orthogonal, circular or annular Zernike aberration polynomials Z5, Z6, ..., and Z22 to the estimated wavefront. Circular polynomials are used for unobstructed telescopes, and annular polynomials are used for obstructed telescopes. The residual RMS error not explained by the least squares fit is given in the residual aberration row.
+
+               Zernike polynomials are labeled Z\e{S} (\e{n}, \e{m}), where \e{S} is Noll's sequential index, \e{n} is the polynomial order, and \e{m} is the angular frequency.\ref{Noll_1976}\ref{Mahajan_1981a}\ref{Mahajan_1981b} The estimated wavefront is orthogonal to the polynomials Z1, Z2, Z3, and Z4. See sections \lref unobstructed_telescope_aberrations {Estimation of unobstructed telescope aberrations} and \lref obstructed_telescope_aberrations {Estimation of obstructed telescope aberrations} for more information.
+
+            }
+
+            { Sort rows by } {
+               The ordering of the rows in the Zernike aberration polynomial table.
+
+               \list [spaced] {
+                  {
+                     \s{Name}. Sorts the rows by the name of the aberration polynomial.
+                  }
+
+                  {
+                     \s{Magnitude}. Sorts the rows by the magnitude of the aberration polynomial coefficient.
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   \subsection { Exposure tab } {
+      \image [marginleft:36pt] Usage/exposure_tab.png
+
+      \division { Exposure estimation } {
+         \image [marginleft:36pt] Usage/exposure_estimation.png
+
+         The exposure estimation tool provides parameters required to achieve the specified defocused image exposure.
+
+         \list [ordered] {
+            {
+               Set the telescope, detector, and filter parameters in the \lref parameters_tab {Parameters tab}.
+            }
+
+            {
+               Set the desired defocused image exposure to approximately 50\% of the detector's full-well capacity in e-.
+            }
+
+            {
+               Select an observation bandwidth and click the \e{Estimate} button.
+            }
+
+            {
+               Adjust the corrugation resolution to achieve a defocus distance within the available mechanical backfocus adjustment range and a defocused image diameter between 48 and 320 pixels.
+            }
+
+            {
+               Adjust the desired exposure time to achieve an acceptable star apparent magnitude. Longer exposures are prefered to average out the effects of atmospheric turbulence as long as tracking errors remain negligible.
+            }
+
+            {
+               If an acceptable star apparent magnitude cannot be achieved, change the corrugation resolution and the desired exposure time iteratively until an acceptable solution is found.
+            }
+
+            {
+               The solution is an estimate for achieving the specified defocused image exposure. Factors affecting accuracy include telescope optical efficiency, detector quantum efficiency, filter transmissivity, star spectral type, and atmospheric extinction variations. The actual exposure achieved will vary and should be checked to verify that the median exposure is at least 5\% and at most 80\% of the detector's dynamic range, and that the brightest defocused image structures lie within the linear operating region of the detector.
+            }
+
+         }
+
+         \definition {
+            { Defocus exposure } {
+               The desired defocused image exposure in e-. Defocus exposure must be between 1,000 and 100,000 e-.
+            }
+
+            { Observation bandwidth } {
+               The bandwidth of the observation in nm.
+
+               \list [spaced] {
+                  {
+                     ~300 nm L-band
+                  }
+
+                  {
+                     ~50-100 nm RGB-band
+                  }
+               }
+            }
+
+            { Corrugation resolution } {
+               The maximum wavefront corrugation spatial frequency in cycles per aperture diameter to be measured. Corrugation resolution must be between 5 and 30 cycles per aperture diameter.
+            }
+
+            { Defocus distance } {
+               The required defocus distance in mm.
+            }
+
+            { Defocus diameter } {
+               The required defocused image diameter in pixels.
+            }
+
+            { Exposure time } {
+               The desired exposure time in seconds. Exposure time must be between 0.1 and 1,000 seconds.
+            }
+
+            { Star magnitude } {
+               The required star apparent magnitude.
+            }
+
+            { Calculate } {
+               Estimate the exposure parameters. To enable, set the telescope, detector, and filter parameters in the \lref parameters_tab {Parameters tab}.
+            }
+         }
+      }
+
+      \division { Exposure measurement } {
+         \image [marginleft:36pt] Usage/exposure_measurement.png
+
+         The exposure measurement tool measures the exposure parameters of the selected frame view. The frame must be bias-subtracted and not otherwise processed.
+
+         \list [ordered] {
+            {
+               Set the telescope, detector, and filter parameters in the \lref parameters_tab {Parameters tab}.
+            }
+
+            {
+               Select an intra-focal or extra-focal frame view and click the \e{Measure} button. The frame must be bias-subtracted and not otherwise processed.
+            }
+
+            {
+               The measured defocus distance, defocused image diameter, and median defocused image exposure are displayed.
+            }
+         }
+
+         \definition {
+            { View } {
+               The intra-focal or extra-focal frame view to measure. The frame must be bias-subtracted and not otherwise processed.
+            }
+
+            { Defocus distance } {
+               The measured defocus distance in mm.
+            }
+
+            { Defocus diameter } {
+               The measured defocused image diameter in pixels.
+            }
+
+            { Defocus exposure } {
+               The measured median defocused image exposure in DN and e-.
+            }
+
+            { Calculate } {
+               Measure the exposure parameters of the selected frame view. To enable, set the telescope, detector, and filter parameters in the \lref parameters_tab {Parameters tab} and select a frame view.
+            }
+         }
+      }
+   }
+
+   \subsection { Button pane } {
+      \image [marginleft:36pt] Usage/button_pane.png
+
+      \definition {
+         { \image Usage/new_instance.png } {
+            Create a new instance.
+         }
+
+         { \image Usage/browse_documentation.png  } {
+            Open a browser to view documentation.
+         }
+
+         { \image Usage/reset.png } {
+            Reset all parameters.
+         }
+
+         { Estimate } {
+            Estimate the wavefront. To enable, set the parameters in the \lref parameters_tab {Parameters tab} and select intra-focal and extra-focal frames in the \lref frames_tab {Frames tab}.
+         }
+
+         { Dismiss } {
+            Dismiss the dialog or abort the estimation.
+         }
+
+      }
+   }
+
+}
+
+\section { Output } {
+   \subsection {intra_focal_combined.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/intra_focal_combined.png
+      }
+
+      \nf
+
+      The cropped, pixel rejected, average combination of the intra-focal frames selected for combination. The width and height of the image are the same and are equal to a power of two. The center of the defocused image is registered to the (x, y) pixel position (\e{s} / 2, \e{s} / 2), were \e{s} is the size of the image. The centers of the combined intra-focal and inverted (rotated by 90\deg) extra-focal images coincide.
+
+      The image includes FITS keywords listed in table \tblnum {intra_focal_combined_keywords}. WECFCNT equals the number of frames in the combination. WEEFCNT equals the product of the number of frames in the combination and the value 1 - \e{r}, where \e{r} equals the fraction of pixels rejected.
+
+      \table [numbered:intra_focal_combined_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WECFCNT} {Combined frame count} }
+         { {WEEFCNT} {Effective frame count} }
+      }
+   }
+
+   \subsection {intra_focal_combined_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/intra_focal_combined_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the combined intra-focal image. The shadow point equals the minimum of the combined intra-focal and extra-focal images, the midtone point equals 0.5, and the highlight point equals the maximum of the combined intra-focal and extra-focal images.
+   }
+
+   \subsection {extra_focal_combined.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/extra_focal_combined.png
+      }
+
+      \nf
+
+      The cropped, pixel rejected, average combination of the extra-focal frames selected for combination. The width and height of the image are the same and are equal to a power of two. The center of the defocused image is registered to the (x, y) pixel position (\e{s} / 2 - 1, \e{s} / 2 - 1), where \e{s} is the size of the image. The centers of the combined intra-focal and inverted (rotated by 90\deg) extra-focal images coincide.
+
+      The image includes FITS keywords listed in table \tblnum {extra_focal_combined_keywords}. WECFCNT equals the number of frames in the combination. WEEFCNT equals the product of the number of frames in the combination and the value 1 - \e{r}, where \e{r} equals the fraction of pixels rejected.
+
+      \table [numbered:extra_focal_combined_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WECFCNT} {Combined frame count} }
+         { {WEEFCNT} {Effective frame count} }
+      }
+   }
+
+   \subsection {extra_focal_combined_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/extra_focal_combined_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the combined extra-focal image. The shadow point equals the minimum of the combined intra-focal and extra-focal images, the midtone point equals 0.5, and the highlight point equals the maximum of the combined intra-focal and extra-focal images.
+   }
+
+   \subsection {intra_focal_rejection.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/intra_focal_rejection.png
+      }
+
+      \nf
+
+      A map of the rejected pixels in the combined intra-focal image. The width and height of the image are the same as the intra-focal image. Pixel values equal \e{r} / \e{n}, where \e{r} equals the number of pixels rejected at that pixel position, and \e{n} equals the number of frames in the combination.
+   }
+
+   \subsection {intra_focal_rejection_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/intra_focal_rejection_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the intra-focal rejection map. The shadow point equals the minimum of the intra-focal and extra-focal rejection maps, the midtone point equals 0.5, and the highlight point equals the maximum of the intra-focal and extra-focal rejection maps.
+   }
+
+   \subsection {extra_focal_rejection.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/extra_focal_rejection.png
+      }
+
+      \nf
+
+      A map of the rejected pixels in the combined extra-focal image. The width and height of the image are the same as the extra-focal image. Pixel values equal \e{r} / \e{n}, where \e{r} equals the number of pixels rejected at that pixel position, and \e{n} equals the number of frames in the combination.
+   }
+
+   \subsection {extra_focal_rejection_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/extra_focal_rejection_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the extra-focal rejection map. The shadow point equals the minimum of the intra-focal and extra-focal rejection maps, the midtone point equals 0.5, and the highlight point equals the maximum of the intra-focal and extra-focal rejection maps.
+   }
+
+   \subsection {wavefront.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/wavefront.png
+      }
+
+      \nf
+
+      The estimate wavefront image encoded with the linear map \e{n} = \e{s} \e{w} + \e{o}, where \e{n} is the pixel value in normalized units, \e{w} is the wavefront error in meters, \e{s} is the wavefront scale in normalized units per meter, and \e{o} is the wavefront offset in normalized units. The wavefront scale and offset values are specified as FITS keywords. Typical values of wavefront scale and offset are 500,000 and 0.5, respectively, which result in a linear map that transforms wavefront errors in the range \[-1000 nm, 1000 nm\] to pixel values in the normalized range \[0, 1\].
+
+      An estimate \e{d} in meters at a point in the wavefront defines a phase of -\e{k} \e{d} radians at the corresponding point on the aperture plane, with wavenumber \e{k} given by 2\pi / \e{λ} radians per meter, where \e{λ} is the observation wavelength in meters.
+
+      The image includes FITS keywords listed in table \tblnum {wavefront_keywords}. WEWSCALE is the wavefront scale. WEWOFFST is the wavefront offset. WEDEFDIA is the estimated defocused image diameter in pixels. WEDEFOBS is the estimated obstruction diameter in pixels for obstructed telescopes, and 0 for unobstructed telescopes. WEOBWVLN is the observation wavelength in nm.
+
+      \table [numbered:wavefront_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WEWSCALE} {Wavefront scale} }
+         { {WEWOFFST} {Wavefront offset} }
+         { {WEDEFDIA} {Defocused image diameter pixels} }
+         { {WEDEFOBS} {Defocused obstruction diameter pixels} }
+         { {WEOBWVLN} {Observation wavelength nm } }
+      }
+   }
+
+   \subsection {wavefront_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/wavefront_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the estimated wavefront image. The shadow point equals the minimum of the estimated wavefront image, the midtone point equals 0.5, and the highlight point equals the maximum of the estimated wavefront image.
+   }
+
+   \subsection {wavefront_domain.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/wavefront_domain.png
+      }
+
+      \nf
+
+      A normalized coordinate domain over which the wavefront estimate is defined. The domain may be useful for wavefront post-processing. The red channel of pixels within the domain equal 1, red channel of pixels outside the domain equal 0. The green and blue channels encode a normalized coordinate mesh, with green encoding the x-axis coordinate and blue encoding the y-axis coordinate. The coordinate mesh is normalized by one-half the estimated aperture diameter \e{d}, the mesh spacing is given by 2 / \e{d}. Coordinates may be decoded by applying the transformation 2 * (\e{c} - 0.5), where \e{c} is the channel value. The parameters \e{r} and \e{θ} of the Zernike polynomials are given by sqrt(\e{x}\sup{2} + \e{y}\sup{2}) and atan2(-\e{y}, \e{x}), respectively, where \e{x} and \e{y} are the mesh coordinates.
+
+      The image includes FITS keywords listed in table \tblnum {wavefront_domain_keywords}. WEDEFDIA is the estimated defocused image diameter in pixels. WEDEFOBS is the estimated obstruction diameter in pixels for obstructed telescopes, and 0 for unobstructed telescopes.
+
+      \table [numbered:wavefront_domain_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WEDEFDIA} {Defocused image diameter pixels} }
+         { {WEDEFOBS} {Defocused obstruction diameter pixels} }
+      }
+   }
+
+   \subsection {wavefront_plot.png} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/wavefront_plot.png
+      }
+
+      \nf
+
+      A contour plot of the estimated wavefront, with contours labeled in nm.
+
+   }
+
+   \subsection {interferogram_sagittal_plot.png} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/interferogram_sagittal_plot.png
+      }
+
+      \nf
+
+      A synthetic interferogram with fringes perpendicular to the sagittal plane. Positive and negative wavefront estimate values shift fringes rightward and leftward, respectively. The number of fringes equals the corrugation resolution scaled by \lref fringe_count_scale { Fringe count scale } and rounded to an even integer.
+   }
+
+   \subsection {interferogram_meridional_plot.png} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/interferogram_meridional_plot.png
+      }
+
+      \nf
+
+      A synthetic interferogram with fringes perpendicular to the meridional plane. Positive and negative wavefront estimate values shift fringes upward and downward, respectively. The number of fringes equals the corrugation resolution scaled by \lref fringe_count_scale { Fringe count scale } and rounded to an even integer.
+   }
+
+   \subsection {wavefront_estimate.csv} {
+      A comma-separated-value file containing wavefront estimation results.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Observation wavelength, 526.000000, nm\n
+Defocus distance, 3.399273, mm\n
+Corrugation resolution, 11.405448, cycles per aperture diameter\n
+Wavefront error, 23.291687, nm RMS\n
+Strehl ratio, 0.925178\n
+Strehl diameter, 3.485876, μm\n
+         }
+      }
+   }
+
+   \subsection {aberration_estimate.csv} {
+      A comma-separated-value file containg the aberration coefficients and the fractions of variation explained (FVE).
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Zernike aberration polynomial, Coefficient nm RMS, FVE\n
+Z5 (2; -2) Primary astigmatism oblique, -5.795833, 0.061920\n
+Z6 (2; 2) Primary astigmatism vertical, 2.136386, 0.008413\n
+Z7 (3; -1) Primary coma vertical, 7.629239, 0.107290\n
+Z8 (3; 1) Primary coma horizontal, -3.302908, 0.020109\n
+Z9 (3; -3) Primary trefoil vertical, -0.908760, 0.001522\n
+Z10 (3; 3) Primary trefoil oblique, -4.039619, 0.030080\n
+Z11 (4; 0) Primary spherical, 15.882907, 0.465005\n
+Z12 (4; 2) Secondary astigmatism vertical, 0.558439, 0.000575\n
+Z13 (4; -2) Secondary astigmatism oblique, -0.443466, 0.000363\n
+Z14 (4; 4) Primary tetrafoil vertical, 0.183385, 0.000062\n
+Z15 (4; -4) Primary tetrafoil oblique, -0.074167, 0.000010\n
+Z16 (5; 1) Secondary coma horizontal, -2.042358, 0.007689\n
+Z17 (5; -1) Secondary coma vertical, 1.777773, 0.005826\n
+Z18 (5; 3) Secondary trefoil oblique, 2.522522, 0.011729\n
+Z19 (5; -3) Secondary trefoil vertical, -0.464774, 0.000398\n
+Z20 (5; 5) Primary pentafoil oblique, -0.607572, 0.000680\n
+Z21 (5; -5) Primary pentafoil vertical, -0.460818, 0.000391\n
+Z22 (6; 0) Secondary spherical, -11.318576, 0.236147\n
+Residual aberration, 4.816736, 0.042767\n
+         }
+      }
+   }
+
+   \subsection {point_spread_function.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/point_spread_function.png
+      }
+
+      \nf
+
+      The estimated point spread function image at the observation wavelength. The point spread function image is encoded using an identity linear map that transforms point spread function values in the range \[0, 1\] to pixel values in the normalized range \[0, 1\].
+
+      The image includes FITS keywords listed in table \tblnum {point_spread_function_keywords}. WEPSFPXS is the pixel size in microns. WEOBWVLN is the observation wavelength in nm.
+
+      \table [numbered:point_spread_function_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WEPSFPXS} {Pixel size in microns} }
+         { {WEOBWVLN} {Observation wavelength nm } }
+      }
+   }
+
+   \subsection {point_spread_function_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/point_spread_function_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default non-linear stretch for the estimated point spread function image. The shadow point equals the minimum of the point spread function, the midtone point equals 0.005, and the highlight point equals the maximum of the point spread function.
+   }
+
+   \subsection {encircled_energy_function_plot.png} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/encircled_energy_function_plot.png
+      }
+
+      \nf
+
+     The plot shows estimated encircled energy functions for the telescope and an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture, both at the obervation wavelength. The plot shows the fractional concentration of encircled energy in the point spread function as a function of diameter. The horizontal axes are diameter labeled in microns on the lower axis and arcseconds on the upper axis. The vertical axis is fractional encircled energy in the corresponding point spread function. The vertical dashed lines marked EE 50\% and EE 80\% show the diameters that encircle 50\% and 80\% of energy in the telescope's point spread function, respectively.
+   }
+
+   \subsection {encircled_energy_function.csv} {
+      A comma-separated-value file containg the estimated telescope encircled energy function at the observation wavelength.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Diameter μm, Encircled energy\n
+0.000000, 0.002739\n
+0.200374, 0.014700\n
+0.389342, 0.026955\n
+0.559143, 0.039715\n
+0.707343, 0.053074\n
+0.836062, 0.067019\n
+0.949617, 0.081467\n
+1.052287, 0.096302\n
+1.147147, 0.111431\n
+1.236289, 0.126843\n
+1.321506, 0.142628\n
+...\n
+        }
+      }
+   }
+
+   \subsection {modulation_transfer_function.fit/xisf} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/modulation_transfer_function.png
+      }
+
+      \nf
+
+      The estimated modulation transfer function of the telescope in two-dimensional form, normalized to the range \[0, 1\], at the observation wavelength.
+
+      The image includes FITS keywords listed in table \tblnum {modulation_transfer_function_keywords}. WEMTFPXS is the pixel size in line-pairs per millimeter (lp/mm). WEOBWVLN is the observation wavelength in nm.
+
+      \table [numbered:modulation_transfer_function_keywords, caption, header:1, marginleft:36pt] {
+         { \tbltag FITS keywords }
+
+         { {Keyword} {Value} }
+         { {WEMTFPXS} {Pixel size in lp/mm} }
+         { {WEOBWVLN} {Observation wavelength nm } }
+      }
+   }
+
+   \subsection {modulation_transfer_function_stf.xpsm} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Usage/modulation_transfer_function_stf.png
+      }
+
+      \nf
+
+      A Streen Transfer Function process icon that defines a default linear stretch for the estimated modulation transfer image. The shadow point equals 0, the midtone point equals 0.5, and the highlight point equals 1.
+   }
+
+   \subsection {modulation_transfer_function_plot.png} {
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \image Output/modulation_transfer_function_plot.png
+      }
+
+      \nf
+
+      The plot shows two sets of modulation transfer functions, one set for the telescope only and one set for the combined telescope and detector system, both at the observation wavelength. Each set includes three functions, two functions for the telescope's sagittal structures and meridional structures, and a third function for an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture. The plot shows the fractional modulation transfer in the point spread function as a function of spatial frequency in line-pairs per millimeter (lp/mm).
+
+      The maximum spatial frequency in the point spread function of the ideal optics is defined as 0.001 / (\e{λ} \e{f} / \e{a}) lp/mm, where \e{λ} is observation wavelength, \e{f} is focal length, and \e{a} is aperture diameter in meters.\ref {Shepherd_2012} The maximum spatial frequency in the point spread function of the detector is defined as 0.001 / \e{p} lp/mm, where \e{p} is the pixel size of the detector in meters.
+   }
+
+   \subsection {modulation_transfer_function_telescope.csv} {
+      A comma-separated-value file containing the telescope sagittal and meridional structure modulation transfer functions at the observation wavelength.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Spatial frequency lp/mm, Sagittal modulation transfer, Meridional modulation transfer\n
+0.000000, 1.000000, 1.000000\n
+3.020105, 0.989610, 0.989579\n
+6.040209, 0.978623, 0.978515\n
+9.060314, 0.967103, 0.966899\n
+12.080419, 0.955114, 0.954817\n
+15.100523, 0.942715, 0.942347\n
+18.120628, 0.929964, 0.929563\n
+21.140733, 0.916920, 0.916529\n
+24.160837, 0.903640, 0.903303\n
+27.180942, 0.890179, 0.889938\n
+...\n
+        }
+      }
+   }
+
+   \subsection {modulation_transfer_function_telescope_and_detector.csv} {
+      A comma-separated-value file containing the combined telescope and detector sagittal and meridional structure modulation transfer functions at the observation wavelength.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Spatial frequency lp/mm, Sagittal modulation transfer, Meridional modulation transfer\n
+0.000000, 1.000000, 1.000000\n
+3.020105, 0.989177, 0.989146\n
+6.040209, 0.976911, 0.976803\n
+9.060314, 0.963299, 0.963096\n
+12.080419, 0.948442, 0.948147\n
+15.100523, 0.932437, 0.932074\n
+18.120628, 0.915386, 0.914991\n
+21.140733, 0.897390, 0.897007\n
+24.160837, 0.878550, 0.878222\n
+27.180942, 0.858967, 0.858734\n
+...\n
+        }
+      }
+   }
+
+   \subsection {console_log.txt} {
+      A text file containg the console log.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+************************************************************\n
+PixInsight Core 01.08.03.1123 Ripley (x64)\n
+************************************************************\n
+\n
+WavefrontEstimator Version 1.16\n
+\n
+Parameters:\n
+Aperture diameter: 106.0 mm\n
+Focal length: 530.0 mm\n
+Detector type: Monochrome\n
+Gain: 0.474 e-/DN\n
+Pixel size: 5.40 μm\n
+Observation wavelength: 526.0 nm\n
+Rejection method: Scale rejection\n
+Rejection scale: 2.00\n
+Identifier prefix: \n
+Fringe count scale: 1.00\n
+Generate views: true\n
+...\n
+        }
+      }
+   }
+}
+
+\section { Console log } {
+   The following sections describe the console log.
+
+   \subsection { Parameters } {
+      The log begins with a listing of the \lref parameters_tab {Parameters tab} settings.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Parameters:\n
+Aperture diameter: 106.0 mm\n
+Focal length: 530.0 mm\n
+Detector type: Monochrome\n
+Gain: 0.474 e-/DN\n
+Pixel size: 5.40 μm\n
+Observation wavelength: 526.0 nm\n
+Rejection method: Scale rejection\n
+Rejection scale: 2.00\n
+Identifier prefix: \n
+Generate views: true\n
+         }
+      }
+   }
+
+   \subsection { Frame defocus threshold } {
+      For each intra-focal and extra-focal frame, the log lists the frame's path and the defocus threshold used to separate the defocused image from the frame background.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Intra-focal frame defocus threshold: \n
+C:/.../intra_g-001_c.fit\n
+Defocus threshold: 3821.5 DN\n
+\n
+Extra-focal frame defocus threshold: \n
+C:/.../extra_g-001_c.fit\n
+Defocus threshold: 3760.3 DN\n
+         }
+      }
+   }
+
+   \subsection { Frame registration } {
+      For each intra-focal and extra-focal frame and a specified defocus threshold, the log lists defocused image measurements, including barycenter, diameter, obstruction diameter, and exposure.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Intra-focal frame registration: \n
+C:/.../intra_g-001_c.fit\n
+Defocus threshold: 3753.4 DN\n
+Defocus barycenter.x: 1660.43 px\n
+Defocus barycenter.y: 1252.03 px\n
+Defocus diameter: 125.92 px\n
+Defocus obstruction diameter: 0.00 px\n
+Defocus exposure: 25468.9 DN, 12072 e-\n
+\n
+Extra-focal frame registration: \n
+C:/.../extra_g-001_c.fit\n
+Defocus threshold: 3753.4 DN\n
+Defocus barycenter.x: 1662.46 px\n
+Defocus barycenter.y: 1254.59 px\n
+Defocus diameter: 125.56 px\n
+Defocus obstruction diameter: 0.00 px\n
+Defocus exposure: 25068.5 DN, 11882 e-\n
+         }
+      }
+   }
+
+   \subsection { Frame registration summary } {
+      The log includes defocused image summary statistics for the intra-focal and extra-focal frames. Location and scale are specified for each defocused image measurement. The location and scale measures are defined by the median and Rousseeuw/Croux S\sub{n} scale parameter.\ref{Rousseeuw_1993}\ref{Croux_1992}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Intra-focal frame registration summary:\n
+Defocus threshold: location: 3753.4 DN, scale: 94.37 DN\n
+Defocus barycenter.x: location: 1660.41 px, scale: 0.256 px\n
+Defocus barycenter.y: location: 1251.70 px, scale: 0.483 px\n
+Defocus diameter: location: 125.87 px, scale: 0.205 px\n
+Defocus obstruction diameter: location: 0.00 px, scale: 0.000 px\n
+Defocus exposure: location: 25450.6 DN, scale: 287.50 DN\n
+\n
+Extra-focal frame registration summary:\n
+Defocus threshold: location: 3753.4 DN, scale: 94.37 DN\n
+Defocus barycenter.x: location: 1662.43 px, scale: 0.222 px\n
+Defocus barycenter.y: location: 1253.80 px, scale: 0.537 px\n
+Defocus diameter: location: 125.83 px, scale: 0.260 px\n
+Defocus obstruction diameter: location: 0.00 px, scale: 0.000 px\n
+Defocus exposure: location: 24555.2 DN, scale: 297.48 DN\n
+         }
+      }
+   }
+
+   \subsection { Frame combination summary } {
+      The log includes a summary of the frame combination, including number of combined frames, number of rejected pixels, and the effective frame count. The effective frame count equals the product of the number of combined frames and the value 1 - \e{r}, where \e{r} equals the fraction of pixels rejected.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Intra-focal frame combination summary:\n
+Combined frame count: 16\n
+Rejection count: 59897 px, 5.712 \%\n
+Effective frame count: 15.09\n
+\n
+Extra-focal frame combination summary:\n
+Combined frame count: 16\n
+Rejection count: 58709 px, 5.599 \%\n
+Effective frame count: 15.10\n
+         }
+      }
+   }
+
+   \subsection { Combined images } {
+      The  log includes statistics for the combined intra-focal and inverted intra-focal images used for the wavefront estimation. The defocus noise values are estimates of the shot noise in the defocused images.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Intra-focal combined image:\n
+Defocus threshold: 3757.7 DN\n
+Defocus barycenter.x: 128.02 px\n
+Defocus barycenter.y: 127.99 px\n
+Defocus diameter: 125.86 px\n
+Defocus obstruction diameter: 0.00 px\n
+Defocus exposure: 25532.5 DN, 182577 e-\n
+Defocus noise: 59.75 DN RMS\n
+\n
+Inverted extra-focal combined image:\n
+Defocus threshold: 3757.7 DN\n
+Defocus barycenter.x: 128.03 px\n
+Defocus barycenter.y: 128.01 px\n
+Defocus diameter: 125.93 px\n
+Defocus obstruction diameter: 0.00 px\n
+Defocus exposure: 24579.9 DN, 175977 e-\n
+Defocus noise: 58.59 DN RMS\n
+         }
+      }
+   }
+
+   \subsection { Wavefront estimation } {
+      The log includes parameters of the wavefront estimation and a residual aberration for each wavefront refinement iteration. Wavefront refinement terminates when the noise threshold exceeds the residual aberration. The noise threshold equals the quadrature sum of the estimated shot noise in the defocus images.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Wavefront estimation:\n
+Defocus diameter ratio: 1.000\n
+Defocus distance: 3.399 mm\n
+Corrugation resolution: 11.41 cycles per aperture diameter\n
+Obstruction ratio: 0.0 \%\n
+Noise threshold: 83.7 DN RMS\n
+Residual aberration: 3263.7 DN RMS\n
+Residual aberration: 1578.2 DN RMS\n
+Residual aberration: 564.1 DN RMS\n
+Residual aberration: 316.5 DN RMS\n
+Residual aberration: 160.6 DN RMS\n
+Residual aberration: 97.4 DN RMS\n
+Residual aberration: 68.7 DN RMS\n
+Residual aberration: 45.7 DN RMS\n
+Wavefront error: 23.3 nm RMS, 1/22.6 λ RMS\n
+         }
+      }
+   }
+
+   \subsection { Aberration estimation } {
+      The log includes a list of the aberration polynomial coefficient estimates and the residual aberration not explained by the least-squares fit. The fraction of wavefront error variance explained by the polynomial is listed in the FVE column.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Aberration estimation:\n
+Z5 (2, -2) Primary astigmatism oblique: -5.8 nm RMS, 6.2 \% FVE\n
+Z6 (2, 2) Primary astigmatism vertical: 2.1 nm RMS, 0.8 \% FVE\n
+Z7 (3, -1) Primary coma vertical: 7.6 nm RMS, 10.7 \% FVE\n
+Z8 (3, 1) Primary coma horizontal: -3.3 nm RMS, 2.0 \% FVE\n
+Z9 (3, -3) Primary trefoil vertical: -0.9 nm RMS, 0.2 \% FVE\n
+Z10 (3, 3) Primary trefoil oblique: -4.0 nm RMS, 3.0 \% FVE\n
+Z11 (4, 0) Primary spherical: 15.9 nm RMS, 46.5 \% FVE\n
+Z12 (4, 2) Secondary astigmatism vertical: 0.6 nm RMS, 0.1 \% FVE\n
+Z13 (4, -2) Secondary astigmatism oblique: -0.4 nm RMS, 0.0 \% FVE\n
+Z14 (4, 4) Primary tetrafoil vertical: 0.2 nm RMS, 0.0 \% FVE\n
+Z15 (4, -4) Primary tetrafoil oblique: -0.1 nm RMS, 0.0 \% FVE\n
+Z16 (5, 1) Secondary coma horizontal: -2.0 nm RMS, 0.8 \% FVE\n
+Z17 (5, -1) Secondary coma vertical: 1.8 nm RMS, 0.6 \% FVE\n
+Z18 (5, 3) Secondary trefoil oblique: 2.5 nm RMS, 1.2 \% FVE\n
+Z19 (5, -3) Secondary trefoil vertical: -0.5 nm RMS, 0.0 \% FVE\n
+Z20 (5, 5) Primary pentafoil oblique: -0.6 nm RMS, 0.1 \% FVE\n
+Z21 (5, -5) Primary pentafoil vertical: -0.5 nm RMS, 0.0 \% FVE\n
+Z22 (6, 0) Secondary spherical: -11.3 nm RMS, 23.6 \% FVE\n
+Residual aberration: 4.8 nm RMS, 4.3 \% FVE\n
+         }
+      }
+   }
+
+   \subsection { Point spread function estimation } {
+      The log includes estimates of Strehl ratio and Strehl diameter at the observation wavelength.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Point spread function estimation:\n
+Strehl ratio: 0.925\n
+Strehl diameter: 3.49 μm, 1.36 arcsec\n
+         }
+      }
+   }
+
+   \subsection { Encircled energy function estimation } {
+      The log includes estimates of the 50\% and 80\% encircled energy diameters.
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Encircled energy function estimation:\n
+Encircled energy 50\% diameter: 2.98 μm, 1.16 arcsec\n
+Encircled energy 80\% diameter: 8.24 μm, 3.20 arcsec\n
+         }
+      }
+   }
+
+   \subsection { Modulation transfer function estimation } {
+      The log includes estimates of sagittal and meridional modulation transfer at the spatial frequencies 5, 10, 20, and 40 lp/mm. Estimates for the telescope and the combined telescope and detector system are included.
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         \c {
+Modulation transfer function estimation:\n
+Telescope:\n
+5 lp/mm: Sagittal 98.2\%, Meridional 98.2\%\n
+10 lp/mm: Sagittal 96.3\%, Meridional 96.3\%\n
+20 lp/mm: Sagittal 92.2\%, Meridional 92.1\%\n
+40 lp/mm: Sagittal 83.2\%, Meridional 83.3\%\n
+Telescope and Detector:\n
+5 lp/mm: Sagittal 98.1\%, Meridional 98.1\%\n
+10 lp/mm: Sagittal 95.9\%, Meridional 95.8\%\n
+20 lp/mm: Sagittal 90.4\%, Meridional 90.4\%\n
+40 lp/mm: Sagittal 77.0\%, Meridional 77.0\%\n
+         }
+      }
+   }
+}
+
+\section { \label unobstructed_telescope_aberrations Estimation of unobstructed telescope aberrations } {
+   Intra-focal and extra-focal images were simulated for an unobstructed 106 mm f/5 telescope with known aberrations at a 3.3 mm defocus distance and a 5.4 micron sampling interval in G-band with a corrugation resolution of 11.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+
+   The sections below show test results, each corresponding to a simulation with a single circular Zernike aberration polynomial coefficient set to 20 nm RMS. Each section shows the input images, the estimated wavefront with linear stretch, the estimated point spread function with non-linear stretch, and the Zernike polynomial definition. The first section shows the results for an ideal unobstructed 106 mm f/5 telescope limited only by diffraction over the system's aperture.
+
+   The recovered wavefront error and coefficient of the simulated aberrations are shown in Table \tblnum {unobstructed_telescope_aberrations_1}. The mean RMS error of the estimated wavefronts and coefficients, the RMS error in the difference between the estimated and known RMS errors, and the relative error of the estimation are shown at the bottom of the table. The relative error is defined as the ratio between the RMS error in the difference and the known RMS error. The recovered wavefront error of the ideal telescope simulation is 0.2 nm RMS.
+
+   \table [numbered:unobstructed_telescope_aberrations_1, caption, header:1, marginleft:36pt] {
+      { \tbltag Unobstructed telescope aberration estimation }
+
+      { {Zernike aberration} {Wavefront \n nm RMS error} {Coefficient \n nm RMS error} }
+      { {\lref unobstructed_Z5 {Z5 (2, -2) Primary astigmatism oblique}} {17.7} {17.7} }
+      { {\lref unobstructed_Z6 {Z6 (2, 2) Primary astigmatism vertical}} {17.7} {17.6} }
+      { {\lref unobstructed_Z7 {Z7 (3, -1) Primary coma vertical}} {21.6} {21.5} }
+      { {\lref unobstructed_Z8 {Z8 (3, 1) Primary coma horizontal}} {21.6} {21.5} }
+      { {\lref unobstructed_Z9 {Z9 (3, -3) Primary trefoil vertical}} {17.8} {17.8} }
+      { {\lref unobstructed_Z10 {Z10 (3, 3) Primary trefoil oblique}} {17.8} {17.8} }
+      { {\lref unobstructed_Z11 {Z11 (4, 0) Primary spherical}} {21.4} {21.3} }
+      { {\lref unobstructed_Z12 {Z12 (4, 2) Secondary astigmatism vertical}} {21.8} {21.0} }
+      { {\lref unobstructed_Z13 {Z13 (4, -2) Secondary astigmatism oblique}} {21.9} {21.0} }
+      { {\lref unobstructed_Z14 {Z14 (4, 4) Primary tetrafoil vertical}} {18.3} {18.2} }
+      { {\lref unobstructed_Z15 {Z15 (4, -4) Primary tetrafoil oblique}} {18.3} {18.2} }
+      { {\lref unobstructed_Z16 {Z16 (5, 1) Secondary coma horizontal}} {23.3} {22.3} }
+      { {\lref unobstructed_Z17 {Z17 (5, -1) Secondary coma vertical}} {23.2} {22.3} }
+      { {\lref unobstructed_Z18 {Z18 (5, 3) Secondary trefoil oblique}} {21.5} {21.1} }
+      { {\lref unobstructed_Z19 {Z19 (5, -3) Secondary trefoil vertical}} {21.5} {21.1} }
+      { {\lref unobstructed_Z20 {Z20 (5, 5) Primary pentafoil oblique}} {18.6} {18.5} }
+      { {\lref unobstructed_Z21 {Z21 (5, -5) Primary pentafoil vertical}} {18.6} {18.5} }
+      { {\lref unobstructed_Z22 {Z22 (6, 0) Secondary spherical}} {22.3} {21.3} }
+      { {Mean RMS error} {20.3} {19.9} }
+      { {Difference RMS error} {2.0} {1.7} }
+      { {Relative error} {10\%} {9\%} }
+   }
+
+   \subsection { Ideal unobstructed 106 mm f/5 telescope } {
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Ideal simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z0_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z0_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Ideal estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z0_wavefront.png
+            { Wavefront 0.2 nm RMS }
+            Aberrations/Circular/circular_Z0_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z5 {Z5 (2, -2) Primary astigmatism oblique} } {
+
+      \block [marginleft:36pt] {#: Z5(r, θ) = Sqrt(6)*r^2*Sin(2*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z5 (2, -2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z5_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z5_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z5 (2, -2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z5_wavefront.png
+            { Wavefront 17.7 nm RMS }
+            Aberrations/Circular/circular_Z5_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z6 {Z6 (2, 2) Primary astigmatism vertical} } {
+
+      \block [marginleft:36pt] {#: Z6(r, θ) = Sqrt(6)*r^2*Cos(2*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z6 (2, 2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z6_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z6_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z6 (2, 2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z6_wavefront.png
+            { Wavefront 17.7 nm RMS }
+            Aberrations/Circular/circular_Z6_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z7 {Z7 (3, -1) Primary coma vertical} } {
+
+      \block [marginleft:36pt] {#: Z7(r, θ) = 2*Sqrt(2)*(-2*r + 3*r^3)*Sin(θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z7 (3, -1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z7_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z7_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z7 (3, -1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z7_wavefront.png
+            { Wavefront 21.6 nm RMS }
+            Aberrations/Circular/circular_Z7_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z8 {Z8 (3, 1) Primary coma horizontal} } {
+
+      \block [marginleft:36pt] {#: Z8(r, θ) = 2*Sqrt(2)*(-2*r + 3*r^3)*Cos(θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z8 (3, 1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z8_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z8_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z8 (3, 1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z8_wavefront.png
+            { Wavefront 21.6 nm RMS }
+            Aberrations/Circular/circular_Z8_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z9 {Z9 (3, -3) Primary trefoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z9(r, θ) = 2*Sqrt(2)*r^3*Sin(3*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z9 (3, -3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z9_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z9_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z9 (3, -3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z9_wavefront.png
+            { Wavefront 17.8 nm RMS }
+            Aberrations/Circular/circular_Z9_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z10 {Z10 (3, 3) Primary trefoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z10(r, θ) = 2*Sqrt(2)*r^3*Cos(3*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z10 (3, 3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z10_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z10_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z10 (3, 3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z10_wavefront.png
+            { Wavefront 17.8 nm RMS }
+            Aberrations/Circular/circular_Z10_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z11 {Z11 (4, 0) Primary spherical} } {
+
+      \block [marginleft:36pt] {#: Z11(r, θ) = Sqrt(5)*(1 - 6*r^2 + 6*r^4) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z11 (4, 0) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z11_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z11_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z11 (4, 0) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z11_wavefront.png
+            { Wavefront 21.4 nm RMS }
+            Aberrations/Circular/circular_Z11_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z12 {Z12 (4, 2) Secondary astigmatism vertical} } {
+
+      \block [marginleft:36pt] {#: Z12(r, θ) = Sqrt(10)*(-3*r^2 + 4*r^4)*Cos(2*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z12 (4, 2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z12_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z12_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z12 (4, 2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z12_wavefront.png
+            { Wavefront 21.8 nm RMS }
+            Aberrations/Circular/circular_Z12_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z13 {Z13 (4, -2) Secondary astigmatism oblique} } {
+
+      \block [marginleft:36pt] {#: Z13(r, θ) = Sqrt(10)*(-3*r^2 + 4*r^4)*Sin(2*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z13 (4, -2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z13_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z13_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z13 (4, -2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z13_wavefront.png
+            { Wavefront 21.9 nm RMS }
+            Aberrations/Circular/circular_Z13_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z14 {Z14 (4, 4) Primary tetrafoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z14(r, θ) = Sqrt(10)*r^4*Cos(4*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z14 (4, 4) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z14_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z14_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z14 (4, 4) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z14_wavefront.png
+            { Wavefront 18.3 nm RMS }
+            Aberrations/Circular/circular_Z14_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z15 {Z15 (4, -4) Primary tetrafoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z15(r, θ) = Sqrt(10)*r^4*Sin(4*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z15 (4, -4) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z15_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z15_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z15 (4, -4) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z15_wavefront.png
+            { Wavefront 18.3 nm RMS }
+            Aberrations/Circular/circular_Z15_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z16 {Z16 (5, 1) Secondary coma horizontal} } {
+
+      \block [marginleft:36pt] {#: Z16(r, θ) = 2*Sqrt(3)*(3*r - 12*r^3 + 10*r^5)*Cos(θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z16 (5, 1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z16_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z16_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z16 (5, 1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z16_wavefront.png
+            { Wavefront 23.3 nm RMS }
+            Aberrations/Circular/circular_Z16_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z17 {Z17 (5, -1) Secondary coma vertical} } {
+
+      \block [marginleft:36pt] {#: Z17(r, θ) = 2*Sqrt(3)*(3*r - 12*r^3 + 10*r^5)*Sin(θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z17 (5, -1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z17_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z17_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z17 (5, -1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z17_wavefront.png
+            { Wavefront 23.2 nm RMS }
+            Aberrations/Circular/circular_Z17_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z18 {Z18 (5, 3) Secondary trefoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z18(r, θ) = 2*Sqrt(3)*(-4*r^3 + 5*r^5)*Cos(3*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z18 (5, 3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z18_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z18_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z18 (5, 3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z18_wavefront.png
+            { Wavefront 21.5 nm RMS }
+            Aberrations/Circular/circular_Z18_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z19 {Z19 (5, -3) Secondary trefoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z19(r, θ) = 2*Sqrt(3)*(-4*r^3 + 5*r^5)*Sin(3*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z19 (5, -3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z19_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z19_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z19 (5, -3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z19_wavefront.png
+            { Wavefront 21.5 nm RMS }
+            Aberrations/Circular/circular_Z19_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z20 {Z20 (5, 5) Primary pentafoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z20(r, θ) = 2*Sqrt(3)*r^5*Cos(5*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z20 (5, 5) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z20_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z20_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z20 (5, 5) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z20_wavefront.png
+            { Wavefront 18.6 nm RMS }
+            Aberrations/Circular/circular_Z20_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z21 {Z21 (5, -5) Primary pentafoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z21(r, θ) = 2*Sqrt(3)*r^5*Sin(5*θ) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z21 (5, -5) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z21_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z21_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z21 (5, -5) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z21_wavefront.png
+            { Wavefront 18.6 nm RMS }
+            Aberrations/Circular/circular_Z21_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label unobstructed_Z22 {Z22 (6, 0) Secondary spherical} } {
+
+      \block [marginleft:36pt] {#: Z22(r, θ) = Sqrt(7)*(-1 + 12*r^2 - 30*r^4 + 20*r^6) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z22 (6, 0) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z22_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Circular/circular_Z22_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z22 (6, 0) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Circular/circular_Z22_wavefront.png
+            { Wavefront 22.3 nm RMS }
+            Aberrations/Circular/circular_Z22_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+}
+
+\section { \label obstructed_telescope_aberrations Estimation of obstructed telescope aberrations } {
+   Intra-focal and extra-focal images were simulated for an 58\% obstructed 250 mm f/5 telescope with known aberrations at a 6.1 mm defocus distance and a 9.0 micron sampling interval in G-band with a corrugation resolution of 15.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+
+   The sections below show test results, each corresponding to a simulation with a single annular Zernike aberration polynomial coefficient set to 20 nm RMS. Each section shows the input images, the estimated wavefront with linear stretch, the estimated point spread function with non-linear stretch, and the Zernike polynomial definition. The first section shows the results for an ideal 58\% obstructed 250 mm f/5 telescope limited only by diffraction over the system's aperture.
+
+   The recovered wavefront error and coefficient of the simulated aberrations are shown in Table \tblnum {obstructed_telescope_aberrations_1}. The mean RMS error of the estimated wavefronts and coefficients, the RMS error in the difference between the estimated and known RMS errors, and the relative error of the estimation are shown at the bottom of the table. The relative error is defined as the ratio between the RMS error in the difference and the known RMS error. The recovered wavefront error of the ideal telescope simulation is 0.2 nm RMS.
+
+   \table [numbered:obstructed_telescope_aberrations_1, caption, header:1, marginleft:36pt] {
+      { \tbltag Obstructed telescope aberration estimation }
+
+      { {Zernike aberration} {Wavefront \n nm RMS error} {Coefficient \n nm RMS error} }
+      { {\lref obstructed_Z5 {Z5 (2, -2) Primary astigmatism oblique}} {16.3} {16.3} }
+      { {\lref obstructed_Z6 {Z6 (2, 2) Primary astigmatism vertical}} {17.4} {17.4} }
+      { {\lref obstructed_Z7 {Z7 (3, -1) Primary coma vertical}} {15.4} {15.2} }
+      { {\lref obstructed_Z8 {Z8 (3, 1) Primary coma horizontal}} {15.4} {15.1} }
+      { {\lref obstructed_Z9 {Z9 (3, -3) Primary trefoil vertical}} {17.0} {17.0} }
+      { {\lref obstructed_Z10 {Z10 (3, 3) Primary trefoil oblique}} {17.0} {17.0} }
+      { {\lref obstructed_Z11 {Z11 (4, 0) Primary spherical}} {22.1} {22.1} }
+      { {\lref obstructed_Z12 {Z12 (4, 2) Secondary astigmatism vertical}} {26.5} {22.8} }
+      { {\lref obstructed_Z13 {Z13 (4, -2) Secondary astigmatism oblique}} {26.8} {22.9} }
+      { {\lref obstructed_Z14 {Z14 (4, 4) Primary tetrafoil vertical}} {17.4} {17.4} }
+      { {\lref obstructed_Z15 {Z15 (4, -4) Primary tetrafoil oblique}} {17.2} {17.2} }
+      { {\lref obstructed_Z16 {Z16 (5, 1) Secondary coma horizontal}} {24.8} {24.9} }
+      { {\lref obstructed_Z17 {Z17 (5, -1) Secondary coma vertical}} {24.9} {24.9} }
+      { {\lref obstructed_Z18 {Z18 (5, 3) Secondary trefoil oblique}} {23.2} {21.9} }
+      { {\lref obstructed_Z19 {Z19 (5, -3) Secondary trefoil vertical}} {23.3} {22.0} }
+      { {\lref obstructed_Z20 {Z20 (5, 5) Primary pentafoil oblique}} {17.7} {17.7} }
+      { {\lref obstructed_Z21 {Z21 (5, -5) Primary pentafoil vertical}} {17.7} {17.7} }
+      { {\lref obstructed_Z22 {Z22 (6, 0) Secondary spherical}} {24.2} {23.7} }
+      { {Mean RMS error} {20.2} {19.6} }
+      { {Difference RMS error} {4.0} {3.3} }
+      { {Relative error} {20\%} {17\%} }
+   }
+
+   \subsection { Ideal 58\% obstructed 250 mm f/5 telescope } {
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Ideal simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z0_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z0_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Ideal estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z0_wavefront.png
+            { Wavefront 0.2 nm RMS }
+            Aberrations/Annular/annular_Z0_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z5 {Z5 (2, -2) Primary astigmatism oblique} } {
+
+      \block [marginleft:36pt] {#: Z5(r, θ, e) = Sqrt(6)*r^2*Sin(2*θ) / Sqrt(1 + e^2 + e^4) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z5 (2, -2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z5_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z5_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z5 (2, -2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z5_wavefront.png
+            { Wavefront 16.3 nm RMS }
+            Aberrations/Annular/annular_Z5_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z6 {Z6 (2, 2) Primary astigmatism vertical} } {
+
+      \block [marginleft:36pt] {#: Z6(r, θ, e) = Sqrt(6)*r^2*Cos(2*θ) / Sqrt(1 + e^2 + e^4) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z6 (2, 2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z6_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z6_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z6 (2, 2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z6_wavefront.png
+            { Wavefront 17.4 nm RMS }
+            Aberrations/Annular/annular_Z6_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z7 {Z7 (3, -1) Primary coma vertical} } {
+
+      \block [marginleft:36pt] {#: Z7(r, θ, e) = 2*Sqrt(2)*(2*r*(1 + e^2) - 3*r^3*(1 + e^2 + e^4))*Sin(θ) / ((-1 + e^2) * (1 + 5*e^2 + 5*e^4 + e^6)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z7 (3, -1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z7_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z7_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z7 (3, -1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z7_wavefront.png
+            { Wavefront 15.4 nm RMS }
+            Aberrations/Annular/annular_Z7_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z8 {Z8 (3, 1) Primary coma horizontal} } {
+
+      \block [marginleft:36pt] {#: Z8(r, θ, e) = 2*Sqrt(2)*(2*r*(1 + e^2) - 3*r^3*(1 + e^2 + e^4))*Cos(θ) / ((-1 + e^2) * (1 + 5*e^2 + 5*e^4 + e^6)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z8 (3, 1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z8_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z8_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z8 (3, 1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z8_wavefront.png
+            { Wavefront 15.4 nm RMS }
+            Aberrations/Annular/annular_Z8_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z9 {Z9 (3, -3) Primary trefoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z9(r, θ, e) = 2*Sqrt(2)*r^3*Sin(3*θ) / (1 + e^2 + e^4 + e^6) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z9 (3, -3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z9_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z9_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z9 (3, -3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z9_wavefront.png
+            { Wavefront 17.0 nm RMS }
+            Aberrations/Annular/annular_Z9_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z10 {Z10 (3, 3) Primary trefoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z10(r, θ, e) = 2*Sqrt(2)*r^3*Cos(3*θ) / (1 + e^2 + e^4 + e^6) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z10 (3, 3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z10_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z10_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z10 (3, 3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z10_wavefront.png
+            { Wavefront 17.0 nm RMS }
+            Aberrations/Annular/annular_Z10_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z11 {Z11 (4, 0) Primary spherical} } {
+
+      \block [marginleft:36pt] {#: Z11(r, θ, e) = Sqrt(5)*(1 + 4*e^2 + e^4 - 6*r^2*(1 + e^2) + 6*r^4) / (-1 + e^2)^2 :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z11 (4, 0) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z11_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z11_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z11 (4, 0) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z11_wavefront.png
+            { Wavefront 22.1 nm RMS }
+            Aberrations/Annular/annular_Z11_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z12 {Z12 (4, 2) Secondary astigmatism vertical} } {
+
+      \block [marginleft:36pt] {#: Z12(r, θ, e) = Sqrt(10)*(3*r^2*(1 + e^2 + e^4 + e^6) - 4*r^4*(1 + e^2 + e^4))*Cos(2*θ) / ((-1 + e^2)*Sqrt(1 + 4*e^2 + 10*e^4 + 4*e^6 + e^8)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z12 (4, 2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z12_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z12_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z12 (4, 2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z12_wavefront.png
+            { Wavefront 26.5 nm RMS }
+            Aberrations/Annular/annular_Z12_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z13 {Z13 (4, -2) Secondary astigmatism oblique} } {
+
+      \block [marginleft:36pt] {#: Z13(r, θ, e) = Sqrt(10)*(3*r^2*(1 + e^2 + e^4 + e^6) - 4*r^4*(1 + e^2 + e^4))*Sin(2*θ) / ((-1 + e^2)*Sqrt(1 + 4*e^2 + 10*e^4 + 4*e^6 + e^8)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z13 (4, -2) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z13_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z13_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z13 (4, -2) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z13_wavefront.png
+            { Wavefront 26.8 nm RMS }
+            Aberrations/Annular/annular_Z13_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z14 {Z14 (4, 4) Primary tetrafoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z14(r, θ, e) = Sqrt(10)*r^4*Cos(4*θ) / Sqrt(1 + e^2 + e^4 + e^6 + e^8) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z14 (4, 4) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z14_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z14_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z14 (4, 4) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z14_wavefront.png
+            { Wavefront 17.4 nm RMS }
+            Aberrations/Annular/annular_Z14_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z15 {Z15 (4, -4) Primary tetrafoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z15(r, θ, e) = Sqrt(10)*r^4*Sin(4*θ) / Sqrt(1 + e^2 + e^4 + e^6 + e^8) :#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z15 (4, -4) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z15_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z15_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z15 (4, -4) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z15_wavefront.png
+            { Wavefront 17.2 nm RMS }
+            Aberrations/Annular/annular_Z15_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z16 {Z16 (5, 1) Secondary coma horizontal} } {
+
+      \block [marginleft:36pt] {#: Z16(r, θ, e) = 2*Sqrt(3)*(3*r*(1 + 4*e^2 + e^4) - 12*r^3*(1 + 4*e^2 + 4*e^4 + e^6) + 10*r^5*(1 + 4*e^2 + e^4))*Cos(θ) / ((-1 + e^2)^2*Sqrt((1 + 4*e^2 + e^4)*(1 + 9*e^2 + 9*e^4 + e^6))):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z16 (5, 1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z16_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z16_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z16 (5, 1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z16_wavefront.png
+            { Wavefront 24.8 nm RMS }
+            Aberrations/Annular/annular_Z16_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z17 {Z17 (5, -1) Secondary coma vertical} } {
+
+      \block [marginleft:36pt] {#: Z17(r, θ, e) = 2*Sqrt(3)*(3*r*(1 + 4*e^2 + e^4) - 12*r^3*(1 + 4*e^2 + 4*e^4 + e^6) + 10*r^5*(1 + 4*e^2 + e^4))*Sin(θ) / ((-1 + e^2)^2*Sqrt((1 + 4*e^2 + e^4)*(1 + 9*e^2 + 9*e^4 + e^6))):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z17 (5, -1) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z17_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z17_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z17 (5, -1) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z17_wavefront.png
+            { Wavefront 24.9 nm RMS }
+            Aberrations/Annular/annular_Z17_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z18 {Z18 (5, 3) Secondary trefoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z18(r, θ, e) = 2*Sqrt(3)*(-4*r^3*(1 + e^2 + e^4 + e^6 + e^8) + 5*r^5*(1 + e^2 + e^4 + e^6))*Sqrt((-1 + e^2)^6*(1 + e^2 + e^4 + e^6))*Cos(3*θ) / ((-1 + e^2)^4*(1 + e^2)*(1 + e^4)*Sqrt(1 + 4*e^2 + 10*e^4 + 20*e^6 + 10*e^8 + 4*e^10 + e^12)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z18 (5, 3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z18_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z18_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z18 (5, 3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z18_wavefront.png
+            { Wavefront 23.2 nm RMS }
+            Aberrations/Annular/annular_Z18_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z19 {Z19 (5, -3) Secondary trefoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z19(r, θ, e) = 2*Sqrt(3)*(-4*r^3*(1 + e^2 + e^4 + e^6 + e^8) + 5*r^5*(1 + e^2 + e^4 + e^6))*Sqrt((-1 + e^2)^6*(1 + e^2 + e^4 + e^6))*Sin(3*θ) / ((-1 + e^2)^4*(1 + e^2)*(1 + e^4)*Sqrt(1 + 4*e^2 + 10*e^4 + 20*e^6 + 10*e^8 + 4*e^10 + e^12)):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z19 (5, -3) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z19_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z19_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z19 (5, -3) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z19_wavefront.png
+            { Wavefront 23.3 nm RMS }
+            Aberrations/Annular/annular_Z19_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z20 {Z20 (5, 5) Primary pentafoil oblique} } {
+
+      \block [marginleft:36pt] {#: Z20(r, θ, e) = 2*Sqrt(3)*r^5*Cos(5*θ) / Sqrt(1 + e^2 + e^4 + e^6 + e^8 + e^10):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z20 (5, 5) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z20_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z20_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z20 (5, 5) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z20_wavefront.png
+            { Wavefront 17.7 nm RMS }
+            Aberrations/Annular/annular_Z20_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z21 {Z21 (5, -5) Primary pentafoil vertical} } {
+
+      \block [marginleft:36pt] {#: Z21(r, θ, e) = 2*Sqrt(3)*r^5*Sin(5*θ) / Sqrt(1 + e^2 + e^4 + e^6 + e^8 + e^10):#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z21 (5, -5) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z21_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z21_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z21 (5, -5) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z21_wavefront.png
+            { Wavefront 17.7 nm RMS }
+            Aberrations/Annular/annular_Z21_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+
+   \subsection { \label obstructed_Z22 {Z22 (6, 0) Secondary spherical} } {
+
+      \block [marginleft:36pt] {#: Z22(r, θ) = Sqrt(7)*(1 + 9*e^2 + 9*e^4 + e^6 - 12*r^2*(1 + 3*e^2 + e^4) + 30*r^4*(1 + e^2) - 20*r^6) / (-1 + e^2)^3:#}
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z22 (6, 0) simulated intra-focal and inverted extra-focal images
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z22_intra_focal_combined.png
+            { Intra-focal image }
+            Aberrations/Annular/annular_Z22_extra_focal_combined_inverted.png
+            { Inverted extra-focal image }
+         }
+      }
+
+      \figure [unnumbered, float:left, marginleft:36pt] {
+         Z22 (6, 0) estimated wavefront and point spread function
+
+         \imageselect [margintop:6pt] {
+            Aberrations/Annular/annular_Z22_wavefront.png
+            { Wavefront 24.2 nm RMS }
+            Aberrations/Annular/annular_Z22_point_spread_function.png
+            { Point spread function }
+         }
+      }
+
+   }
+}
+
+\section { \label requirements_recommendations {Requirements and recommendations} } {
+   WavefrontEstimator supports testing of telescopes with unobstructed or obstructed optics. Apertures must be circular. Obstructions must be circular and centrally located. Observations must be on-axis. Observations must use broadband filters, narrowband filters are not supported.
+
+   Intra-focal and extra-focal frames must be exposed to at least 5\% and at most 80\% of the detector's dynamic range. The brightest defocused image structures must lie within the linear operating region of the detector. The frames must have equal exposure times.
+
+   The exposure in the frame background must be at most 2\% of defocused image exposures. Field stars must be at least 2.5 magnitudes dimmer than the target star.
+
+   Intra-focal and extra-focal defocus distances and defocused image diameters should be equal to within 5\%. Defocused image diameters must be between 48 and 320 pixels.
+
+   Intra-focal and extra-focal frames selected for combination must be bias-subtracted and must not be otherwise processed. One monochrome detector observation defines one frame with an observation band defined by the filter used for the observation. One Bayer RGB detector observation defines one frame for each raw Bayer RGB channel, that is, one R-band frame, two G-band frames, and one B-band frame. The SplitCFA process may be used for channel extraction. Bias-subtraction must be performed prior to channel extraction. Color detectors with color-filter-array (CFA) patterns differing from Bayer RGB are not supported.
+
+   Combined intra-focal and extra-focal images must entail at least 100 seconds and 100,000 e- of exposure to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio.
+
+   The telescope must be in thermal equilibrium.
+}
+
+\section { \label frequently_asked_questions {Frequently asked questions} } {
+   \definition {
+      { Can the ImageCalibration process be used to bias subtract frames? } {
+         Yes.
+      }
+
+      { Should frames be flat fielded? } {
+         No. Local pixel sensitivity variations and global illumination variations due to vignetting have a negligible effect on the results.
+      }
+
+      { Can the StarAlignment and ImageIntegration processes be used to register and combine frames? } {
+         No. WavefrontEstimator uses special techniques to register the defocused images and combine them in a manner that conserves local exposure.
+      }
+
+      { Should frames be dithered? } {
+         Yes, if possible.
+      }
+
+      { Does light pollution and moon light effect the results? } {
+         No, as long as the background exposure is at most 2\% of defocused image exposure.
+      }
+
+      { How can the effects of atmospheric turbulence be minimized? } {
+         Observe near the meridian, observe in good seeing conditions, increase frame exposure time, increase the number of combined frames, average the results of several data sets.
+      }
+
+      { Should I blink my frames and reject obvious outliers? } {
+         Yes.
+      }
+
+      { What should I do to visualize images opened from the output directory? } {
+         Load or merge the associated screen transfer function icon *_stf.xpsm from the output directory and drag the icon onto the image view.
+      }
+
+      { How do I determine detector gain? } {
+         Frames may have a EGAIN keyword in the FITS header. Alternatively, use the \sref FlatSNREstimator {FlatSNREstimator} script. An approximation within \pm 20\% will suffice.
+      }
+
+      { How do I determine observation wavelength? } {
+         The script supplies reasonable defaults for selected filters. Use the approximate center wavelength for other broadband filters.
+      }
+
+      { Can narrowband filters be used? } {
+         No, the method is designed for broadband observations only.
+      }
+
+      { How do I select a good rejection scale parameter value? } {
+         Use a value between 1.5 and 3. Smaller values will increase the fraction of rejected pixels.
+      }
+
+      { Should I use near-infrared (NIR) preflash and repeated flush to reduce residual bulk image (RBI) effects prior to each exposure? } {
+         Yes, if available.
+      }
+
+      { Should I use detector binning? } {
+         Yes, if the defocused image diameter would otherwise exceed the 320 pixel limit. Detector gain and pixel size in the \lref parameters_tab {Parameters tab} must be set to the detector's binned gain and pixel size.
+      }
+
+      { How does the FITS format coordinate origin affect results? } {
+         The results will be consistent with either choice. Subsequently, before opening and viewing the results, be sure the current coordinate origin matches the setting when the results were generated, otherwise the FITS and PNG files will mismatch.
+      }
+
+      { How can I estimate the full width at half maximum (FWHM) of the point spread function? } {
+         Apply the PixelMath process expression "iif($target > 0.5, 0.5, 0)" to point_spread_function.fit/xsif. Count the number of non-zero pixels \e{p} in the result using the Statistics process with the Unclipped option disabled. Use the command File > FITS Header to determine the value of the FITS header keyword WEPSFPXS \e{s} in point_spread_function.fit/xsif. An estimate of the FWHM in microns \e{m} is given by
+
+         \e{m} = 2 \e{s} sqrt(\e{p} / \pi).
+
+         An estimate of the FWHM in arcseconds \e{a} is given by
+
+         \e{a} = 648 \e{m} / (\pi \e{f}),
+
+         where \e{f} is the focal length in millimeters.
+      }
+
+      { How can I estimate the peak-to-valley (PTV) error in the wavefront? } {
+         Use the Statistics process to measure the maximum \e{max} and minimum \e{min} values in wavefront.fit/xsif. Use the command File > FITS Header to determine the values of the FITS header keywords WEWOFFST \e{o} and WEWSCALE \e{s} in wavefront.fit/xsif. Estimates of the peak \e{p} and valley \e{v} in the wavefront are given by
+
+         \e{p} = (\e{max} - \e{o}) / \e{s} and
+
+         \e{v} = (\e{min} - \e{o}) / \e{s}
+
+         in meters, respectively. The PTV error in the wavefront is given the difference \e{p} - \e{v} in meters.
+      }
+   }
+}
+
+\section { Algorithms } {
+   \subsection {Image registration and combination} {
+      A defocused image is separated from the frame background by a threshold equal to 15\% of the median across the frame set of the median defocused image exposure. The barycenters of the defocused image domains are cocentered in a manner that conserves local exposure by translation using bilinear interpolation. Images are average combined after the application of the pixel \lref rejection_method {rejection method}.
+   }
+
+   \subsection {Wavefront estimation} {
+      The wavefront estimation method is based on the estimator outlined in Roddier.\ref{Roddier_1993a}\ref{Roddier_1991} With this method, the wavefront \e{W} can be reconstructed from an intra-focal image \e{I} of a bright star and an inverted (rotated by 180\deg) extra-focal image \e{E} of the same star by solving a partial differential equation of the inhomogeneous Poisson form
+
+      ∆\e{W} = \e{k} (\e{I} - \e{E}) / (\e{I} + \e{E}),
+
+      subject to the third-type boundary condition
+
+      \e{∂}\sup{2}\e{W} / \e{∂n}\sup{2} = 0,
+
+      where \e{k} is a constant that depends on the degree of defocus and on the focal length of the telescope and \e{n} is a vector normal to the aperture boundary. The boundary condition differs from the Neumann (or second-type) boundary condition of the Roddier estimator to allow an addition degree of freedom and improve estimation accuracy. The images \e{I} and \e{E} are separated from the frame background by a threshold equal to 15\% of the geometric mean of the median exposures.
+
+      Both sides of the differential equation are measures of wavefront curvature. The left hand side is the wavefront Laplacian, the departure of the wavefront from its local average. The right hand side is the detector signal the scales with the difference between the images. An aberrated region with positive wavefront Laplacian will cause light to focus at a position before the nominal focal plane. This gives a higher exposure intra-focal region and a lower exposure extra-focal region and a corresponding positive value in the right hand side of the equation.
+
+      The differential equation is solved using Fourier techniques and refined with an iterative algorithm that simulates closed-loop wavefront compensation in adaptive optics. Residual aberrations are compensated by geometrically distorting the images until the noise level is reached. Geometric distortions are determined by direct numerical differentiation of the refined wavefront. Poisson equation solver self-consistency conditions are satisfied by the method outlined in Ftaclas.\ref{Ftaclas_2001}
+   }
+
+   \subsection { Point spread function estimation } {
+
+      WavefrontEstimator estimates the point spread function of the telescope as the squared modulus of the Fourier transform of the estimated wavefront of the telescope.
+
+   }
+
+   \subsection { Modulation transfer function estimation } {
+
+      WavefrontEstimator estimates the modulation transfer function of the telescope as the modulus of the Fourier transform of the estimated point spread function of the telescope. The maximum spatial frequency in the point spread function of the telescope is defined as 0.001 / (\e{λ} \e{f} / \e{a}) lp/mm, where \e{λ} is observation wavelength, \e{f} is focal length, and \e{a} is aperture diameter in meters.\ref {Shepherd_2012}
+
+      WavefrontEstimator estimates the modulation transfer function of the detector as the sinc function sin(\e{π s} / \e{m}) / (\e{π s} / \e{m}), where \e{s} equals spatial frequency in lp/mm, and \e{m} equals the maximum spatial frequency in the point spread function of the detector, which is defined as 0.001 / \e{p} lp/mm, where \e{p} is the pixel size of the detector in meters.
+
+      WavefrontEstimator estimates the modulation transfer function of the combined telescope and detector system as the product of the modulation transfer functions of the telescope and detector.
+
+   }
+}
+
+\section { Error handling } {
+   Errors may occur due to a failure to follow requirements and recommendations, high noise levels or spurious noise structures in the frames, or software limitations and bugs. Please ask for help on the \xref http://pixinsight.com/forum/ {PixInsight Forum}.
+
+   \definition {
+      { The defocused image diameter is too large. } {
+         The defocused image diameter is greater than 320 pixels.
+
+         The problem may be due to excessive defocus distance, small detector pixel size, exposure problems, or spurious noise structures. Monochrome detector binning may be used to reduce defocused image diameter while maintaining a fixed defocused distance.
+      }
+
+      { The defocused image diameter is too small. } {
+         The defocused image diameter is less than 48 pixels.
+
+         The problem may be due to insufficient defocus distance, large detector pixel size, exposure problems, or spurious noise structures.
+      }
+
+      { The defocused image signal is too large. } {
+         The median defocused image signal is greater than 80\% of the detector's dynamic range.
+
+         The problem may be due to exposure problems or spurious noise structures.
+      }
+
+      { The defocused image signal is too small. } {
+         The median defocused image signal is less than 5\% of the detector's dynamic range.
+
+         The problem may be due to exposure problems or spurious noise structures.
+      }
+
+      { The defocus threshold estimation process did not converge. } {
+         A threshold separating the defocused image from the frame background could not be found.
+
+         The problem may be due to insufficient defocused star exposure, excessively bright background exposure, the presense of excessively bright defocused field stars, the position of the defocused image too close to the frame edge, or spurious noise structures.
+      }
+
+      { The wavefront estimation process did not converge. } {
+         A wavefront estimate satisfying noise floor accuracy requirements could not be found.
+
+         The problem may be due to insufficient signal-to-noise ratio in the defocused star images, extreme atmospheric turbulence, spurious noise structures, or extreme optical aberrations.
+      }
+   }
+}
+
+\section { Limitations and known issues } {
+   The estimated defocus distance and central obstruction ratio may differ from what a geometrical optics model would predict due to diffraction, scatter, and thresholding approximations.
+
+   The exposure estimation tool uses various approximations which can result in under-exposed or over-exposed frames. Factors affecting accuracy include telescope optical efficiency, detector quantum efficiency, filter transmissivity, star spectral type, and atmospheric extinction variations.
+
+   The effects of the central obstruction support structure (i.e. spider) are not modeled.
+
+   The accuracy of the results varies with telescope and detector characteristics, with observing conditions, and is limited by algorithm approximations. The results must be treated as estimates only. For better accuracy, interferometric testing may be required.
+}
+
+\relatedscripts {
+   FlatSNREstimator
+}
+
+\relatedtools {
+}
+
+\reference Croux_1992 {
+   C. Croux and P. Rousseeuw, "Time-Efficient Algorithms for Two Highly Robust Estimators of Scale", \e{Computational Statistics}, 1: 411-428, 1992.
+}
+
+\reference Ftaclas_2001 {
+   C. Ftaclas and A. Kostinski, "Curvature Sensors, Adaptive Optics, and Neumann Boundary
+   Conditions", \e {Applied Optics}, 40(4):435-438, Feburary 2001.
+}
+
+\reference Laine_2006 {
+   S. Laine and T. Aila, "A weighted error metric and optimization method for antialiasing patterns", \e {Computer Graphics Forum}, 25(1):83-94, 2006.
+}
+
+\reference Lequevre_2011 {
+   F. Lequèvre, S. Marchand, P. Martinole, and D. Vernet, \e {WinRoddier Professional Version 3.0}, www.astrosurf.com/tests/roddier/projet.html.
+}
+
+\reference Mahajan_1981a {
+   V. Mahajan, "Zernike annular polynomials for imaging systems with annular pupils", \e {Journal of the Optical Society of America}, 71(1):75-85, January 1981.
+}
+
+\reference Mahajan_1981b {
+   V. Mahajan, "Zernike annular polynomials for imaging systems with annular pupils: errata", \e {Journal of the Optical Society of America}, 71(11):1408-1408, November 1981.
+}
+
+\reference Malacara_2005 {
+   D. Malacara, M. Servín, and Z. Malacara, \e {Interferogram Analysis for Optical Testing},
+   ISBN 1574446827, CRC Press, Taylor & Francis Group, 2005.
+}
+
+\reference Noll_1976 {
+   R. Noll, "Zernike polynomials and atmospheric turbulence", \e {Journal of the Optical Society of America}, 66(3):207-211, March 1976.
+}
+
+\reference Roddier_1991 {
+   F. Roddier and C. Roddier, "Wavefront reconstruction using iterative Fourier transforms",
+   \e {Applied Optics}, 30(11):1325-1327, April 1991.
+}
+
+\reference Roddier_1993a {
+   C. Roddier and F. Roddier, "Wave-front reconstruction from defocused images and the testing of
+   ground-based optical telescopes", \e {Journal of the Optical Society of America A}, 10(11):2277-2287,
+   November 1993.
+}
+
+\reference Rousseeuw_1993 {
+   P. Rousseeuw and C. Croux, "Alternatives to the Median Absolute Deviation", \e {Journal
+   of the American Statistical Association}, 88:1273-1283, December 1993.
+}
+
+\reference Shen_2006 {
+   F. Shen and A. Wang, "Fast-Fourier-transform based numerical integration method for the Rayleigh-Sommerfeld diffraction formula", \e {Applied Optics}, 45(6):1102-1110, Feburary 2006.
+}
+
+\reference Shepherd_2012 {
+   M. Shepherd, "Correct Sampling of Diffraction Limited Images", CCAT-TM-109, www.ccatobservatory.org, November 2012.
+}
+
+\reference Suiter_2009 {
+   H. Suiter, \e {Star Testing Astronomical Telescopes}, ISBN 0943396905, Willmann-Bell, Inc., 2nd edition, March 2009.
+}
+
+\make
+
+%% ****************************************************************************
+%% EOF WavefrontEstimator.pidoc - Released 2015/10/05 00:00:00 UTC
