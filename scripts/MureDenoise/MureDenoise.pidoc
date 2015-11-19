@@ -1,0 +1,455 @@
+%% ****************************************************************************
+%% MureDenoise.pidoc - Released 2015/11/20 00:00:00 UTC
+%% ****************************************************************************
+%%
+%% This file is part of MureDenoise Script Version 1.10
+%%
+%% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
+%%
+%% Redistribution and use in both source and binary forms, with or without
+%% modification, is permitted provided that the following conditions are met:
+%%
+%% 1. All redistributions of source code must retain the above copyright
+%%    notice, this list of conditions and the following disclaimer.
+%%
+%% 2. All redistributions in binary form must reproduce the above copyright
+%%    notice, this list of conditions and the following disclaimer in the
+%%    documentation and/or other materials provided with the distribution.
+%%
+%% 3. Neither the names "PixInsight" and "Pleiades Astrophoto", nor the names
+%%    of their contributors, may be used to endorse or promote products derived
+%%    from this software without specific prior written permission. For written
+%%    permission, please contact info@pixinsight.com.
+%%
+%% 4. All products derived from this software, in any form whatsoever, must
+%%    reproduce the following acknowledgment in the end-user documentation
+%%    and/or other materials provided with the product:
+%%
+%%    "This product is based on software from the PixInsight project, developed
+%%    by Pleiades Astrophoto and its contributors (http://pixinsight.com/)."
+%%
+%%    Alternatively, if that is where third-party acknowledgments normally
+%%    appear, this acknowledgment must be reproduced in the product itself.
+%%
+%% THIS SOFTWARE IS PROVIDED BY PLEIADES ASTROPHOTO AND ITS CONTRIBUTORS
+%% "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+%% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+%% PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL PLEIADES ASTROPHOTO OR ITS
+%% CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+%% EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS
+%% INTERRUPTION; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; AND LOSS OF USE,
+%% DATA OR PROFITS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+%% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+%% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+%% POSSIBILITY OF SUCH DAMAGE.
+%% ****************************************************************************
+
+\documentclass PIScriptDoc
+
+\script MureDenoise
+
+\keywords {
+   noise reduction, image denoising, mixed Poisson-Gaussian noise
+}
+
+\author {
+   Mike Schuster
+}
+
+\copyright {
+   2012-2015 Mike Schuster. All Rights Reserved.
+}
+
+\brief {
+   Script for denoising linear monochannel images corrupted by mixed Poisson-Gaussian noise.
+}
+
+\description {
+   MureDenoise denoises linear monochannel images corrupted by mixed Poisson-Gaussian noise. MureDenoise is applicable to single frame images and average combinations of equally exposed and registered frames.
+
+   The script supports an astronomical image processing workflow in which the denoising step occurs immediately after the calibration and optional average combination steps and prior to other linear or nonlinear processing steps.
+
+   The script applies an interscale wavelet mixed noise unbiased risk estimator (MURE) to find a denoised output image that minimizes an estimate of the oracle mean-squared error (MSE), or "risk", between the denoised output image and the unknown noise-free image.\ref{Stein_1981}\ref{Luisier_2010}
+
+   \s{ Note }: For linear multichannel images, run the monochannel denoiser on each channel separately. For linear one shot color (OSC) images, denoise the color filter array (CFA) channels not the debayered RGB channels.
+
+   \s{ Warning }: The script is adapted to denoise linear monochannel images mainly corrupted by shot noise, read noise, and dark current noise which is typically the case for astronomical data. The script does not work properly for other noise distributions, for saturated images, for linearly or nonlinearly processed images, for median combinations, or for drizzle combinations.
+
+   \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
+
+   This document describes MureDenoise Version 1.10.
+
+   \subsection { Mixed Poisson-Gaussian noise hypothesis } {
+      The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
+
+      \list {
+         { y: noisy input image, }
+         { x: unknown noise-free image, }
+         { &alpha;: detector gain (e-/DN), }
+         { &delta;: detector offset (DN), }
+         { &sigma;: standard deviation of detector additive white Gaussian noise (DN), }
+         { &eta;: average combination count, and }
+         { &nu;: variance scale. }
+      }
+
+      &Rho;(x) is a Poisson distribution with expected value x. &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;) is a Gaussian distribution with expected value &delta; and variance &nu;&sigma;\sup{2}/&eta;.
+
+      The expectation &xi;\{y\} and variance &upsilon;\{y\} of the noisy input image y are given by
+
+      \list {
+         { &xi;\{y\} = &nu;x/(&eta;&alpha;) + &delta; and }
+         { &upsilon;\{y\} = &nu;\sup{2}x/(&eta;&alpha;)\sup{2} + &nu;&sigma;\sup{2}/&eta;. }
+      }
+   }
+
+   \subsection { Covariance hypothesis } {
+      The denoising method employs a covariance hypothesis to compensate for the correlation or covariance introduced by the image registration process. The interpolation performed by image registration results in positive covariance between pixels within the interpolation filter's local region of support. This covariance influences denoising quality in two ways. First, variance in a registered image is reduced due to the positive covariance. Second, variance in the coarse coefficients of a wavelet decomposition of a registered image is increased due to the positive covariance. This increase follows from the fact that the variance of a sum of two correlated random variables equals the sum of their variances plus twice their covariance. The covariance hypothesis models both of these influences to improve denoising quality, as a function of level of wavelet refinement &rho;, average combination count &eta;, and interpolation method &iota;.
+
+      The first component of the covariance hypothesis is the interpolation covariance function R(&iota;) that estimates the average multiplicative scaling of variance that results from an application of interpolation method &iota;. R(&iota;) is defined as the integral over a unit pixel domain of the sum of interpolation method's filter coefficients squared. Table \tblnum {interpolation_covariance_function} shows approximate values of R(&iota;) for the supported interpolation methods.
+
+      \table [numbered:interpolation_covariance_function, header:1, marginleft:36pt] {
+         { {Interpolation method &iota;} {R(&iota;)} }
+         { {Nearest Neighbor} {1} }
+         { {Bilinear} {0.444} }
+         { {Bicubic Spline} {0.663} }
+         { {Lanczos-3} {0.799} }
+         { {Lanczos-4} {0.835} }
+         { {Lanczos-5} {0.873} }
+      }
+
+      The second component of the covariance hypothesis is the combination covariance function R(&eta;, &iota;) that estimates the ratio of the normalized variance of the average combination of &eta; images registered with interpolation method &iota; to the normalized variance of an average combination of &eta; unregistered images. R(&eta;, &iota;) is defined as (1 + (&eta; - 1) R(&iota;)) / &eta;. The numerator represents the variance sum of one unregistered reference image with unit variance and &eta; - 1 registered images each with R(&iota;) variance. The denominator represents the variance sum of &eta; unregistered images each with unit variance.
+
+      The final component of the covariance hypothesis is the refinement covariance function R(&rho;, &eta;, &iota;) that estimates the ratio of the normalized variance of coarse coefficients of a registered combination to the normalized variance of coarse coefficients of an unregistered combination at level of wavelet refinement &rho; in an unnormalized Haar wavelet decomposition. R(&rho;, &eta;, &iota;) is defined as (2\sup{&rho;} - 1 + sqrt(R(&eta;, &iota;)))\sup{2} / 4\sup{&rho;}. The numerator models an exponential decrease in relative covariance with increasing level of refinement. This decrease follows from the spatially local nature of the covariance introduced by interpolation. In the limit the numerator approaches the 4\sup{&rho;} denominator, the normalized variance of coarse coefficients in a unnormalized Haar wavelet decomposition of statistically independent data. Figure \fignum {refinement_covariance_function} shows the refinement covariance function for an average combination of 10 images for several interpolation methods.
+
+      \figure [numbered:refinement_covariance_function, float:left, marginleft:36pt] {
+         \figtag Refinement covariance function for an average combination of 10 images
+
+         \image [margintop:6pt] Images/refinement_covariance.png
+      }
+   }
+
+   \subsection { Denoising method } {
+      The denoising method is based on a statistical estimate of the oracle mean square error (MSE), or "risk", between the unknown noise-free image and the denoised output image. Given a mixed Poisson-Gaussian noise hypothesis, the denoising method minimizes the MSE estimate over a set of denoising processes to find the optimal one, in the sense of peak-signal-to-noise ratio (PSNR).\ref{Stein_1981}\ref{Luisier_2010}
+
+      The denoising processes are expressed as a linear combination of denoising threshold functions, from which only the weights are unknown. These weights are computed by a solution to a linear system of equations. This implies that all parameters of the method are determined automatically, without requiring user input.
+
+      The denoising method applies MSE minimization independently in each subband of a simple orthogonal decimated unnormalized Haar wavelet decomposition that preserves hypothesis noise statistics across scales. The denoising threshold functions involve several parameters, which provides more adaptability than the standard single-parameter thresholding functions. In particular, the thresholds are adapted to local estimates of the signal-dependent noise variance, which are derived from the corresponding coarse coefficients at the same scale. The coarse coefficients are also used to aggregate interscale relationships into the denoising functions.
+
+      The denoising method uses cycle-spinning to suppress visual artifacts due to the lack of translation invariance of the orthogonal decimated wavelet transform.\ref{Coifman_1995} For a range of translations or shifts, cycle-spinning shifts the noisy image, denoises the shifted image, and then unshifts the denoised image. The result so produced are averaged together to form the output denoised image, which is nearly translation invariant.
+
+      The denoising method provides an option to compensate for large spatial scale noise variance scaling due to flatfielding. Large spatial scale noise scaling variations, resulting from the flatfield correction of optical vignettes and detector sensitivity variations, are estimating by smoothing the flatfield. The denoising method compensates for these variations by multiplying the noisy image by the smoothed flatfield, denoising the product, and then dividing the result by the smoothed flatfield to form the output denoised image.
+   }
+
+   \subsection { Single frame image denoising } {
+      Figure \fignum {single_frame_image_parameters} shows parameters for denoising a 40 minute single frame exposure of the ionized hydrogen region Sharpless Sh2-202 obtained with a Takahashi FSQ-106EDX 106 mm f/5 refractor, a monochrome Kodak KAF-8300 detector binned 2x2, and an Astrodon 3 nm H-alpha filter.
+
+      The combination count parameter is set to 1 to specify that the image is a single frame exposure.
+
+      The flatfield view is set to the image used for flatfield calibration to enable large spatial scale flatfield compensation.
+
+      Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible denoising quality improvement.
+
+      The detector gain parameter is set to a value obtained from camera manufacture data provide by the EGAIN FITS file keyword. If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script can provide an estimate.
+
+      The standard deviation of detector additive white Gaussian noise parameter is set to an estimate of the quadrature sum of read noise and dark current noise in a 40 minute dark provided by the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script. Detector offset is set to 0 because the image is dark-subtracted.
+
+      The variance scale parameter is set to one to indicate that the nominal amount of denoising be performed. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
+
+      \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR).
+
+      The cycle-spin count parameter provides an adjustable tradeoff between output quality and processing time. The default cycle-spin count of 8 typically provides very good quality results in reasonable time. With this default, denoising a 4K x 4K pixel image requires several minutes of time on a late 2015 processor and a single-threaded PixInsight PJSR platform.
+
+      \figure [numbered:single_frame_image_parameters, float:left, marginleft:36pt] {
+         \figtag Single frame image parameters
+
+         \image [margintop:6pt] Usage/dialog_light_12_c.png
+      }
+
+      \nf
+
+      Figure \fignum {single_frame_stack} shows a crop of the noisy and denoised single frame images with nonlinear stretch in a stack from which only one is visible at a time for efficient image comparison.
+
+      \figure [numbered:single_frame_stack, float:left, marginleft:36pt] {
+         \figtag Single frame noisy and denoised images
+
+         \imageselect [margintop:6pt] {
+            Images/light_12_c_crop.png
+            { Noisy image }
+            Images/light_12_c_denoised_crop.png
+            { Denoised image }
+         }
+      }
+
+      \nf
+   }
+
+   \subsection { Average combination image denoising } {
+      Figure \fignum {average_combination_image_parameters} shows parameters for denoising an average combination of 8 registered frames of Sharpless Sh2-202, each a 40 minute exposure obtained in similar observing conditions with the same equipment.
+
+      The combination count parameter is set to 8 to specify that the image is an 8 frame average combination.
+
+      The interpolation method parameter is set to the Bicubic Spline method that was used by the \e{StarAlignment} process to register the frames. Interpolation method must be set equal to the \e{StarAlignment} process parameter \e{Interpolation} > \e{Pixel interpolation}.
+
+      The variance scale parameter of 1.078 is found by loading information from an \e{ImageIntegration} process log file. The log file is a manually created .txt file containing a copy of the Process Console log generated by the \e{ImageIntegration} process. The loaded value reflects variance scaling due to the image output normalization and weighting performed by the combination process.
+
+      The remaining parameters are identical to those shown in Figure \fignum {single_frame_image_parameters}.
+
+      \figure [numbered:average_combination_image_parameters, float:left, marginleft:36pt] {
+         \figtag Average combination image parameters
+
+         \image [margintop:6pt] Usage/dialog_integration_8.png
+      }
+
+      \nf
+
+      Figures \fignum {average_combination_stack} and \fignum {average_combination_stack2} show a crop of the noisy and denoised average combination images with nonlinear stretch in a stack for efficient image comparison. The differences are hard to see in Figure \fignum {average_combination_stack} at actual size. Figure \fignum {average_combination_stack2} shows a crop of the same images at a 2x zoom where the differences are more apparent.
+
+      \figure [numbered:average_combination_stack, float:left, marginleft:36pt] {
+         \figtag Average combination noisy and denoised images
+
+         \imageselect [margintop:6pt] {
+            Images/integration_8_crop.png
+            { Noisy image }
+            Images/integration_8_denoised_crop.png
+            { Denoised image }
+         }
+      }
+
+      \nf
+
+      \figure [numbered:average_combination_stack2, float:left, marginleft:36pt] {
+         \figtag Average combination noisy and denoised images
+
+         \imageselect [margintop:6pt] {
+            Images/integration_8_crop2.png
+            { Noisy image }
+            Images/integration_8_denoised_crop2.png
+            { Denoised image }
+         }
+      }
+
+      \nf
+   }
+
+   \subsection { Method noise } {
+      MureDenoise provides an option to generate the method noise image. Method noise is the noise guessed by the denoising method, defined as the difference between the noisy input and the denoised output. Method noise should track hypothesis noise statistics, and is strongly signal dependent due to the presence of Poisson noise.
+
+      Figures \fignum {method_noise_denoised} and \fignum {method_noise} show crops of a denoised higher dynamic range 40 minute single frame H-alpha image of the ionized hydrogen region IC 1318b/c and the corresponding method noise image, the latter shown with linear stretch. Signal dependent method noise variations are clearly visible, however image structures unrelated to noise are small.
+
+      \figure [numbered:method_noise_denoised, float:left, marginleft:36pt] {
+         \figtag Denoised image
+
+         \image [margintop:6pt] Images/light_01_c_denoised_crop.png
+      }
+
+      \nf
+
+      \figure [numbered:method_noise, float:left, marginleft:36pt] {
+         \figtag Method noise
+
+         \image [margintop:6pt] Images/light_01_c_method_noise_crop.png
+      }
+
+      \nf
+   }
+}
+
+\usage {
+   \subsection {MureDenoise} {
+      \image [marginleft:36pt] Usage/dialog_integration_8.png
+
+      \division { Image } {
+         \image [marginleft:36pt] Usage/image_group.png
+
+
+         \definition {
+            { View } {
+               The view of the linear monochannel image selected for denoising. The image must be a single frame image or an average combination of similarly exposed and registered frames. The size of the image must be at least 256 pixels in width and height.
+
+               For linear multichannel images, run the monochannel denoiser on each channel separately. For linear one shot color (OSC) images, denoise the color filter array (CFA) channels not the debayered RGB channels.
+            }
+
+            { Combination count } {
+               The average combination count of the image.
+
+               Combination count must be set to 1 for single frame images.
+
+               Combination count must be set to &eta; for average combinations of &eta; equally exposed and registered frames.
+            }
+
+            { Interpolation method } {
+               The interpolation method used to register images for combination, as defined by the \e{StarAlignment} process.
+
+               Interpolation method must be set equal to the \e{StarAlignment} process parameter \e{Interpolation} > \e{Pixel interpolation}. When \e{Auto} was selected as the \e{StarAlignment} pixel interpolation parameter, interpolation method must be set equal to the value recorded in the \e{StarAlignment} process log.
+
+               The script supports the following interpolation methods:
+
+               \list {
+                  {
+                     Nearest Neighbor
+                  }
+
+                  {
+                     Bilinear
+                  }
+
+                  {
+                     Bicubic Spline
+                  }
+
+                  {
+                     Lanczos-3
+                  }
+
+                  {
+                     Lanczos-4
+                  }
+
+                  {
+                     Lanczos-5
+                  }
+               }
+            }
+         }
+      }
+
+      \division { Flatfield } {
+         \image [marginleft:36pt] Usage/flatfield_group.png
+
+         \definition {
+            { View } {
+               To enable large spatial scale flatfield compensation, the view of the monochannel image used for flatfield calibration. To disable flatfield compensation, do not select a view.
+
+               Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible denoising quality improvement.
+
+               The standard deviation of the smoothed flatfield is written to the process console as the \e {Flatfield scale} value. The value is normalized as a percentage of the mean of the smoothed flatfield.
+            }
+         }
+      }
+
+      \division { Detector } {
+         \image [marginleft:36pt] Usage/detector_group.png
+
+         \definition {
+            { Gain } {
+               The gain of the detector in e-/DN.
+
+               If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script can provide an estimate.
+            }
+
+            { Gaussian noise } {
+               The standard deviation of additive white Gaussian noise of the detector in DN.
+
+               Gaussian noise should be set to an estimate of detector read noise or an estimate of the quadrature sum of read noise and dark current noise.
+
+               If detector Gaussian noise is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate.
+            }
+
+            { Offset } {
+               The offset of the detector in DN.
+
+               Offset must be set to 0 for bias or dark-subtracted images.
+
+               If detector offset is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate.
+            }
+         }
+      }
+
+      \division { Denoise } {
+         \image [marginleft:36pt] Usage/denoise_group.png
+
+         \definition {
+
+            { Variance scale } {
+               This parameter scales hypothesis noise variance. A value of one corresponds to nominal hypothesis noise variance and a corresponding nominal amount of denoising. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
+
+               \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR).
+
+               To account for the effects of average combination image normalization and weighting, variance scale may be loaded from \e{ImageIntegration} process log information.
+            }
+
+            { Load variance scale...} {
+               Loads the variance scale from information in an \e{ImageIntegration} process log file.
+
+               The log file is a manually created .txt file containing a copy of the Process Console log generated by the \e{ImageIntegration} process.
+
+               The loaded value equals &eta; &Sigma;(\e{w}\sub{\e{i}}\e{s}\sub{\e{i}})\sup{2} / (&Sigma;\e{w}\sub{\e{i}})\sup{2}, where \e{w}\sub{\e{i}} and \e{s}\sub{\e{i}} equal the weight and scale factor of the \e{i}\sup{th} combined image and &eta; equals the number of images combined.
+            }
+
+            { Cycle-spin count } {
+               Cycle-spin count provides an adjustable trade-off between output quality and processing time. Increasing the number of cycle-spins improves denoising quality, but also increases (nearly linearly) processing time.
+
+               The default cycle-spin count of 8 typically provides very good quality results in reasonable time. With this default, denoising a 4K x 4K pixel image requires several minutes of time on a late 2015 processor and a single-threaded PixInsight PJSR platform.
+            }
+
+            { Generate method noise image } {
+               Generate the method noise of the denoising process as a new image window. Method noise is the noise guessed by the denoising method, defined as the difference between the noisy input and the denoised output. Method noise should track hypothesis noise statistics, and is strongly signal dependent due to the presence of Poisson noise.
+
+               The standard deviation of the method noise image is written to the process console as the \e {Method noise} value in DN units.
+            }
+         }
+      }
+   }
+
+   \subsection { Button pane } {
+      \image [marginleft:36pt] Usage/button_pane.png
+
+      \definition {
+         { \image Usage/new_instance.png } {
+            Create a new instance.
+         }
+
+         { \image Usage/browse_documentation.png  } {
+            Open a browser to view documentation.
+         }
+
+         { \image Usage/reset.png } {
+            Reset all parameters.
+         }
+
+         { Denoise } {
+            Denoise the image.
+         }
+
+         { Dismiss } {
+            Dismiss the dialog or abort the denoising.
+         }
+
+      }
+   }
+
+}
+
+\section { Limitations and known issues } {
+   \s{ Warning }: The script is adapted to denoise linear monochannel images mainly corrupted by shot noise, read noise, and dark current noise which is typically the case for astronomical data. The script does not work properly for other noise distributions, for saturated images, for linearly or nonlinearly processed images, for median combinations, or for drizzle combinations.
+
+   \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
+
+   \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Underestimates of detector gain and overestimates of detector Gaussian noise risk similar problems.
+}
+
+\relatedscripts {
+   DarkBiasNoiseEstimator
+}
+
+\relatedscripts {
+   FlatSNREstimator
+}
+
+\reference Coifman_1995 {
+   R. Coifman and D. Donoho, “Translation invariant de-noising,” in \e { Lecture Notes in Statistics: Wavelets and Statistics }, 103:125–150, Springer Verlag, New York, 1995.
+}
+
+\reference Luisier_2010 {
+   F. Luisier, "The SURE-LET Approach to Image Denoising", École polytechnique fédérale de Lausanne, Thèse N° 4566, January 2010.
+}
+
+\reference Stein_1981 {
+   C. Stein, "Estimation of the Mean of a Multivariate Normal Distribution", \e { The Annals of Statistics }, 9(6):1135-1151, November 1981.
+}
+
+\make
+
+%% ****************************************************************************
+%% MureDenoise.pidoc - Released 2015/11/20 00:00:00 UTC
