@@ -1,0 +1,331 @@
+%% BatchStatisics.pidoc
+
+%% Copyright (C) 2014 Ian Lauwerys. All Rights Reserved.
+
+\documentclass PIScriptDoc
+
+\script BatchStatistics
+
+\keywords
+{
+   batch statistics, batch, statistics, noise evaluation, noise, spreadsheet, excel, csv, text, delimited, export
+}
+
+\author
+{
+   Ian Lauwerys (www.blackwaterskies.co.uk)
+}
+
+\copyright
+{
+   Copyright © 2014 Ian Lauwerys. All Rights Reserved.
+}
+
+\brief
+{
+   A script to measure statistics on batch of images and write them to a file.
+}
+
+\description
+{
+   \image BatchStatistics.png
+
+   The BatchStatistics script enables measurement of statistics on a batch of images. Results are output to the console and/or a text file in a variety of delimited formats such as CSV, suitable for import to spreadsheets and other external data analysis tools. All statistics and measures in the \tref Statistics {Statistics} process and \sref NoiseEvaluation {NoiseEvaluation} script are available for output.
+
+   Batchstatistics supports multi-image file formats and any number of channels per image.
+
+   \subsection { \label images_to_analyse Images to Analyse }
+   {
+      \list
+      {
+         {
+            Click the \s {Add} button to choose image files to analyse.  Any image file format supported by PixInsight should be suitable.  The script will support images with multiple channels (RGB, etc.) and it should also support multi-image file formats such as FITS.  (Please note that his latter feature is untested by me so please report any problems via this thread).
+
+            Note that the dialog can be resized vertically to show more list entries and horizontally to show long file names by dragging its edges as required.
+
+            \vs \e { \s {Important:} When working with multi-channel images, it is best to try to work with sets of images that have the same number of channels and in the same order. BatchStatistics will process images with any number of channels, but will warn you via the PixInsight console if the current image contains a different number of channels than the previous one. Given that the objective is to output to a file format containing columns of data, changing the number of channels between images will mean that the column headers do not always correspond to the data rows.  (Note that if you append results to an existing output file, BatchStatistics has no way to know how many columns of data it contains, so the operator is responsible for doing the right thing!)}
+
+            \vs BatchStatistics does not currently support working with open image views, previews, etc. \vs
+         }
+         {
+            The \s {Clear}, \s {Invert Selection} and \s {Remove Selected} buttons function in the same manner as other PixInsight scripts and processes should you need to amend the list.
+         }
+      }
+   }
+
+   \subsection { \label statistics_options Statistics Options }
+   {
+      \list
+      {
+         {
+            The \s {Number Format} combo box functions in the same manner as the existing \tref Statistics {Statistics} process.  You may output results using PixInsight's native Normalized Real format, or converted to Integer bit depth to match your camera's output format (typically 16 bit for CCD cameras or 12 / 14 bit for DSLR cameras).
+         }
+         {
+            The \s {Precision} spin box allows you to choose the number of digits in Normalized Real and Scientific formats between 0 and 17 places.
+         }
+         {
+            The \s {Scientific Notation} check box functions in the same manner as the existing \tref Statistics {Statistics} process.  It allows you to output Normalized Real format numbers in scientific notation.
+         }
+         {
+            The \s {Normalize} check box functions in the same manner as the existing \tref Statistics {Statistics} process.  It makes all scale estimates consistent with the standard deviation of a normal distribution.
+         }
+         {
+            The \s {Unclipped} check box functions in the same manner as the existing \tref Statistics {Statistics} process. By default, statistics are computed by clipping (ignoring) pixels with values of 0 ("black") and 1 (fully saturated) when this box is unchecked.  If you change the \s {Clipping Low} and \s {Clipping High} controls, then pixels with values outside the chosen clipping range will be ignored instead.  By checking the \s {Unclipped} check box, statistics are computed for all pixels in the image ignoring any clipping range.
+         }
+         {
+            \s {Clipping Low} and \s {Clipping High}: If the \s {Unclipped} check box is unchecked, any pixels with values less than \s {Clipping Low} or greater than \s {Clipping High} will be excluded from statistics calculations.
+         }
+      }
+   }
+
+   \subsection { \label metadata_and_statistics_to_output Metadata and Statistics to Output }
+   {
+      \list
+      {
+         {
+            Select the appropriate check boxes to choose which statistics to output.  Except as noted below, all options should function in the same manner as the existing \tref Statistics {Statistics} process.
+
+            \vs \e { \s {Important: Selecting all statistics may lead to long pauses between images.  The script may appear to have hung but be patient as some options (such as Qn) are computationally expensive and may take some time to complete.  The status bar and console messages will only update once all channels in an image have been fully processed.} }
+
+            \vs The following options are output once per image.  The corresponding column headers are also shown:
+            \list
+            {
+               {
+                  \s {File Path:}  \e {File_Path} The path of the image being analysed.
+               }
+               {
+                  \s {File Name:} \e {File_Name} The file name of the image being analysed.
+               }
+               {
+                  \s {Full File Name:} \e {File_Full_Name} The combined path and file name of the image being analysed.
+               }
+               {
+                  \s {Image Number:} \e {Image_Number} The image number within the file (useful for multi-image file formats only).
+               }
+               {
+                  \s {Clipping Low:} \e {Clipping_Low} The low range clipping value for statistics calculations.
+               \vs \e { \s {Note:} If \s {Unclipped} is selected, this column will be null.} \vs
+               }
+               {
+                  \s {Clipping High:} \e {Clipping_High} The high range clipping value for statistics calculations.
+               \vs \e { \s {Note:} If \s {Unclipped} is selected, this column will be null.} \vs
+               }
+               {
+                  \s {Image Width:} \e {Width} The width of the image in pixels.
+               }
+               {
+                  \s {Image Height:} \e {Height} The height of the image in pixels.
+               }
+               {
+                  \s {Number of Channels:}
+                  \list
+                  {
+                     {
+                        \e {Channels_First_Analysed} First channel number analysed.
+                     }
+                     {
+                        \e {Channels_Last_Analysed} Last channel number analysed.
+                     }
+                     {
+                        \e {Channels_Analysed} Number of channels analysed.
+                     }
+                  }
+                  \e { \s {Note:} that monochrome images usually have one channel (0), and colour images have three, Red (0), Green (1) and Blue (2), but this may vary depending on the image format.}
+               }
+            }
+
+            The following options are output once per channel in the image.  The corresponding column headers are also shown.  Each column header will have the channel number to which it relates appended, e.g. \e {Mean_0}, \e {Mean_1}, \e {Mean_2}, etc.
+            \list
+            {
+               {
+                  \s {Count Percent:} \e {Count_Pct_n} Pixels used for statistics calculations (i.e. not clipped) as a percentage of total pixels in image.
+               }
+               {
+                  \s {Count Pixels:} \e {Count_Px_n} Number of pixels used for statistics calculations (i.e. not clipped).
+               }
+               {
+                  \s {Mean:} \e {Mean_n} The arithmetic mean, i.e. the average of sample values.
+               }
+               {
+                  \s {Median:} \e {Median_n} The median of sample values.
+               }
+               {
+                  \s {Modulus:} \e {Modulus_n} The sum of absolute sample values.
+               }
+               {
+                  \s {Norm:} \e {Norm_n} The sum of sample values.
+               }
+               {
+                  \s {Sum of Squares:} \e {Sum_Of_Squares_n} The sum of the squares of sample values.
+               }
+               {
+                  \s {Mean of Squares:} \e {Mean_Of_Squares_n} The mean of the squares of sample values.
+               }
+               {
+                  \s {Variance:} \e {Variance_n} The variance from the mean of sample values.
+               }
+               {
+                  \s {Standard Deviation:} \e {StdDev_n} The standard deviation from the mean of sample values.
+               }
+               {
+                  \s {Average Absolute Deviation:} \e {AvgDev_n} The average absolute deviation from the median of sample values.
+               }
+               {
+                  \s {Median Absolute Deviation (MAD):} \e {MAD_n} The median absolute deviation from the median (MAD) of sample values.
+               }
+               {
+                  \s {Biweight Midvariance (BWMV):} \e {SQRT_BWMV_n} The square root of the biweight midvariance of sample values.
+               }
+               {
+                  \s {Percentage Bend Midvariance (PBMV):} \e {SQRT_PBMV_n} The square root of the percentage bend midvariance of sample values.
+               }
+               {
+                  \s {Sn:} \e {Sn_n} The Sn scale estimator of Rousseeuw and Croux of sample values.
+               }
+               {
+                  \s {Qn:} \e {Qn_n} The Qn scale estimator of Rousseeuw and Croux of sample values.
+               }
+               {
+                  \s {Minimum:} \e {Min_n} The minimum sample value.
+               }
+               {
+                  \s {Maximum:} \e {Max_n} The maximum sample value.
+               }
+               {
+                  \s {Minimum Position:}
+                  \list
+                  {
+                     {
+                        \e {Min_Pos_X_n} The X coordinate of the first occurrence of the minimum sample value.
+                     }
+                     {
+                        \e {Min_Pos_Y_n} The Y Coordinate of the first occurrence of the minimum sample value.
+                     }
+                  }
+               }
+               {
+                  \s {Maximum Position:}
+                  \list
+                  {
+                     {
+                        \e {Max_Pos_X_n} The X coordinate of the first occurrence of the maximum sample value.
+                     }
+                     {
+                        \e {Max_Pos_Y_n} The Y Coordinate of the first occurrence of the maximum sample value.
+                     }
+                  }
+               }
+            }
+
+            The following additional measures are available over and above those in the existing \tref Statistics {Statistics} process:
+
+            \list
+            {
+               {
+                  \s {Noise Evaluation:}
+                  \list
+                  {
+                     {
+                        \e {Sigma_MRS_n} The noise standard deviation calculated using the Multi-resolution Support method.
+                     }
+                     {
+                        \e {Count_MRS_n} The count of noise pixels calculated using the Multi-resolution Support method.
+                     }
+                     {
+                        \e {Layers_MRS_n} The number of layers used by the Multi-resolution Support method.
+
+                        \vs \e { \s {Note:} If the MRS method does not converge on a solution, these three columns will be null.} \vs
+                     }
+                     {
+                        \e {Sigma_K_Sigma_n} The noise standard deviation calculated using the K-Sigma method.
+                     }
+                     {
+                        \e {Count_K_Sigma_n} The count of noise pixels calculated using the K-Sigma method.
+
+                        \vs \e { \s {Note:} Noise Evaluation will produce the same results as the existing \sref NoiseEvaluation {NoiseEvaluation} script, except that the K-Sigma values will always be calculated regardless of whether the MRS method converges on a solution.}
+                     }
+                  }
+               }
+               {
+                  The \s {Select All} button checks all available statistics and metadata checkboxes.
+
+                  \vs \e{ \s {Caution: Computing all statistics for a large number of images will take a significant amount of time, so only select those that you actually require.} } \vs
+               }
+               {
+                  The \ {Select None} button unchecks all available statistics and metadata checkboxes.
+               }
+            }
+         }
+      }
+   }
+
+   \subsection { \label output_options Output Options }
+   {
+      \list {
+         {
+         The \s {File Format} combo box allows you to select various delimited output formats from Tab, Pipe, Colon, Space, Comma or CSV.
+
+         \vs \e { \s {Note:} Any data value which contains the delimiter value will be enclosed in double quotes (" ").  In the case of the CSV format, the delimiter is the comma character and all data values are enclosed in double quotes.  Line endings are the MS-DOS CR LF format as per RFC 4180.} \vs
+         }
+         {
+         The \s {To Console} checkbox outputs header and result rows to the PixInsight Console.  Due to informational messages (e.g. loading of images) this is not as useful as it could be as it is not possible to cut and paste a block of results directly from the console to your application, but it may be of use for single images (vs. cutting and pasting individual data values from the \tref Statistics {Statistics} process).
+
+         \vs \e { \s {Note:} MS Excel's \s {Text to Columns} option is your friend when cutting and pasting from the console.} \vs
+         }
+         {
+         The \s {To File} checkbox outputs header and result rows to a text file.
+         }
+         {
+         The \s {Overwrite} checkbox overwrites any existing text file of the same name as that specified in \s {Output File}.
+
+         \vs \e { \s {Important: No warning will be given when overwriting (this is by design for future developments in re-using script instances) so please be careful!} } \vs
+         }
+         {
+         The \s {Append} checkbox appends results to any existing text file of the same name as that specified in \s {Output File} or creates a new file if one does not exist.
+         }
+         {
+         The \s {Include Header} checkbox outputs a row of column headers appropriate to the first image in the file list.  Please see the note above about working with images containing varying numbers of channels.
+
+         \vs \e { \s {Note:} Headers are not written to existing files when appending, only to new ones if created (this is by design to ensure that each output file only contains a single header row at the top).} \vs
+         }
+         {
+         The \s {Output File...} button allows you to select a folder and select/specify a file name for output of results.  The chosen file name is displayed in the \s {Output File} text box.
+         }
+      }
+   }
+
+   \subsection { \label control_buttons Control Buttons }
+   {
+      \list
+      {
+         {
+            The \s {Analyse} button analyses all images in the file list and produces the selected statistics and metadata.
+         }
+         {
+            The \s {Exit} button exits the BatchStatistics script.
+
+            \vs \e { \s {Note}: No warning is given upon exit so please take care to create a process icon if required.} \vs
+         }
+         {
+            The blue \s {Process} triangle can be dragged to the PixInsight workspace to create a process icon.  All file entries in the list and the options are saved as part of the process icon. The process may be re-instantiated by right clicking the script icon, choosing \s {Launch Script Instance} and then clicking the round \s {Apply Global} icon at the bottom of the \s {Script} dialog.
+
+            \vs \e { \s {Note:} Dragging the "Process" triangle on to an image window has no effect at present. It is planned to allow processing of image statistics from open images using this method in a future version.} \vs
+         }
+         {
+            The \s {Help} button displays this help documentation, or hover over it for a brief summary in the tooltip.
+         }
+      }
+   }
+}
+
+\relatedscripts
+{
+   SubframeSelector, NoiseEvaluation
+}
+
+\relatedtools
+{
+   Statistics, ImageIntegration
+}
+
+\make
