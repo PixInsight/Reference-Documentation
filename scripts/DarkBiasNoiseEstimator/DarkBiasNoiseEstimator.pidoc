@@ -1,11 +1,48 @@
 %% ****************************************************************************
-%% DarkBiasNoiseEstimator.pidoc - Released 2014/12/19 00:00:00 UTC
+%% DarkBiasNoiseEstimator.pidoc - Released 2015/11/21 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of DarkBiasNoiseEstimator Script version 0.11
+%% This file is part of DarkBiasNoiseEstimator Script version 1.3
 %%
-%% Copyright (C) 2012-2014 Mike Schuster. All Rights Reserved.
-%% Copyright (C) 2003-2014 Pleiades Astrophoto S.L. All Rights Reserved.
+%% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
+%%
+%% Redistribution and use in both source and binary forms, with or without
+%% modification, is permitted provided that the following conditions are met:
+%%
+%% 1. All redistributions of source code must retain the above copyright
+%%    notice, this list of conditions and the following disclaimer.
+%%
+%% 2. All redistributions in binary form must reproduce the above copyright
+%%    notice, this list of conditions and the following disclaimer in the
+%%    documentation and/or other materials provided with the distribution.
+%%
+%% 3. Neither the names "PixInsight" and "Pleiades Astrophoto", nor the names
+%%    of their contributors, may be used to endorse or promote products derived
+%%    from this software without specific prior written permission. For written
+%%    permission, please contact info@pixinsight.com.
+%%
+%% 4. All products derived from this software, in any form whatsoever, must
+%%    reproduce the following acknowledgment in the end-user documentation
+%%    and/or other materials provided with the product:
+%%
+%%    "This product is based on software from the PixInsight project, developed
+%%    by Pleiades Astrophoto and its contributors (http://pixinsight.com/)."
+%%
+%%    Alternatively, if that is where third-party acknowledgments normally
+%%    appear, this acknowledgment must be reproduced in the product itself.
+%%
+%% THIS SOFTWARE IS PROVIDED BY PLEIADES ASTROPHOTO AND ITS CONTRIBUTORS
+%% "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+%% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+%% PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL PLEIADES ASTROPHOTO OR ITS
+%% CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+%% EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS
+%% INTERRUPTION; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; AND LOSS OF USE,
+%% DATA OR PROFITS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+%% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+%% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+%% POSSIBILITY OF SUCH DAMAGE.
 %% ****************************************************************************
 
 \documentclass PIScriptDoc
@@ -21,7 +58,7 @@
 }
 
 \copyright {
-   2012-2014 Mike Schuster. All Rights Reserved.
+   2012-2015 Mike Schuster. All Rights Reserved.
 }
 
 \brief {
@@ -36,6 +73,8 @@
    Spurious signal noise (e.g. cosmic-ray hits) is discounted from the offset estimation by measuring the typical median of local regions in the normalized sum of the darks or biases.
 
    Spatial noise (e.g. offset and dark current nonuniformity) and spurious signal noise (e.g. cosmic-ray hits) are discounted from the temporal noise estimation by measuring the typical normalized Rousseeuw and Croux S\sub{n} scale estimate \ref Rousseeuw_1993\sup{,} \ref Croux_1992 of local regions in the normalized difference between the darks or biases.
+
+   This document describes DarkBiasNoiseEstimator Version 1.4.
 }
 
 \usage {
@@ -60,7 +99,7 @@
          }
 
          { Temporal noise } {
-            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. read noise and dark noise) in the darks or biases, in data number (DN 16-bit \[0,65535\]) RMS units.
+            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. read noise and dark noise) in the darks or biases, in data number (DN 16-bit \[0,65535\]) units.
          }
       }
    }
@@ -87,8 +126,8 @@
 }
 
 \section { Applications } {
-   \subsection { Detector read noise in e- RMS estimation } {
-      Figure 1 shows results for flat dark subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds at -20{\deg}C. Since detector dark current is relatively low and the exposures are relatively short, dark noise is negligible and so the temporal noise estimate provides a reasonable estimate of the standard deviation of detector read noise in DN RMS. Using the camera vendor provided detector gain of 1.059 e-/DN, an estimate of the detector's binned 2x2 read noise at -20{\deg}C is 12.65 DN RMS * 1.059 -e/DN = 13.4 e- RMS.
+   \subsection { Detector read noise in e- estimation } {
+      Figure 1 shows results for flat dark subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds at -20{\deg}C. Since detector dark current is relatively low and the exposures are relatively short, dark noise is negligible and so the temporal noise estimate provides a reasonable estimate of the standard deviation of detector read noise in DN. Using the camera vendor provided detector gain of 1.059 e-/DN, an estimate of the detector's binned 2x2 read noise at -20{\deg}C is 12.65 DN * 1.059 -e/DN = 13.4 e-.
 
       \figure [float:left] {
          \image flat_dark_result.png
@@ -184,3 +223,6 @@
 }
 
 \make
+
+%% ****************************************************************************
+%% EOF DarkBiasNoiseEstimator.pidoc - Released 2015/11/21 00:00:00 UTC
