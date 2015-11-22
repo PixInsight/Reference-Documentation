@@ -1,8 +1,8 @@
 %% ****************************************************************************
-%% WavefrontEstimator.pidoc - Released 2015/10/05 00:00:00 UTC
+%% WavefrontEstimator.pidoc - Released 2015/11/23 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of WavefrontEstimator Script Version 1.16
+%% This file is part of WavefrontEstimator Script Version 1.18
 %%
 %% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
@@ -66,7 +66,7 @@
 }
 
 \description {
-   WavefrontEstimator estimates the on-axis optical wavefront of a telescope from long-exposure defocused stellar images. Exposure differences between an intra-focal image and an inverted (rotated by 180\deg) extra-focal image of the same bright star reflect local changes in the curvature of the wavefront.\ref{Roddier_1993a}\ref{Roddier_1991}\ref{Suiter_2009}\ref{Lequevre_2011} WavefrontEstimator measures the defocused image exposure differences, reconstructs the wavefront, and provides a diagnosis of wavefront aberrations. WavefrontEstimator relies on long combined exposures of at least 100 seconds and 100,000 e- to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio. The telescope must be in thermal equilibrium. Please review the \lref requirements_recommendations {Requirements and recommendations} and \lref frequently_asked_questions {Frequently asked questions} sections. This document describes WavefrontEstimator Version 1.16.
+   WavefrontEstimator estimates the on-axis optical wavefront of a telescope from long-exposure defocused stellar images. Exposure differences between an intra-focal image and an inverted (rotated by 180\deg) extra-focal image of the same bright star reflect local changes in the curvature of the wavefront.\ref{Roddier_1993a}\ref{Roddier_1991}\ref{Suiter_2009}\ref{Lequevre_2011} WavefrontEstimator measures the defocused image exposure differences, reconstructs the wavefront, and provides a diagnosis of wavefront aberrations. WavefrontEstimator relies on long combined exposures of at least 100 seconds and 100,000 e- to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio. The telescope must be in thermal equilibrium. Please review the \lref requirements_recommendations {Requirements and recommendations} and \lref frequently_asked_questions {Frequently asked questions} sections. This document describes WavefrontEstimator Version 1.18.
 
    The estimated wavefront defines a map of optical phase on the aperture plane, normalized to zero mean phase. Non-zero estimates correspond to wavefront aberrations and lower image quality. An estimate \e{d} in meters at a point in the wavefront defines a phase of -\e{k} \e{d} radians at the corresponding point on the aperture plane, with wavenumber \e{k} given by 2\pi / \e{λ} radians per meter, where \e{λ} is the observation wavelength in meters.
 
@@ -235,7 +235,7 @@
       \figure [numbered:wavefront_contour_plot_1, float:left, marginleft:36pt] {
          \figtag Estimated wavefront contour plot
 
-         \image [margintop:6pt] Output/wavefront_plot.png
+         \image [margintop:6pt] Output/wavefront_plot1.png
       }
 
       \nf
@@ -245,7 +245,7 @@
       \figure [numbered:interferogram_sagittal_plot_1, float:left, marginleft:36pt] {
          \figtag Synthetic interferogram sagittal
 
-         \image [margintop:6pt] Output/interferogram_sagittal_plot.png
+         \image [margintop:6pt] Output/interferogram_sagittal_plot1.png
       }
 
       \nf
@@ -253,7 +253,7 @@
       \figure [numbered:interferogram_meridional_plot_1, float:left, marginleft:36pt] {
          \figtag Synthetic interferogram meridional
 
-         \image [margintop:6pt] Output/interferogram_meridional_plot.png
+         \image [margintop:6pt] Output/interferogram_meridional_plot1.png
       }
 
       \nf
@@ -292,7 +292,7 @@
       \figure [numbered:encircled_energy_function_1, float:left, marginleft:36pt] {
          \figtag Estimated encircled energy function
 
-         \image [margintop:6pt] Output/encircled_energy_function_plot.png
+         \image [margintop:6pt] Output/encircled_energy_function_plot1.png
       }
 
       \nf
@@ -300,14 +300,14 @@
 
    \subsection { Modulation transfer function } {
 
-      Figure \fignum {modulation_transfer_function_plot_1} shows two sets of modulation transfer functions, one set for the telescope only and one set for the combined telescope and detector system, both at the observation wavelength. Each set includes three functions, two functions for the telescope's sagittal and meridional structures, and a third function for an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture. The plot shows the fractional modulation transfer in the point spread function as a function of spatial frequency in line-pairs per millimeter (lp/mm). At the spatial frequency of 40 lp/mm, the sagittal and meridional modulation equal approximately 83\% for the telescope, and 77\% for the telescope and detector. In both cases the loss of modulation due to aberrations when compared to the ideal system is about 4\%.
+      Figure \fignum {modulation_transfer_function_plot_1} shows two sets of modulation transfer functions, one set for the telescope only and one set for the combined telescope and detector system, both at the observation wavelength. Each set includes three functions, two functions for the telescope's sagittal and meridional structures, and a third function for an ideal optical system with the same aperture diameter, obstruction diameter, and focal length limited only by diffraction over the system's aperture. The plot shows the fractional modulation transfer in the point spread function as a function of spatial frequency in line-pairs per millimeter (lp/mm). At the spatial frequency of 40 lp/mm, the sagittal and meridional modulation equal approximately 83\% for the telescope, and 77\% for the telescope and detector. In both cases the loss of modulation due to aberrations when compared to the ideal system is about 4\%. At the modulation transfer of 50\%, the sagittal and meridional spatial frequency equal approximately 135 lp/mm for the telescope, and 78 lp/mm for the telescope and detector.
 
       The maximum spatial frequency in the point spread function of the ideal optics is defined as 0.001 / (\e{λ} \e{f} / \e{a}) lp/mm, where \e{λ} is observation wavelength, \e{f} is focal length, and \e{a} is aperture diameter in meters.\ref {Shepherd_2012} The maximum spatial frequency in the point spread function of the detector is defined as 0.001 / \e{p} lp/mm, where \e{p} is the pixel size of the detector in meters.
 
       \figure [numbered:modulation_transfer_function_plot_1, float:left, marginleft:36pt] {
          \figtag Estimated modulation transfer function plot
 
-         \image [margintop:6pt] Output/modulation_transfer_function_plot.png
+         \image [margintop:6pt] Output/modulation_transfer_function_plot1.png
       }
 
       \nf
@@ -325,7 +325,7 @@
 
    \subsection { Accuracy of wavefront estimation } {
 
-      To quantify the accuracy of the wavefront estimation for the Takahashi FSQ-106EDX refractor, intra-focal and extra-focal images were simulated for the telescope with known wavefronts at a 3.3 mm defocus distance and a 5.4 micron sampling interval in G-band. The wavefronts were constructed by summing the Zernike polynomials Z5, Z6, ..., and Z22 with random coefficients weighted by the factor 1 / \e{f}\wt\sup{1.5}, where \e{f} equals the sum of the associated polynomial's order and angular frequency magnitude. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+      To quantify the accuracy of the wavefront estimation for the Takahashi FSQ-106EDX refractor, intra-focal and extra-focal images were simulated for the telescope with known wavefronts at a 3.3 mm defocus distance and a 2.7 micron sampling interval in G-band. The wavefronts were constructed by summing the Zernike polynomials Z5, Z6, ..., and Z22 with random coefficients weighted by the factor 1 / \e{f}\wt\sup{1.5}, where \e{f} equals the sum of the associated polynomial's order and angular frequency magnitude. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
 
       Table \tblnum {wavefront_estimation_accuracy_1} shows the results of the simulations for known 20 and 40 nm RMS error wavefronts, which correspond to Strehl ratios of approximately 0.94 and 0.80, respectively, at the 526 nm observation wavelength. Columns show the known wavefront RMS error of the simulations, the mean estimated wavefront RMS error, the RMS error in the difference between the estimated and the known wavefront RMS errors, the RMS error in the difference between the estimated and known coefficients, and the relative error of the estimation. The relative error, defined as the ratio between the RMS error in the wavefront difference and the known wavefront RMS error, equals 5\% to 6\%.
 
@@ -737,11 +737,11 @@
 
                \list [spaced] {
                   {
-                     ~300 nm L-band
+                     ~300 nm L-bandwidth
                   }
 
                   {
-                     ~50-100 nm RGB-band
+                     ~50 to 100 nm RGB-bandwidth
                   }
                }
             }
@@ -962,10 +962,10 @@
          { \tbltag FITS keywords }
 
          { {Keyword} {Value} }
-         { {WEWSCALE} {Wavefront scale} }
+         { {WEWSCALE} {Wavefront scale 1/meters} }
          { {WEWOFFST} {Wavefront offset} }
-         { {WEDEFDIA} {Defocused image diameter pixels} }
-         { {WEDEFOBS} {Defocused obstruction diameter pixels} }
+         { {WEDEFDIA} {Defocused diameter px} }
+         { {WEDEFOBS} {Defocused obstruction diameter px} }
          { {WEOBWVLN} {Observation wavelength nm } }
       }
    }
@@ -987,7 +987,7 @@
 
       \nf
 
-      A normalized coordinate domain over which the wavefront estimate is defined. The domain may be useful for wavefront post-processing. The red channel of pixels within the domain equal 1, red channel of pixels outside the domain equal 0. The green and blue channels encode a normalized coordinate mesh, with green encoding the x-axis coordinate and blue encoding the y-axis coordinate. The coordinate mesh is normalized by one-half the estimated aperture diameter \e{d}, the mesh spacing is given by 2 / \e{d}. Coordinates may be decoded by applying the transformation 2 * (\e{c} - 0.5), where \e{c} is the channel value. The parameters \e{r} and \e{θ} of the Zernike polynomials are given by sqrt(\e{x}\sup{2} + \e{y}\sup{2}) and atan2(-\e{y}, \e{x}), respectively, where \e{x} and \e{y} are the mesh coordinates.
+      A normalized coordinate domain over which the wavefront estimate is defined. The domain may be useful for wavefront post-processing. The red channel of pixels within the domain equal 1, red channel of pixels outside the domain equal 0. The green and blue channels encode a normalized coordinate mesh, with green encoding the x-axis coordinate and blue encoding the y-axis coordinate. The coordinate mesh is normalized by one-half the estimated aperture diameter \e{d}, the mesh spacing is given by 2 / \e{d}. Coordinates may be decoded by applying the transformation 2 * (\e{c} - 0.5), where \e{c} is the channel value. The parameters \e{r} and \e{θ} of the Zernike polynomials are given by sqrt(\e{x}\sup{2} + \e{y}\sup{2}) and atan2(\e{y}, \e{x}), respectively, where \e{x} and \e{y} are the mesh coordinates.
 
       The image includes FITS keywords listed in table \tblnum {wavefront_domain_keywords}. WEDEFDIA is the estimated defocused image diameter in pixels. WEDEFOBS is the estimated obstruction diameter in pixels for obstructed telescopes, and 0 for unobstructed telescopes.
 
@@ -995,14 +995,14 @@
          { \tbltag FITS keywords }
 
          { {Keyword} {Value} }
-         { {WEDEFDIA} {Defocused image diameter pixels} }
-         { {WEDEFOBS} {Defocused obstruction diameter pixels} }
+         { {WEDEFDIA} {Defocused diameter px} }
+         { {WEDEFOBS} {Defocused obstruction diameter px} }
       }
    }
 
    \subsection {wavefront_plot.png} {
       \figure [unnumbered, float:left, marginleft:36pt] {
-         \image Output/wavefront_plot.png
+         \image Output/wavefront_plot1.png
       }
 
       \nf
@@ -1013,7 +1013,7 @@
 
    \subsection {interferogram_sagittal_plot.png} {
       \figure [unnumbered, float:left, marginleft:36pt] {
-         \image Output/interferogram_sagittal_plot.png
+         \image Output/interferogram_sagittal_plot1.png
       }
 
       \nf
@@ -1023,7 +1023,7 @@
 
    \subsection {interferogram_meridional_plot.png} {
       \figure [unnumbered, float:left, marginleft:36pt] {
-         \image Output/interferogram_meridional_plot.png
+         \image Output/interferogram_meridional_plot1.png
       }
 
       \nf
@@ -1047,30 +1047,30 @@ Strehl diameter, 3.485876, μm\n
    }
 
    \subsection {aberration_estimate.csv} {
-      A comma-separated-value file containg the aberration coefficients and the fractions of variation explained (FVE).
+      A comma-separated-value file containg the Zernike aberration coefficients.
 
       \figure [unnumbered, float:left, marginleft:36pt] {
          \c {
-Zernike aberration polynomial, Coefficient nm RMS, FVE\n
-Z5 (2; -2) Primary astigmatism oblique, -5.795833, 0.061920\n
-Z6 (2; 2) Primary astigmatism vertical, 2.136386, 0.008413\n
-Z7 (3; -1) Primary coma vertical, 7.629239, 0.107290\n
-Z8 (3; 1) Primary coma horizontal, -3.302908, 0.020109\n
-Z9 (3; -3) Primary trefoil vertical, -0.908760, 0.001522\n
-Z10 (3; 3) Primary trefoil oblique, -4.039619, 0.030080\n
-Z11 (4; 0) Primary spherical, 15.882907, 0.465005\n
-Z12 (4; 2) Secondary astigmatism vertical, 0.558439, 0.000575\n
-Z13 (4; -2) Secondary astigmatism oblique, -0.443466, 0.000363\n
-Z14 (4; 4) Primary tetrafoil vertical, 0.183385, 0.000062\n
-Z15 (4; -4) Primary tetrafoil oblique, -0.074167, 0.000010\n
-Z16 (5; 1) Secondary coma horizontal, -2.042358, 0.007689\n
-Z17 (5; -1) Secondary coma vertical, 1.777773, 0.005826\n
-Z18 (5; 3) Secondary trefoil oblique, 2.522522, 0.011729\n
-Z19 (5; -3) Secondary trefoil vertical, -0.464774, 0.000398\n
-Z20 (5; 5) Primary pentafoil oblique, -0.607572, 0.000680\n
-Z21 (5; -5) Primary pentafoil vertical, -0.460818, 0.000391\n
-Z22 (6; 0) Secondary spherical, -11.318576, 0.236147\n
-Residual aberration, 4.816736, 0.042767\n
+Zernike aberration polynomial, Coefficient nm RMS\n
+Z5 (2; -2) Primary astigmatism oblique, -5.795833\n
+Z6 (2; 2) Primary astigmatism vertical, 2.136386\n
+Z7 (3; -1) Primary coma vertical, 7.629239\n
+Z8 (3; 1) Primary coma horizontal, -3.302908\n
+Z9 (3; -3) Primary trefoil vertical, -0.908760\n
+Z10 (3; 3) Primary trefoil oblique, -4.039619\n
+Z11 (4; 0) Primary spherical, 15.882907\n
+Z12 (4; 2) Secondary astigmatism vertical, 0.558439\n
+Z13 (4; -2) Secondary astigmatism oblique, -0.443466\n
+Z14 (4; 4) Primary tetrafoil vertical, 0.183385\n
+Z15 (4; -4) Primary tetrafoil oblique, -0.074167\n
+Z16 (5; 1) Secondary coma horizontal, -2.042358\n
+Z17 (5; -1) Secondary coma vertical, 1.777773\n
+Z18 (5; 3) Secondary trefoil oblique, 2.522522\n
+Z19 (5; -3) Secondary trefoil vertical, -0.464774\n
+Z20 (5; 5) Primary pentafoil oblique, -0.607572\n
+Z21 (5; -5) Primary pentafoil vertical, -0.460818\n
+Z22 (6; 0) Secondary spherical, -11.318576\n
+Residual aberration, 4.816736\n
          }
       }
    }
@@ -1090,7 +1090,7 @@ Residual aberration, 4.816736, 0.042767\n
          { \tbltag FITS keywords }
 
          { {Keyword} {Value} }
-         { {WEPSFPXS} {Pixel size in microns} }
+         { {WEPSFPXS} {Pixel size microns} }
          { {WEOBWVLN} {Observation wavelength nm } }
       }
    }
@@ -1107,7 +1107,7 @@ Residual aberration, 4.816736, 0.042767\n
 
    \subsection {encircled_energy_function_plot.png} {
       \figure [unnumbered, float:left, marginleft:36pt] {
-         \image Output/encircled_energy_function_plot.png
+         \image Output/encircled_energy_function_plot1.png
       }
 
       \nf
@@ -1152,7 +1152,7 @@ Diameter μm, Encircled energy\n
          { \tbltag FITS keywords }
 
          { {Keyword} {Value} }
-         { {WEMTFPXS} {Pixel size in lp/mm} }
+         { {WEMTFPXS} {Pixel size lp/mm} }
          { {WEOBWVLN} {Observation wavelength nm } }
       }
    }
@@ -1169,7 +1169,7 @@ Diameter μm, Encircled energy\n
 
    \subsection {modulation_transfer_function_plot.png} {
       \figure [unnumbered, float:left, marginleft:36pt] {
-         \image Output/modulation_transfer_function_plot.png
+         \image Output/modulation_transfer_function_plot1.png
       }
 
       \nf
@@ -1230,7 +1230,7 @@ Spatial frequency lp/mm, Sagittal modulation transfer, Meridional modulation tra
 PixInsight Core 01.08.03.1123 Ripley (x64)\n
 ************************************************************\n
 \n
-WavefrontEstimator Version 1.16\n
+WavefrontEstimator Version 1.18\n
 \n
 Parameters:\n
 Aperture diameter: 106.0 mm\n
@@ -1408,30 +1408,30 @@ Wavefront error: 23.3 nm RMS, 1/22.6 λ RMS\n
    }
 
    \subsection { Aberration estimation } {
-      The log includes a list of the aberration polynomial coefficient estimates and the residual aberration not explained by the least-squares fit. The fraction of wavefront error variance explained by the polynomial is listed in the FVE column.
+      The log includes a list of the aberration polynomial coefficient estimates and the residual aberration not explained by the least-squares fit.
 
       \figure [unnumbered, float:left, marginleft:36pt] {
          \c {
 Aberration estimation:\n
-Z5 (2, -2) Primary astigmatism oblique: -5.8 nm RMS, 6.2 \% FVE\n
-Z6 (2, 2) Primary astigmatism vertical: 2.1 nm RMS, 0.8 \% FVE\n
-Z7 (3, -1) Primary coma vertical: 7.6 nm RMS, 10.7 \% FVE\n
-Z8 (3, 1) Primary coma horizontal: -3.3 nm RMS, 2.0 \% FVE\n
-Z9 (3, -3) Primary trefoil vertical: -0.9 nm RMS, 0.2 \% FVE\n
-Z10 (3, 3) Primary trefoil oblique: -4.0 nm RMS, 3.0 \% FVE\n
-Z11 (4, 0) Primary spherical: 15.9 nm RMS, 46.5 \% FVE\n
-Z12 (4, 2) Secondary astigmatism vertical: 0.6 nm RMS, 0.1 \% FVE\n
-Z13 (4, -2) Secondary astigmatism oblique: -0.4 nm RMS, 0.0 \% FVE\n
-Z14 (4, 4) Primary tetrafoil vertical: 0.2 nm RMS, 0.0 \% FVE\n
-Z15 (4, -4) Primary tetrafoil oblique: -0.1 nm RMS, 0.0 \% FVE\n
-Z16 (5, 1) Secondary coma horizontal: -2.0 nm RMS, 0.8 \% FVE\n
-Z17 (5, -1) Secondary coma vertical: 1.8 nm RMS, 0.6 \% FVE\n
-Z18 (5, 3) Secondary trefoil oblique: 2.5 nm RMS, 1.2 \% FVE\n
-Z19 (5, -3) Secondary trefoil vertical: -0.5 nm RMS, 0.0 \% FVE\n
-Z20 (5, 5) Primary pentafoil oblique: -0.6 nm RMS, 0.1 \% FVE\n
-Z21 (5, -5) Primary pentafoil vertical: -0.5 nm RMS, 0.0 \% FVE\n
-Z22 (6, 0) Secondary spherical: -11.3 nm RMS, 23.6 \% FVE\n
-Residual aberration: 4.8 nm RMS, 4.3 \% FVE\n
+Z5 (2, -2) Primary astigmatism oblique: -5.8 nm RMS\n
+Z6 (2, 2) Primary astigmatism vertical: 2.1 nm RMS\n
+Z7 (3, -1) Primary coma vertical: 7.6 nm RMS\n
+Z8 (3, 1) Primary coma horizontal: -3.3 nm RMS\n
+Z9 (3, -3) Primary trefoil vertical: -0.9 nm RMS\n
+Z10 (3, 3) Primary trefoil oblique: -4.0 nm RMS\n
+Z11 (4, 0) Primary spherical: 15.9 nm RMS\n
+Z12 (4, 2) Secondary astigmatism vertical: 0.6 nm RMS\n
+Z13 (4, -2) Secondary astigmatism oblique: -0.4 nm RMS\n
+Z14 (4, 4) Primary tetrafoil vertical: 0.2 nm RMS\n
+Z15 (4, -4) Primary tetrafoil oblique: -0.1 nm RMS\n
+Z16 (5, 1) Secondary coma horizontal: -2.0 nm RMS\n
+Z17 (5, -1) Secondary coma vertical: 1.8 nm RMS\n
+Z18 (5, 3) Secondary trefoil oblique: 2.5 nm RMS\n
+Z19 (5, -3) Secondary trefoil vertical: -0.5 nm RMS\n
+Z20 (5, 5) Primary pentafoil oblique: -0.6 nm RMS\n
+Z21 (5, -5) Primary pentafoil vertical: -0.5 nm RMS\n
+Z22 (6, 0) Secondary spherical: -11.3 nm RMS\n
+Residual aberration: 4.8 nm RMS\n
          }
       }
    }
@@ -1454,34 +1454,30 @@ Strehl diameter: 3.49 μm, 1.36 arcsec\n
       \figure [unnumbered, float:left, marginleft:36pt] {
          \c {
 Encircled energy function estimation:\n
-Encircled energy 50\% diameter: 2.98 μm, 1.16 arcsec\n
-Encircled energy 80\% diameter: 8.24 μm, 3.20 arcsec\n
+EE 50\% diameter: 2.98 μm, 1.16 arcsec\n
+EE 80\% diameter: 8.24 μm, 3.20 arcsec\n
          }
       }
    }
 
    \subsection { Modulation transfer function estimation } {
-      The log includes estimates of sagittal and meridional modulation transfer at the spatial frequencies 5, 10, 20, and 40 lp/mm. Estimates for the telescope and the combined telescope and detector system are included.
+      The log includes estimates of the 80\% and 50\% modulation transfer spatial frequencies. Estimates for the telescope and the combined telescope and detector system are included.
       \figure [unnumbered, float:left, marginleft:36pt] {
          \c {
 Modulation transfer function estimation:\n
 Telescope:\n
-5 lp/mm: Sagittal 98.2\%, Meridional 98.2\%\n
-10 lp/mm: Sagittal 96.3\%, Meridional 96.3\%\n
-20 lp/mm: Sagittal 92.2\%, Meridional 92.1\%\n
-40 lp/mm: Sagittal 83.2\%, Meridional 83.3\%\n
+MTF 80\% spatial frequency: Sagittal 47.3 lp/mm, Meridional 47.4 lp/mm\n
+MTF 50\% spatial frequency: Sagittal 136.0 lp/mm, Meridional 134.3 lp/mm\n
 Telescope and Detector:\n
-5 lp/mm: Sagittal 98.1\%, Meridional 98.1\%\n
-10 lp/mm: Sagittal 95.9\%, Meridional 95.8\%\n
-20 lp/mm: Sagittal 90.4\%, Meridional 90.4\%\n
-40 lp/mm: Sagittal 77.0\%, Meridional 77.0\%\n
+MTF 80\% spatial frequency: Sagittal 35.8 lp/mm, Meridional 35.8 lp/mm\n
+MTF 50\% spatial frequency: Sagittal 77.7 lp/mm, Meridional 77.6 lp/mm\n
          }
       }
    }
 }
 
 \section { \label unobstructed_telescope_aberrations Estimation of unobstructed telescope aberrations } {
-   Intra-focal and extra-focal images were simulated for an unobstructed 106 mm f/5 telescope with known aberrations at a 3.3 mm defocus distance and a 5.4 micron sampling interval in G-band with a corrugation resolution of 11.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+   Intra-focal and extra-focal images were simulated for an unobstructed 106 mm f/5 telescope with known aberrations at a 3.3 mm defocus distance and a 2.7 micron sampling interval in G-band with a corrugation resolution of 11.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
 
    The sections below show test results, each corresponding to a simulation with a single circular Zernike aberration polynomial coefficient set to 20 nm RMS. Each section shows the input images, the estimated wavefront with linear stretch, the estimated point spread function with non-linear stretch, and the Zernike polynomial definition. The first section shows the results for an ideal unobstructed 106 mm f/5 telescope limited only by diffraction over the system's aperture.
 
@@ -2047,7 +2043,7 @@ Telescope and Detector:\n
 }
 
 \section { \label obstructed_telescope_aberrations Estimation of obstructed telescope aberrations } {
-   Intra-focal and extra-focal images were simulated for an 58\% obstructed 250 mm f/5 telescope with known aberrations at a 6.1 mm defocus distance and a 9.0 micron sampling interval in G-band with a corrugation resolution of 15.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
+   Intra-focal and extra-focal images were simulated for an 58\% obstructed 250 mm f/5 telescope with known aberrations at a 6.1 mm defocus distance and a 2.7 micron sampling interval in G-band with a corrugation resolution of 15.3 cycles per aperture diameter. The images were computed by Fourier transform based numerical integration of the Rayleigh-Sommerfeld diffraction integral.\ref{Shen_2006}\ref{Laine_2006}
 
    The sections below show test results, each corresponding to a simulation with a single annular Zernike aberration polynomial coefficient set to 20 nm RMS. Each section shows the input images, the estimated wavefront with linear stretch, the estimated point spread function with non-linear stretch, and the Zernike polynomial definition. The first section shows the results for an ideal 58\% obstructed 250 mm f/5 telescope limited only by diffraction over the system's aperture.
 
@@ -2875,4 +2871,4 @@ Telescope and Detector:\n
 \make
 
 %% ****************************************************************************
-%% EOF WavefrontEstimator.pidoc - Released 2015/10/05 00:00:00 UTC
+%% EOF WavefrontEstimator.pidoc - Released 2015/11/23 00:00:00 UTC
