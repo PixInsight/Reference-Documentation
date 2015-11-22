@@ -2,7 +2,7 @@
 %% MureDenoise.pidoc - Released 2015/11/20 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of MureDenoise Script Version 1.10
+%% This file is part of MureDenoise Script Version 1.11
 %%
 %% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
@@ -72,13 +72,13 @@
 
    The script applies an interscale wavelet mixed noise unbiased risk estimator (MURE) to find a denoised output image that minimizes an estimate of the oracle mean-squared error (MSE), or "risk", between the denoised output image and the unknown noise-free image.\ref{Stein_1981}\ref{Luisier_2010}
 
-   \s{ Note }: For linear multichannel images, run the monochannel denoiser on each channel separately. For linear one shot color (OSC) images, denoise the color filter array (CFA) channels not the debayered RGB channels.
+   \s{ Note }: For linear multichannel images from monocolor detectors, run the monochannel denoiser on each channel separately. The script does not work properly for images from one shot color (OSC) detectors.
 
    \s{ Warning }: The script is adapted to denoise linear monochannel images mainly corrupted by shot noise, read noise, and dark current noise which is typically the case for astronomical data. The script does not work properly for other noise distributions, for saturated images, for linearly or nonlinearly processed images, for median combinations, or for drizzle combinations.
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   This document describes MureDenoise Version 1.10.
+   This document describes MureDenoise Version 1.11.
 
    \subsection { Mixed Poisson-Gaussian noise hypothesis } {
       The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
@@ -120,13 +120,7 @@
 
       The second component of the covariance hypothesis is the combination covariance function R(&eta;, &iota;) that estimates the ratio of the normalized variance of the average combination of &eta; images registered with interpolation method &iota; to the normalized variance of an average combination of &eta; unregistered images. R(&eta;, &iota;) is defined as (1 + (&eta; - 1) R(&iota;)) / &eta;. The numerator represents the variance sum of one unregistered reference image with unit variance and &eta; - 1 registered images each with R(&iota;) variance. The denominator represents the variance sum of &eta; unregistered images each with unit variance.
 
-      The final component of the covariance hypothesis is the refinement covariance function R(&rho;, &eta;, &iota;) that estimates the ratio of the normalized variance of coarse coefficients of a registered combination to the normalized variance of coarse coefficients of an unregistered combination at level of wavelet refinement &rho; in an unnormalized Haar wavelet decomposition. R(&rho;, &eta;, &iota;) is defined as (2\sup{&rho;} - 1 + sqrt(R(&eta;, &iota;)))\sup{2} / 4\sup{&rho;}. The numerator models an exponential decrease in relative covariance with increasing level of refinement. This decrease follows from the spatially local nature of the covariance introduced by interpolation. In the limit the numerator approaches the 4\sup{&rho;} denominator, the normalized variance of coarse coefficients in a unnormalized Haar wavelet decomposition of statistically independent data. Figure \fignum {refinement_covariance_function} shows the refinement covariance function for an average combination of 10 images for several interpolation methods.
-
-      \figure [numbered:refinement_covariance_function, float:left, marginleft:36pt] {
-         \figtag Refinement covariance function for an average combination of 10 images
-
-         \image [margintop:6pt] Images/refinement_covariance.png
-      }
+      The final component of the covariance hypothesis is the refinement covariance function R(&rho;, &eta;, &iota;) that estimates the ratio of the normalized variance of coarse coefficients of a registered combination to the normalized variance of coarse coefficients of an unregistered combination at level of wavelet refinement &rho; in an unnormalized Haar wavelet decomposition. R(&rho;, &eta;, &iota;) is defined as 1 - (1 - R(&eta;, &iota;)) / 1.5\sup{&rho;}. The function models empirical evidence of an exponential decrease in relative covariance with increasing level of refinement. This decrease follows from the spatially local nature of the covariance introduced by interpolation.
    }
 
    \subsection { Denoising method } {
@@ -190,8 +184,6 @@
       The combination count parameter is set to 8 to specify that the image is an 8 frame average combination.
 
       The interpolation method parameter is set to the Bicubic Spline method that was used by the \e{StarAlignment} process to register the frames. Interpolation method must be set equal to the \e{StarAlignment} process parameter \e{Interpolation} > \e{Pixel interpolation}.
-
-      The variance scale parameter of 1.078 is found by loading information from an \e{ImageIntegration} process log file. The log file is a manually created .txt file containing a copy of the Process Console log generated by the \e{ImageIntegration} process. The loaded value reflects variance scaling due to the image output normalization and weighting performed by the combination process.
 
       The remaining parameters are identical to those shown in Figure \fignum {single_frame_image_parameters}.
 
