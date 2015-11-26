@@ -1,8 +1,8 @@
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2015/11/20 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2015/11/26 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of MureDenoise Script Version 1.11
+%% This file is part of MureDenoise Script Version 1.12
 %%
 %% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
@@ -78,7 +78,7 @@
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   This document describes MureDenoise Version 1.11.
+   This document describes MureDenoise Version 1.12.
 
    \subsection { Mixed Poisson-Gaussian noise hypothesis } {
       The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
@@ -104,7 +104,7 @@
    }
 
    \subsection { Covariance hypothesis } {
-      The denoising method employs a covariance hypothesis to compensate for the correlation or covariance introduced by the image registration process. The interpolation performed by image registration results in positive covariance between pixels within the interpolation filter's local region of support. This covariance influences denoising quality in two ways. First, variance in a registered image is reduced due to the positive covariance. Second, variance in the coarse coefficients of a wavelet decomposition of a registered image is increased due to the positive covariance. This increase follows from the fact that the variance of a sum of two correlated random variables equals the sum of their variances plus twice their covariance. The covariance hypothesis models both of these influences to improve denoising quality, as a function of level of wavelet refinement &rho;, average combination count &eta;, and interpolation method &iota;.
+      The denoising method employs a covariance hypothesis to compensate for the correlation or covariance introduced by the image registration process. The interpolation performed by image registration results in positive covariance between pixels within the interpolation filter's local region of support, which reduces the variance in a registered image. The covariance hypothesis models this effect to improve denoising quality as a function of average combination count &eta; and interpolation method &iota;.
 
       The first component of the covariance hypothesis is the interpolation covariance function R(&iota;) that estimates the average multiplicative scaling of variance that results from an application of interpolation method &iota;. R(&iota;) is defined as the integral over a unit pixel domain of the sum of interpolation method's filter coefficients squared. Table \tblnum {interpolation_covariance_function} shows approximate values of R(&iota;) for the supported interpolation methods.
 
@@ -115,12 +115,9 @@
          { {Bicubic Spline} {0.663} }
          { {Lanczos-3} {0.799} }
          { {Lanczos-4} {0.835} }
-         { {Lanczos-5} {0.873} }
       }
 
       The second component of the covariance hypothesis is the combination covariance function R(&eta;, &iota;) that estimates the ratio of the normalized variance of the average combination of &eta; images registered with interpolation method &iota; to the normalized variance of an average combination of &eta; unregistered images. R(&eta;, &iota;) is defined as (1 + (&eta; - 1) R(&iota;)) / &eta;. The numerator represents the variance sum of one unregistered reference image with unit variance and &eta; - 1 registered images each with R(&iota;) variance. The denominator represents the variance sum of &eta; unregistered images each with unit variance.
-
-      The final component of the covariance hypothesis is the refinement covariance function R(&rho;, &eta;, &iota;) that estimates the ratio of the normalized variance of coarse coefficients of a registered combination to the normalized variance of coarse coefficients of an unregistered combination at level of wavelet refinement &rho; in an unnormalized Haar wavelet decomposition. R(&rho;, &eta;, &iota;) is defined as 1 - (1 - R(&eta;, &iota;)) / 1.5\sup{&rho;}. The function models empirical evidence of an exponential decrease in relative covariance with increasing level of refinement. This decrease follows from the spatially local nature of the covariance introduced by interpolation.
    }
 
    \subsection { Denoising method } {
@@ -157,7 +154,7 @@
       \figure [numbered:single_frame_image_parameters, float:left, marginleft:36pt] {
          \figtag Single frame image parameters
 
-         \image [margintop:6pt] Usage/dialog_light_12_c.png
+         \image [margintop:6pt] Usage/dialog_reference.png
       }
 
       \nf
@@ -168,9 +165,9 @@
          \figtag Single frame noisy and denoised images
 
          \imageselect [margintop:6pt] {
-            Images/light_12_c_crop.png
+            Images/reference_noisy_crop1.png
             { Noisy image }
-            Images/light_12_c_denoised_crop.png
+            Images/reference_denoised_crop1.png
             { Denoised image }
          }
       }
@@ -201,9 +198,9 @@
          \figtag Average combination noisy and denoised images
 
          \imageselect [margintop:6pt] {
-            Images/integration_8_crop.png
+            Images/integration_8_noisy_crop1.png
             { Noisy image }
-            Images/integration_8_denoised_crop.png
+            Images/integration_8_denoised_crop1.png
             { Denoised image }
          }
       }
@@ -214,7 +211,7 @@
          \figtag Average combination noisy and denoised images
 
          \imageselect [margintop:6pt] {
-            Images/integration_8_crop2.png
+            Images/integration_8_noisy_crop2.png
             { Noisy image }
             Images/integration_8_denoised_crop2.png
             { Denoised image }
@@ -296,10 +293,6 @@
 
                   {
                      Lanczos-4
-                  }
-
-                  {
-                     Lanczos-5
                   }
                }
             }
@@ -444,4 +437,4 @@
 \make
 
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2015/11/20 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2015/11/26 00:00:00 UTC
