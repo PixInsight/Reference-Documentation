@@ -62,7 +62,7 @@
       {
       There must be sufficient source images to fully 'wet' the final image.  Drizzling doesn't create additional data, rather it takes the total signal in the source images and spreads it across more pixels.  This causes the final image to be noisier than an image created from the same data using a normal registration and integration process.  Therefore drizzling requires more source images to create an acceptable signal to noise ratio in the final image.  This is especially the case for Bayer drizzling, since two (Green) or three (Red, Blue) out of every four source pixels will be black and thus contribute no signal to that colour channel in the final image.
 
-      \vs \e { \s {Note}: There are no hard and fast rules as to the number or source images required, as this will depend on the target, sky background, etc.  As a rule of thumb, tens to hundreds of source images are needed for a successful Bayer drizzle.  Bear in mind that for a typical RGGB CFA, the Green channel contributes double the signal of the Red and Blue channels by virtue of there being twice as many Green filtered sensor pixels.  Therefor sufficient source signal is required to achieve the desired SNR in the Red and Blue channels.} \vs
+      \vs \e { \s {Note}: There are no hard and fast rules as to the number or source images required, as this will depend on the target, sky background, etc.  As a rule of thumb, tens to hundreds of source images are needed for a successful Bayer drizzle.  Bear in mind that for a typical RGGB CFA, the Green channel contributes double the signal of the Red and Blue channels by virtue of there being twice as many Green filtered sensor pixels.  Therefore sufficient source signal is required to achieve the desired SNR in the Red and Blue channels.} \vs
       }
    }
 
@@ -92,7 +92,7 @@
       {
          The next step is to debayer the calibrated source images using the \tref Debayer {Debayer} tool or the \s {BatchDebayer} script.  Debayering necessary to enable subsquent tools to generate the drizzle data files required for \tref DrizzleIntegration {DrizzleIntegration}.  Use an appropriate debayering algorithm such as VNG or AHD (but not superpixel).
       
-      At the end of the whole process, the calibrated images generated at the end of \lref step_1 above. will be reused, but for now the workflow proceeds with the debayered images.
+      At the end of the whole process, the calibrated images generated at the end of \lref step_1 {Step 1} above. will be reused, but for now the workflow proceeds with the debayered images.
       }
 
       \subsection { \label step_3 Step 3. Registration }
@@ -118,12 +118,12 @@
       
          \vs \e { \s {Note}:  When a .drz file has been associated with an input image, a special "<d>" indicator is shown on the Input Images file list for the corresponding item.  For a drizzle data file to be associated with its corresponding registered image, both files must have the same file name (only different suffixes).} \vs
 
-         Secondly, activate the \s {Generate Drizzle Data} option on \tref ImageIntegration {ImageIntegration}.  Now proceed to integrate the images as usual: Find optimal pixel rejection parameters and maximize SNR in the result, just as for normal image integration tasks.  Each time the \tref  {ImageIntegration} tool is run, the selected .drz files are updated with statistical and rejection data automatically.  Ensure that the final integration is performed \s {without} a selected region of interest so that all rejection data is generated.
+         Secondly, activate the \s {Generate Drizzle Data} option on \tref ImageIntegration {ImageIntegration}.  Now proceed to integrate the images as usual: Find optimal pixel rejection parameters and maximize SNR in the result, just as for normal image integration tasks.  Each time the \tref ImageIntegration {ImageIntegration} tool is run, the selected .drz files are updated with statistical and rejection data automatically.  Ensure that the final integration is performed \s {without} a selected region of interest so that all rejection data is generated.
       }
 
       \subsection { \label step_5 Step 5. Drizzle Integration (OPTIONAL) }
       {
-         In order to proceed directly to a Bayer drizzle skip to \lref step_6 below. To test a standard drizzle integration first, complete this Step 5.
+         In order to proceed directly to a Bayer drizzle skip to \lref step_6 {Step 6} below. To test a standard drizzle integration first, complete this Step 5.
 
          After \tref StarAlignment {StarAlignment} and \tref ImageIntegration {ImageIntegration}, the drizzle data files (*.drz) are now ready for the \tref DrizzleIntegration {DrizzleIntegration} tool.  Select the .drz files generated above, execute the tool globally and a drizzle integrated image will be generated.
 
@@ -168,11 +168,11 @@
       
          f. Image normalization parameters, including estimates of statistical location and scale.
       
-         g. Image weighting parameters.  These are normally based on noise estimates computed during \lref step_1 above (and stored as XISF properties and FITS keywords in the image), but can also be generated from statistical parameters or image properties/keywords by \tref ImageIntegration {ImageIntegration} during \lref step_4 above if necessary.
+         g. Image weighting parameters.  These are normally based on noise estimates computed during \lref step_1 {Step 1} above (and stored as XISF properties and FITS keywords in the image), but can also be generated from statistical parameters or image properties/keywords by \tref ImageIntegration {ImageIntegration} during \lref step_4 {Step 4} above if necessary.
       
          Drizzle data files are created by the \tref StarAlignment {StarAlignment} tool with items a, b, c and d. The \tref ImageIntegration {ImageIntegration} tool updates drizzle files with items e, f and g. 
       
-         In order to conduct a Bayer drizzle, it is necessary to replace item a. with the path to the calibrated mono CFA image, that is, the final images generated at the end of \lref step_1 above \s {after} calibration (and optionally cosmeticisation) but \s {before} applying the debayering process.  However, the \tref {DrizzleIntegration} process cannot use the monochrome CFA data directly because the RGB color channels would become intermixed in the integrated image.
+         In order to conduct a Bayer drizzle, it is necessary to replace item a. with the path to the calibrated mono CFA image, that is, the final images generated at the end of \lref step_1 {Step 1} above \s {after} calibration (and optionally cosmeticisation) but \s {before} applying the debayering process.  However, the \tref DrizzleIntegration {DrizzleIntegration} process cannot use the monochrome CFA data directly because the RGB color channels would become intermixed in the integrated image.
       
          \image MonoToRGB.png
       
@@ -186,7 +186,7 @@
       
          \vs \e { \s {Note}:  The Bayer drizzle workflow can only be implemented as a fully automatic process using the BatchPreprocessing script.  Using any other method, including the \s {BayerDrizzlePrep} script, there is no foolproof automatic means by which the source monochrome CFA images can be associated with the corresponding drizzle data file.  This is because the drizzle data files are first created by the \tref StarAlignment {StarAlignment} process from the debayered source images.  Thus there is no reliable rule to impute the names and locations of the mono CFA images that preceded the debayer step.} \vs
 
-         Therefore the user is responsible for ensuring that each mono CFA images in the /s {Images to Convert} list has a corresponding drizzle data file in the /s {Drizzle Files to Convert} list, and that /s {both lists are in the same order}.
+         Therefore the user is responsible for ensuring that each mono CFA images in the \s {Images to Convert} list has a corresponding drizzle data file in the \s {Drizzle Files to Convert} list, and that \s {both lists are in the same order}.
       }
    }
 
@@ -198,7 +198,7 @@
 
       \subsection { \label images_to_convert Images to Convert }
       {
-         The \s {Images to Convert} list contains the source images to be converted.  These should be calibrated and (optionally) cosmeticised, but not yet debayered images, as created at the end of \lref step_1 of the Bayer drizzle workflow.
+         The \s {Images to Convert} list contains the source images to be converted.  These should be calibrated and (optionally) cosmeticised, but not yet debayered images, as created at the end of \lref step_1 {Step 1} of the Bayer drizzle workflow.
 
          \vs \e { \s {Note}:  There must be an equal number of image files and drizzle data files in the lists and they must be in the same order.  The \ {BayerDrizzlePrep} script cannot automatically match the image file with its corresponding drizzle data file.  Selecting an image file in the \s {Images to Convert} list will select the corresponding drizzle data file in the \s {Drizzle Files to Convert} list.} \vs
 
@@ -224,7 +224,7 @@
 
       \subsection { \label drizzle_files_to_convert Drizzle Files to Convert }
       {
-         The \s {Drizzle Files to Convert} list contains the completed drizzle data files (.drz) to be converted.  These should be the complete drizzle files as created at the end of \lref step_4 of the Bayer drizzle workflow.
+         The \s {Drizzle Files to Convert} list contains the completed drizzle data files (.drz) to be converted.  These should be the complete drizzle files as created at the end of \lref step_4 {Step 4} of the Bayer drizzle workflow.
 
          \vs \e { \s {Note}:  There must be an equal number of image files and drizzle data files in the lists and they must be in the same order.  The \ {BayerDrizzlePrep} script cannot automatically match the image file with its corresponding drizzle data file.  Selecting a drizzle data file in the \s {Drizzle Files to Convert} list will select the corresponding image file in the \s {Images to Convert} list.} \vs
 
