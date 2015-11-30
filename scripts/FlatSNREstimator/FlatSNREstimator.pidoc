@@ -1,12 +1,48 @@
 %% ****************************************************************************
-%% FlatSNREstimator.pidoc - Released 2014/12/19 00:00:00 UTC
+%% FlatSNREstimator.pidoc - Released 2015/12/02 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of FlatSNREstimator Script version 0.15
+%% This file is part of FlatSNREstimator Script version 1.5
 %%
-%% Copyright (C) 2012-2014 Mike Schuster. All Rights Reserved.
-%% Copyright (C) 2003-2014 Pleiades Astrophoto S.L. All Rights Reserved.
-%% ****************************************************************************
+%% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
+%%
+%% Redistribution and use in both source and binary forms, with or without
+%% modification, is permitted provided that the following conditions are met:
+%%
+%% 1. All redistributions of source code must retain the above copyright
+%%    notice, this list of conditions and the following disclaimer.
+%%
+%% 2. All redistributions in binary form must reproduce the above copyright
+%%    notice, this list of conditions and the following disclaimer in the
+%%    documentation and/or other materials provided with the distribution.
+%%
+%% 3. Neither the names "PixInsight" and "Pleiades Astrophoto", nor the names
+%%    of their contributors, may be used to endorse or promote products derived
+%%    from this software without specific prior written permission. For written
+%%    permission, please contact info@pixinsight.com.
+%%
+%% 4. All products derived from this software, in any form whatsoever, must
+%%    reproduce the following acknowledgment in the end-user documentation
+%%    and/or other materials provided with the product:
+%%
+%%    "This product is based on software from the PixInsight project, developed
+%%    by Pleiades Astrophoto and its contributors (http://pixinsight.com/)."
+%%
+%%    Alternatively, if that is where third-party acknowledgments normally
+%%    appear, this acknowledgment must be reproduced in the product itself.
+%%
+%% THIS SOFTWARE IS PROVIDED BY PLEIADES ASTROPHOTO AND ITS CONTRIBUTORS
+%% "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+%% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+%% PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL PLEIADES ASTROPHOTO OR ITS
+%% CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+%% EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS
+%% INTERRUPTION; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; AND LOSS OF USE,
+%% DATA OR PROFITS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+%% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+%% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+%% POSSIBILITY OF SUCH DAMAGE.
 
 \documentclass PIScriptDoc
 
@@ -76,7 +112,7 @@
          }
 
          { Temporal noise } {
-            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. photon noise, read noise, and dark noise) in the flats, in data number (DN 16-bit \[0,65535\]) RMS units.
+            Temporal noise is an estimate of the standard deviation of temporal noise (e.g. photon noise, read noise, and dark noise) in the flats, in data number (DN 16-bit \[0,65535\]) units.
          }
 
          { SNR } {
@@ -118,7 +154,7 @@
 
 \section { Applications } {
    \subsection { Detector gain in e-/DN estimation } {
-      Figure 1 show results for flat subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds with a 3nm Ha filter at -20{\deg}C. The gain result provides an estimate of detector gain in e-/DN, which is computed as follows. For an estimated signal in DN, an estimated noise in DN RMS, and some unknown gain in e-/DN, signal in e- equals signal * gain, and noise in e- RMS equals noise * gain. Photon statistics says that noise in e- RMS equals the square root of signal in e-. Hence noise * gain = (signal * gain)^0.5. Solving this equation for gain gives gain = signal / noise^2 in e-/DN. This solution provides the estimate of 1.055 e-/DN that is within 1\% of the the camera vendor's supplied specification of 1.059 e-/DN.
+      Figure 1 show results for flat subframes from a Kodak KAF-8300 detector, each binned 2x2 and exposed 24 seconds with a 3nm Ha filter at -20{\deg}C. The gain result provides an estimate of detector gain in e-/DN, which is computed as follows. For an estimated signal in DN, an estimated noise in DN, and some unknown gain in e-/DN, signal in e- equals signal * gain, and noise in e- equals noise * gain. Photon statistics says that noise in e- equals the square root of signal in e-. Hence noise * gain = (signal * gain)^0.5. Solving this equation for gain gives gain = signal / noise^2 in e-/DN. This solution provides the estimate of 1.055 e-/DN that is within 1\% of the the camera vendor's supplied specification of 1.059 e-/DN.
 
       \figure [float:left] {
          \image flat_result.png
@@ -133,19 +169,19 @@
             {Channel} {Signal} {Temporal noise} {SNR} {Gain}
          }
          {
-            {} {DN} {DN RMS} {} {e-/DN}
+            {} {DN} {DN} {} {e-/DN}
          }
          {
-            {CFA_0 R} {4674.50} {183.21} {25.5} {0.139}
+            {CFA_0 R} {4674.87} {183.21} {25.5} {0.139}
          }
          {
-            {CFA_1 G} {7102.81} {226.64} {31.3} {0.138}
+            {CFA_1 G} {7103.19} {226.64} {31.3} {0.138}
          }
          {
-            {CFA_2 G} {7146.31} {228.11} {31.3} {0.137}
+            {CFA_2 G} {7146.81} {227.90} {31.4} {0.138}
          }
          {
-            {CFA_3 B} {4280.63} {176.25} {24.3} {0.138}
+            {CFA_3 B} {4281.00} {176.25} {24.3} {0.138}
          }
       }
 
@@ -253,3 +289,6 @@
 }
 
 \make
+
+%% ****************************************************************************
+%% EOF FlatSNREstimator.pidoc - Released 2015/12/02 00:00:00 UTC
