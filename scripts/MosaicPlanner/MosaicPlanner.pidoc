@@ -1,0 +1,213 @@
+\documentclass PIScriptDoc
+
+\script {
+   MosaicPlanner
+}
+
+\keywords {
+   mosaic
+}
+
+\author {
+   Andrés del Pozo
+}
+
+\copyright {
+   2015, Andrés del Pozo
+}
+
+\brief {
+   Script for planning the tiles of mosaics of astronomical images.
+}
+
+\introduction{
+   MosaicPlanner is a script for planning the framing of astronomical images.
+   It allows to find how many tiles are necessary for covering an area and finding the position and rotation of the tiles.
+   The script can also help with the orientation of the tiles for getting good stars for off-axis guiders or double-sensor cameras.
+
+   MosaicPlanner requires a reference image that shows the area that needs to be covered with tiles.
+   This image must have coordinates defined using the convention \e{FITS World Coordinate System (WCS)}\ref GreisenWCS \ref CalabrettaCelestial.
+   The coordinates solution can be calculated using the script \sref{ImageSolver}{ImageSolver}, \sref{ManualImageSolver}{ManualImageSolver}
+    or other applications.
+
+   The reference image can be synthetic (see \sref{CatalogStarGenerator}{CatalogStarGenerator})
+    and it can be projected in any of the supported \dref{Projections}{projections}.
+    The tiles are placed using the projection of the reference image, so if it uses a projection different to the usual Gnomonic projection,
+    when later aligning and merging the tiles the projection of the reference image should be used.
+}
+
+\usage{
+    \figure{ \center{ \image[border:1px solid black, width:100\%]{MainDialog.jpg}} }
+
+    The user interface of the script has two parts:
+    a viewer shows the reference image and the position of the tiles.
+    To the right there are several collapsible panels that configure several aspects of the mosaic plan.
+
+    \subsection{System Geometry}
+    {
+      This section allows to configure the focal length and dimensions of the sensor of the camera that will be used to take the images.
+      When the camera has an off-axis guider or a second sensor,
+      the dimensions and position of the guiding sensor can be also configured.
+
+       \figure{ \center{ \image[border:1px solid black]{SystemGeom.png}} }
+
+      \definition
+      {
+         {Focal length}
+         {
+            This is the focal length in millimeters of the lens or telescope attached to the camera.
+            The focal length must be the effective focal length after taking in account focal reducers, Barlows or any effect
+                         that modifies the focal length.
+            In some telescopes, like many amateur Schmidt–Cassegrain,
+            the focusing is done moving the main mirror and this modifies the focal length of the system.
+
+            This parameter can be calculated with a very good precision using \sref{ImageSolver}{ImageSolver} on an
+             image taken with the same configuration of the camera.
+         }
+
+         {Main sensor}
+         {
+            This section configures the dimensions of the sensor of the camera.
+            The dimensions can be expressed in millimeters or pixels. In this later case,
+            it is also necessary to set the size of the pixels.
+
+            These values usually can be found in the specifications of the camera.
+         }
+
+         {Guider sensor}
+         {
+            This optional section configures the dimensions of the guider sensor of the camera and its position
+            relative to the main sensor.
+
+            The position of the guider sensor is configured as the (x,y) offset of the center of the guider
+             sensor relative to the center of the main sensor.
+             i.e. a guider sensor placed 15mm upside the main sensor would have an offset of (0,-15).
+               An offset of (15,0) would be valid for a guider sensor to the right of the main sensor.
+
+            The dimensions of the guider sensor usually can be found in the specifications of the guider camera,
+            while the offset depends on the off-axis guider or the specifications of the double sensor camera.
+         }
+      }
+    }
+    \subsection{Mosaic Definition}
+    {
+      This section defines the coordinates of the mosaic and the number of tiles.
+      The mosaic planner places a reference tile and then tiles around it.
+       \figure{ \center{ \image[border:1px solid black]{MosaicDef.png}} }
+
+      \definition
+      {
+         {Origin}
+         {
+            These are the coordinates of the center of the reference tile.
+            The coordinates can be written by the user or they can be got from other sources using the buttons to the right
+            of the panel: Search window, center of the reference image or center of another image open in the workspace.
+
+            The reference tile can be moved using the arrow buttons.
+            The movement speed depends on the zoom level of the image viewer.
+            The image should be zoomed in for fine adjustment of the position.
+         }
+         {Dimensions}
+         {
+            The tile plan always contains one tile (the reference tile) but the script can also place tiles around it.
+            This subsection defines how many and where the tiles are placed around the reference tile.
+            \definition
+            {
+               {Columns}
+               { Number of columns of tiles placed to the left and to the right of the reference tile. }
+               {Rows}
+               { Number of rows of tiles placed to up and down from of the reference tile. }
+               {Overlap}
+               { Percentage of overlapping between tiles.}
+               {Rotation}
+               { Rotation angle of the tile grid. }
+               {Fixed tile rotation}
+               { All the tiles have the same rotation as defined in the \e{Rotation} field.}
+               {Adjust tile rotation}
+               {
+                  The reference tile uses the rotation of the \e{Rotation} field.
+                  The rotation of the rest of the tiles is calculated in order the tiles are as orthogonal as possible to
+                  the reference tile.
+                  This option is usually necessary for short focal length mosaics.
+               }
+            }
+
+            \figure {
+               \figtag \s {Tile rotation}
+               \imageselect[menupos:right,border:1px solid black] {
+                  RotationFixed.png      { Fixed tile rotation }
+                  RotationAdjust.png   { Adjust tile rotation }
+               }
+            }
+         }
+      }
+    }
+
+    \subsection{Tiles}
+    {
+           \figure{ \center{ \image[border:1px solid black]{Tiles.png}} }
+      This section contains a list of the tiles generated by the current configuration of the mosaic.
+       The table shows the coordinates and rotation angle of each tile.
+
+       It is possible to select one or more tiles in the table.
+       The selected tiles are drawn on the image using a yellow color.
+
+       The selected tiles can be rotated by 90 degrees increments using the two buttons under the table.
+       This can be used to change the orientation of the camera so the guiding sensor is placed in a better position
+       without changing the geometry of the mosaic.
+   }
+
+    \subsection{Guide stars}
+    {
+      This section can be optionally activated and draws on the image the position of stars that can be used as
+      guiding stars.
+           \figure{ \center{ \image[border:1px solid black]{GuideStars.jpg}} }
+
+      \definition
+      {
+         {Local catalog}
+         {
+            The stars can be extracted from a PPMX astrometric catalog stored locally in the computer.
+            The PPMX catalog can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
+         }
+         {Online catalog}
+         {
+            The stars can be downloaded from an online catalog.
+            The script uses one of VizieR mirror servers and it supports several different catalogs.
+         }
+         {Max magnitude}
+         {
+            Maximum magnitude of the stars that can be used as guide stars.
+         }
+         {Label size}
+         {
+            Size used for drawing the magnitude of the stars.
+         }
+      }
+    }
+}
+
+\section{Limitations}
+{
+   \list
+   {
+      {
+         The algorithm for generating the position of the tiles is quite simple and
+         it is currently only useful for mosaics with a focal length of 25-50mm or more.
+      }
+      {
+         The tile plan is only as good as the precision of the data of the geometry of the camera.
+         It is really important to set the exact effective focal length of the camera and
+         the offset of the guider sensor.
+      }
+   }
+}
+
+\reference GreisenWCS {  E. W. Greisen, M. R. Calabretta (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of World Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1061-1075}
+
+\reference CalabrettaCelestial {  M. R. Calabretta, E. W. Greisen (2002) \e { \xref {http://fits.gsfc.nasa.gov/fits_wcs.html} {Representations of Celestial Coordinates in FITS } },  Astronomy & Astrophysics, 395, 1077-1122}
+
+\relatedscript ImageSolver
+\relatedscript ManualImageSolver
+
+\make
