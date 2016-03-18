@@ -161,7 +161,7 @@
     {
       This section can be optionally activated and draws on the image the position of stars that can be used as
       guiding stars.
-           \figure{ \center{ \image[border:1px solid black]{GuideStars.jpg}} }
+           \figure{ \center{ \image[border:1px solid black, width:100\%]{GuideStars.jpg}} }
 
       \definition
       {
@@ -179,12 +179,41 @@
          {
             Maximum magnitude of the stars that can be used as guide stars.
          }
-         {Label size}
+      }
+    }
+
+    \subsection{Graphic properties}
+    {
+      This section can be optionally activated and draws on the image the position of stars that can be used as
+      guiding stars.
+           \figure{ \center{ \image[border:1px solid black]{GraphicProps.png}} }
+
+      \definition
+      {
+         {Tiles / Show coordinates}
          {
-            Size used for drawing the magnitude of the stars.
+            When this option is checked the coordinates of the centers of the tiles are drawn
+            on the annotated image using the selected font.
+         }
+         {Tiles / Color}
+         {
+            Color used for the lines of the tiles and the text of the coordinates.
+         }
+         {Tiles / Line width}
+         {
+            Width in pixels of the lines of the tiles.
+         }
+         {Guide stars / Font}
+         {
+            Font used for the labels of the guide stars.
+         }
+         {Guide stars / Color}
+         {
+            Color of the markers and labels of the guide stars.
          }
       }
     }
+
 }
 
 \section{Limitations}
