@@ -167,8 +167,24 @@
       {
          {Local catalog}
          {
-            The stars can be extracted from a PPMX astrometric catalog stored locally in the computer.
-            The PPMX catalog can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
+            When this option is active the stars are extracted from a catalog stored in a file in the computer.
+            The script supports two formats:
+            \list{
+               {
+                  \s{StarGenerator format}: The process StarGenerator uses the PPMX astrometric catalog stored in a .bin file.
+                  The PPMX catalog can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
+               }
+               {
+                  \s{Custom catalog format}: These files can be created downloading star data from an online catalog.
+                  Pressing the download button the script opens the download dialog that allows to select
+                  one of the supported catalogs and the working area.
+                  \n
+                  The catalog downloader has a limit of 2 million of objects.
+                  Some catalogs also have a maximum field of view
+                  (i.e. the online PPMX catalog has a maximum field of view of 60 degrees).
+                  When the catalog has proper motion data the coordinates of the stars are stored for the given epoch.
+               }
+            }
          }
          {Online catalog}
          {
