@@ -139,12 +139,24 @@
                the AperturePhotometry script, using ImageSolver on each one.
             }
 
+            { Use image metadata }
+            {
+               When solving an image the solver will prioritize the image metadata (Coordinates, focal length, epoch).
+               If any of the parameters is not available the solver will substitute them with the values in the solver dialog.
+            }
+
+            { Use solver configuration }
+            {
+              When solving an image the solver will use the configuration in the solver dialog
+              while ignoring the values (coordinates, focal length, epoch, ...) that the images could have.
+            }
+
             { Force plate-solving the already solved images }
             {
                When this option is active the script tries to plate-solve all the images,
                including those already solved.
 
-               This option can be used when the current referentiation is not good enough and
+               This option can be used when the current astrometric solution is not good enough and
                you desire to improve it.
             }
 

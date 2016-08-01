@@ -135,7 +135,7 @@
             The parameter \s{Focal Length} can only be used when \lref{PixelSize}{Pixel size} has a value greater than zero.
             The focal length must be the effective focal length after taking in account focal reducers, Barlows or any effect
              that modifies the focal length.
-            Some telescopes, like many amateur Schmidt–Cassegrain, the focusing is done moving the main mirror and this
+            In some telescopes, like many amateur Schmidt–Cassegrain, the focusing is done moving the main mirror and this
             modifies the focal length of the system.
 
             The parameter \s{Focal Length} is initialized automatically if the image has the keywords \s{FOCALLEN} and \s{XPIXSZ}.
@@ -167,9 +167,25 @@
             If this option is selected the script uses a catalog stored locally.
             In this case you have to configure the path where the catalog is stored.
 
-            You can use the PPMX star catalog that can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
-            The file PPMX.bin has to be saved somewhere in your computer and then set its path in the script.
-            This catalog has stars of magnitude less than 12.8.
+            The script supports two formats:
+            \list{
+               {
+                  \s{StarGenerator format}: The process StarGenerator uses the PPMX astrometric catalog stored in a .bin file.
+                  The PPMX catalog can be downloaded from \xref{http://pixinsight.com/download/}{http://pixinsight.com/download/}.
+                  This catalog has stars of magnitude less than 12.8.
+               }
+               {
+                  \s{Custom catalog format}: These files can be created downloading star data from an online catalog.
+                  Pressing the download button the script opens the download dialog that allows to select
+                  one of the supported catalogs and the working area.
+                  \n
+                  The catalog downloader has a limit of 2 million of objects.
+                  Some catalogs also have a maximum field of view
+                  (i.e. the online PPMX catalog has a maximum field of view of 60 degrees).
+                  When the catalog has proper motion data the coordinates of the stars are stored for the given epoch.
+               }
+            }
+
          }
          {VizieR star catalog}
          {
