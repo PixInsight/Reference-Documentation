@@ -1,8 +1,8 @@
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2016/02/24 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2016/12/19 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of MureDenoise Script Version 1.15
+%% This file is part of MureDenoise Script Version 1.18
 %%
 %% Copyright (C) 2012-2016 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2016 Pleiades Astrophoto S.L. All Rights Reserved.
@@ -58,7 +58,7 @@
 }
 
 \copyright {
-   2012-2015 Mike Schuster. All Rights Reserved.
+   2012-2016 Mike Schuster. All Rights Reserved.
 }
 
 \brief {
@@ -70,7 +70,7 @@
 
    The script supports an astronomical image processing workflow in which the denoising step occurs immediately after the calibration and optional average combination steps and prior to other linear or nonlinear processing steps.
 
-   The script applies an interscale wavelet mixed noise unbiased risk estimator (MURE) to find a denoised output image that minimizes an estimate of the oracle mean-squared error (MSE), or "risk", between the denoised output image and the unknown noise-free image.\ref{Stein_1981}\ref{Luisier_2010}
+   The script applies a Haar-wavelet mixed noise unbiased risk estimator (MURE) to find a denoised output image that minimizes an estimate of the oracle mean-squared error (MSE), or "risk", between the denoised output image and the unknown noise-free image.\ref{Stein_1981}\ref{Luisier_2010}
 
    \s{ Note }: For linear multichannel images from monocolor detectors, run the monochannel denoiser on each channel separately. The script does not work properly for images from one shot color (OSC) detectors.
 
@@ -78,7 +78,7 @@
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   This document describes MureDenoise Version 1.15.
+   This document describes MureDenoise Version 1.18.
 
    \subsection { Mixed Poisson-Gaussian noise hypothesis } {
       The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
@@ -89,11 +89,17 @@
          { &alpha;: detector gain (e-/DN), }
          { &delta;: detector offset (DN), }
          { &sigma;: standard deviation of detector additive white Gaussian noise (DN), }
-         { &eta;: average combination count, and }
+         { &eta;: image average combination count, and }
          { &nu;: variance scale. }
       }
 
-      &Rho;(x) is a Poisson distribution with expected value x. &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;) is a Gaussian distribution with expected value &delta; and variance &nu;&sigma;\sup{2}/&eta;. Average combination count &eta; equals the number of images combined in the average combination. Variance scale &nu; equals the product of a user specified \lref variance_scale {variance scale} parameter and the combination covariance function discussed in the \lref covariance_hypothesis {Covariance hypothesis} section.
+      &Rho;(x) is a Poisson distribution with expected value x.
+
+      &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;) is a Gaussian distribution with expected value &delta; and variance &nu;&sigma;\sup{2}/&eta;.
+
+      &eta; equals the average combination count of the image or 1 for single frame images.
+
+      Variance scale &nu; equals the product of a user specified \lref variance_scale {variance scale} parameter and the combination variance scaling function discussed in the \lref correlation_hypothesis {Correlation hypothesis} section.
 
       The expectation &xi;\{y\} and variance &upsilon;\{y\} of the noisy input image y are given by
 
@@ -103,21 +109,20 @@
       }
    }
 
-   \subsection { \label covariance_hypothesis {Covariance hypothesis} } {
-      The denoising method employs a covariance hypothesis to compensate for the correlation or covariance introduced by the image registration process. The interpolation performed by image registration results in positive covariance between pixels within the interpolation filter's local region of support, which reduces the variance in a registered image. The covariance hypothesis models this effect to improve denoising quality as a function of average combination count &eta; and interpolation method &iota;.
+   \subsection { \label correlation_hypothesis {Correlation hypothesis} } {
+      The denoising method employs a correlation hypothesis to partially compensate for the correlation introduced by image registration. Registration results in correlation between pixels within the interpolation filter's region of support which reduces the variance of a registered image. The correlation hypothesis models the Haar-wavelet correlation structure to improve denoising quality.
 
-      The first component of the covariance hypothesis is the interpolation covariance function R(&iota;) that estimates the average multiplicative scaling of variance that results from an application of interpolation method &iota;. R(&iota;) is defined as the integral over a unit pixel domain of the sum of interpolation method's filter coefficients squared. Table \tblnum {interpolation_covariance_function} shows approximate values of R(&iota;) for the supported interpolation methods.
+      The first component of the correlation hypothesis is the subband variance scaling function S(&kappa;, &iota;) that defines the average scaling of variance in subband &kappa; that results from an application of interpolation method &iota;. Figures \fignum {subband_variance_scaling_function} shows an estimate of S(&kappa;, &iota;) for the supported interpolation methods. Scales approach 1 in increasing subbands due to the locality of the correlation.
 
-      \table [numbered:interpolation_covariance_function, header:1, marginleft:36pt] {
-         { {Interpolation method &iota;} {R(&iota;)} }
-         { {Nearest Neighbor} {1} }
-         { {Bilinear} {0.444} }
-         { {Bicubic Spline} {0.663} }
-         { {Lanczos-3} {0.799} }
-         { {Lanczos-4} {0.835} }
+      \figure [numbered:subband_variance_scaling_function, float:left, marginleft:36pt] {
+         \figtag Subband variance scaling function S(&kappa;, &iota;)
+
+         \image [margintop:6pt] Hypothesis/SubbandVarianceScaling.png
       }
 
-      The second component of the covariance hypothesis is the combination covariance function R(&eta;, &iota;) that estimates the ratio of the normalized variance of the average combination of &eta; images registered with interpolation method &iota; to the normalized variance of an average combination of &eta; unregistered images. R(&eta;, &iota;) is defined as (1 + (&eta; - 1) R(&iota;)) / &eta;. The numerator represents the variance sum of one unregistered reference image with unit variance and &eta; - 1 registered images each with R(&iota;) variance. The denominator represents the variance sum of &eta; unregistered images each with unit variance.
+      \nf
+
+      The second component of the correlation hypothesis is the combination variance scaling function C(&kappa;, &iota;, &eta;) that estimates the ratio of the normalized variance of the average combination of &eta; images registered with interpolation method &iota; to the normalized variance of an average combination of &eta; unregistered images in subband &kappa;. C(&kappa;, &iota;, &eta;) is defined as (1 + (&eta; - 1) S(&kappa;, &iota;)) / &eta;. The numerator represents the variance sum of one unregistered reference image with unit variance and &eta; - 1 registered images each with S(&kappa;, &iota;) variance. The denominator represents the variance sum of &eta; unregistered images each with unit variance.
    }
 
    \subsection { Denoising method } {
@@ -125,9 +130,9 @@
 
       The denoising processes are expressed as a linear combination of denoising threshold functions, from which only the weights are unknown. These weights are computed by a solution to a linear system of equations. This implies that all parameters of the method are determined automatically, without requiring user input.
 
-      The denoising method applies MSE minimization independently in each subband of a simple orthogonal decimated unnormalized Haar wavelet decomposition that preserves hypothesis noise statistics across scales. The denoising threshold functions involve several parameters, which provides more adaptability than the standard single-parameter thresholding functions. In particular, the thresholds are adapted to local estimates of the signal-dependent noise variance, which are derived from the corresponding coarse coefficients at the same scale. The coarse coefficients are also used to aggregate interscale relationships into the denoising functions.
+      The denoising method applies MSE minimization independently in each subband of an unnormalized Haar-wavelet decomposition that preserves hypothesis noise statistics across subbands. The denoising threshold functions involve several parameters, which provides more adaptability than the standard single-parameter thresholding functions. In particular, the thresholds are adapted to local estimates of the signal-dependent noise variance, which are derived from the corresponding coarse coefficients in the same subband. The coarse coefficients are also used to aggregate intersubband relationships into the denoising functions.
 
-      The denoising method uses cycle-spinning to suppress visual artifacts due to the lack of translation invariance of the orthogonal decimated wavelet transform.\ref{Coifman_1995}\ref{Kamilov_2014} For a range of translations or shifts, cycle-spinning shifts the noisy image, denoises the shifted image, and then unshifts the denoised image. The result so produced are averaged together to form the output denoised image, which is nearly translation invariant.
+      The denoising method uses cycle-spinning to suppress visual artifacts due to the lack of translation invariance of the decimated wavelet decomposition.\ref{Coifman_1995}\ref{Kamilov_2014} For a range of translations or shifts, cycle-spinning shifts the noisy image, denoises the shifted image, and then unshifts the denoised image. The result so produced are averaged together to form the output denoised image, which is nearly translation invariant.
 
       The denoising method provides an option to compensate for large spatial scale noise variance scaling due to flatfielding. Large spatial scale noise scaling variations, resulting from the flatfield correction of optical vignettes and detector sensitivity variations, are estimating by smoothing the flatfield. The denoising method compensates for these variations by multiplying the noisy image by the smoothed flatfield, denoising the product, and then dividing the result by the smoothed flatfield to form the output denoised image.
    }
@@ -135,7 +140,7 @@
    \subsection { Single frame image denoising } {
       Figure \fignum {single_frame_image_parameters} shows parameters for denoising a 40 minute single frame exposure of the ionized hydrogen region Sharpless Sh2-202 obtained with a Takahashi FSQ-106EDX 106 mm f/5 refractor, a monochrome Kodak KAF-8300 detector binned 2x2, and an Astrodon 3 nm H-alpha filter.
 
-      The combination count parameter is set to 1 to specify that the image is a single frame exposure.
+      The image combination count parameter is set to 1 to specify that the image is a single frame exposure.
 
       The flatfield view is set to the image used for flatfield calibration to enable large spatial scale flatfield compensation.
 
@@ -178,7 +183,7 @@
    \subsection { Average combination image denoising } {
       Figure \fignum {average_combination_image_parameters} shows parameters for denoising an average combination of 8 registered frames of Sharpless Sh2-202, each a 40 minute exposure obtained in similar observing conditions with the same equipment.
 
-      The combination count parameter is set to 8 to specify that the image is an 8 frame average combination.
+      The image combination count parameter is set to 8 to specify that the image is an 8 frame average combination.
 
       The interpolation method parameter is set to the Nearest Neighbor method that was used by the \e{StarAlignment} process to register the frames. Interpolation method must be set equal to the \e{StarAlignment} process parameter \e{Interpolation} > \e{Pixel interpolation}.
 
@@ -345,7 +350,6 @@
          \image [marginleft:36pt] Usage/denoise_group.png
 
          \definition {
-
             { \label variance_scale {Variance scale} } {
                This parameter scales hypothesis noise variance. A value of one corresponds to nominal hypothesis noise variance and a corresponding nominal amount of denoising. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
 
@@ -355,7 +359,7 @@
             }
 
             { Load variance scale...} {
-               Loads the variance scale and combination count from information in an \e{ImageIntegration} process log file.
+               Loads the variance scale and combination count from information in an \e{ImageIntegration} process log file. Provides support for the Output normalization options Additive with scaling and No normalization, and the Weights options Noise evaluation, FITS keyword, and Don't care (all weights = 1).
 
                The log file is a manually created .txt file containing a copy of the Process Console log generated by the \e{ImageIntegration} process.
 
@@ -425,7 +429,7 @@
 }
 
 \reference Coifman_1995 {
-   R. Coifman and D. Donoho, “Translation invariant de-noising,” in \e { Lecture Notes in Statistics: Wavelets and Statistics }, 103:125–150, Springer Verlag, New York, 1995.
+   R. Coifman and D. Donoho, “Translation invariant de-noising”, in \e { Lecture Notes in Statistics: Wavelets and Statistics }, 103:125–150, Springer Verlag, New York, 1995.
 }
 
 \reference Kamilov_2014 {
@@ -443,4 +447,4 @@
 \make
 
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2016/02/24 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2016/12/19 00:00:00 UTC
