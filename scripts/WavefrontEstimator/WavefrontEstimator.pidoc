@@ -1,8 +1,8 @@
 %% ****************************************************************************
-%% WavefrontEstimator.pidoc - Released 2015/11/23 00:00:00 UTC
+%% WavefrontEstimator.pidoc - Released 2016/12/30 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of WavefrontEstimator Script Version 1.18
+%% This file is part of WavefrontEstimator Script Version 1.19
 %%
 %% Copyright (C) 2012-2015 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2015 Pleiades Astrophoto S.L. All Rights Reserved.
@@ -66,7 +66,7 @@
 }
 
 \description {
-   WavefrontEstimator estimates the on-axis optical wavefront of a telescope from long-exposure defocused stellar images. Exposure differences between an intra-focal image and an inverted (rotated by 180\deg) extra-focal image of the same bright star reflect local changes in the curvature of the wavefront.\ref{Roddier_1993a}\ref{Roddier_1991}\ref{Suiter_2009}\ref{Lequevre_2011} WavefrontEstimator measures the defocused image exposure differences, reconstructs the wavefront, and provides a diagnosis of wavefront aberrations. WavefrontEstimator relies on long combined exposures of at least 100 seconds and 100,000 e- to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio. The telescope must be in thermal equilibrium. Please review the \lref requirements_recommendations {Requirements and recommendations} and \lref frequently_asked_questions {Frequently asked questions} sections. This document describes WavefrontEstimator Version 1.18.
+   WavefrontEstimator estimates the on-axis optical wavefront of a telescope from long-exposure defocused stellar images. Exposure differences between an intra-focal image and an inverted (rotated by 180\deg) extra-focal image of the same bright star reflect local changes in the curvature of the wavefront.\ref{Roddier_1993a}\ref{Roddier_1991}\ref{Suiter_2009}\ref{Lequevre_2011} WavefrontEstimator measures the defocused image exposure differences, reconstructs the wavefront, and provides a diagnosis of wavefront aberrations. WavefrontEstimator relies on long combined exposures of at least 100 seconds and 100,000 e- to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio. The telescope must be in thermal equilibrium. Please review the \lref requirements_recommendations {Requirements and recommendations} and \lref frequently_asked_questions {Frequently asked questions} sections. This document describes WavefrontEstimator Version 1.19.
 
    The estimated wavefront defines a map of optical phase on the aperture plane, normalized to zero mean phase. Non-zero estimates correspond to wavefront aberrations and lower image quality. An estimate \e{d} in meters at a point in the wavefront defines a phase of -\e{k} \e{d} radians at the corresponding point on the aperture plane, with wavenumber \e{k} given by 2\pi / \e{λ} radians per meter, where \e{λ} is the observation wavelength in meters.
 
@@ -118,7 +118,7 @@
 
       \nf
 
-      Figure \fignum {exposure_estimate_1} shows the exposure estimation tool that estimates parameters for a specified defocused image exposure. A defocused image exposure of approximately 50\% of the detector's full-well capacity or 10,000 e- is selected for the Kodak KAF-8300 detector. An observation bandwidth of ~50-100 nm is selected for the Astrodon E-Series Gen 2 G-band. Given a fixed exposure time, increasing defocus distance increases the method's ability to resolve wavefront corrugations,\ref{Malacara_2005} but decreases the signal-to-noise ratio of the enlarged image. For this telescope, mechanical backfocus limitations restrict defocus distance to a maximum of 3.5 mm. A maximum wavefront corrugation spatial frequency to be measured of 11.3 cycles per aperture diameter is selected to obtain a defocus distance near the upper limit. The resulting defocused image diameter of about 124 pixels is within the supported range of 48 to 320 pixels. An exposure time of 5 seconds results in a required star apparent magnitude of 1.0. Longer exposures reduce the effects of atmospheric turbulence, but for this telescope defocusing the image also defocuses the tracking system, and 5 seconds was chosen so that tracking errors remain negligible. To average out the effects of atmospheric turbulence and achieve the required exposure of at least 100 seconds and 100,000 e-, multiple 5 second frames must be exposed and combined.
+      Figure \fignum {exposure_estimate_1} shows the exposure estimation tool that estimates parameters for a specified defocused image exposure. A defocused image exposure of approximately 50\% of the detector's full-well capacity or 10,000 e- is selected for the Kodak KAF-8300 detector. An observation bandwidth of ~50-100 nm is selected for the Astrodon E-Series Gen 2 G-band. Given a fixed exposure time, increasing defocus distance increases the method's ability to resolve wavefront corrugations,\ref{Malacara_2005} but decreases the signal-to-noise ratio of the enlarged image. For this telescope, mechanical backfocus limitations restrict defocus distance to a maximum of 3.5 mm. A maximum wavefront corrugation spatial frequency to be measured of 11.3 cycles per aperture diameter is selected to obtain a defocus distance near the upper limit. The resulting defocused image diameter of about 124 pixels is within the supported range of 32 to 320 pixels. An exposure time of 5 seconds results in a required star apparent magnitude of 1.0. Longer exposures reduce the effects of atmospheric turbulence, but for this telescope defocusing the image also defocuses the tracking system, and 5 seconds was chosen so that tracking errors remain negligible. To average out the effects of atmospheric turbulence and achieve the required exposure of at least 100 seconds and 100,000 e-, multiple 5 second frames must be exposed and combined.
 
       \figure [numbered:exposure_estimate_1, float:left, marginleft:36pt] {
          \figtag Exposure estimation tool
@@ -159,7 +159,7 @@
 
    \subsection { Image registration and combination } {
 
-      To met the long exposure requirement for averaging out the effects of atmospheric turbulence, WavefrontEstimator provides a frame combination facility. The frame registration and average combination operations are performed in a manner that conserves local defocused image exposure. Intra-focal and extra-focal frames selected for combination are included in separate lists as shown in figures \fignum {intra_focal_frames_1} and \fignum {extra_focal_frames_1}. The frames must be bias-subtracted and must not be otherwise processed.
+      To met the long exposure requirement for averaging out the effects of atmospheric turbulence, WavefrontEstimator provides a frame combination facility. The frame registration and average combination operations are performed in a manner that conserves local defocused image exposure. Intra-focal and extra-focal frames selected for combination are included in separate lists as shown in figures \fignum {intra_focal_frames_1} and \fignum {extra_focal_frames_1}. The frames must be bias-subtracted and must not be otherwise processed. Frames from color filter array detectors must not be demosaiced.
 
       \figure [numbered:intra_focal_frames_1, float:left, marginleft:36pt] {
          \figtag Intra-focal frames selected for combination
@@ -440,7 +440,7 @@
                   }
 
                   {
-                     Bayer RGB
+                     Color filter array
                   }
                }
             }
@@ -548,7 +548,7 @@
 
          \definition {
             { Intra-focal frames list } {
-               The list of intra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed.
+               The list of intra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed. Frames from color filter array detectors must not be demosaiced.
             }
 
             { Add frames } {
@@ -574,7 +574,7 @@
 
          \definition {
             { Extra-focal frames list } {
-               The list of extra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed.
+               The list of extra-focal frames selected for combination. The frames must be bias-subtracted and must not be otherwise processed. Frames from color filter array detectors must not be demosaiced.
             }
 
             { Add frames } {
@@ -710,7 +710,7 @@
             }
 
             {
-               Adjust the corrugation resolution to achieve a defocus distance within the available mechanical backfocus adjustment range and a defocused image diameter between 48 and 320 pixels.
+               Adjust the corrugation resolution to achieve a defocus distance within the available mechanical backfocus adjustment range and a defocused image diameter between 32 and 320 pixels.
             }
 
             {
@@ -775,7 +775,7 @@
       \division { Exposure measurement } {
          \image [marginleft:36pt] Usage/exposure_measurement.png
 
-         The exposure measurement tool measures the exposure parameters of the selected frame view. The frame must be bias-subtracted and not otherwise processed.
+         The exposure measurement tool measures the exposure parameters of the selected frame view. The frame must be bias-subtracted and not otherwise processed. Frames from color filter array detectors must not be demosaiced.
 
          \list [ordered] {
             {
@@ -783,7 +783,7 @@
             }
 
             {
-               Select an intra-focal or extra-focal frame view and click the \e{Measure} button. The frame must be bias-subtracted and not otherwise processed.
+               Select an intra-focal or extra-focal frame view and click the \e{Measure} button. The frame must be bias-subtracted and not otherwise processed. Frames from color filter array detectors must not be demosaiced.
             }
 
             {
@@ -793,7 +793,7 @@
 
          \definition {
             { View } {
-               The intra-focal or extra-focal frame view to measure. The frame must be bias-subtracted and not otherwise processed.
+               The intra-focal or extra-focal frame view to measure. The frame must be bias-subtracted and not otherwise processed. Frames from color filter array detectors must not be demosaiced.
             }
 
             { Defocus distance } {
@@ -1230,7 +1230,7 @@ Spatial frequency lp/mm, Sagittal modulation transfer, Meridional modulation tra
 PixInsight Core 01.08.03.1123 Ripley (x64)\n
 ************************************************************\n
 \n
-WavefrontEstimator Version 1.18\n
+WavefrontEstimator Version 1.19\n
 \n
 Parameters:\n
 Aperture diameter: 106.0 mm\n
@@ -2614,9 +2614,9 @@ MTF 50\% spatial frequency: Sagittal 77.7 lp/mm, Meridional 77.6 lp/mm\n
 
    The exposure in the frame background must be at most 2\% of defocused image exposures. Field stars must be at least 2.5 magnitudes dimmer than the target star.
 
-   Intra-focal and extra-focal defocus distances and defocused image diameters should be equal to within 5\%. Defocused image diameters must be between 48 and 320 pixels.
+   Intra-focal and extra-focal defocus distances and defocused image diameters should be equal to within 5\%. Defocused image diameters must be between 32 and 320 pixels.
 
-   Intra-focal and extra-focal frames selected for combination must be bias-subtracted and must not be otherwise processed. One monochrome detector observation defines one frame with an observation band defined by the filter used for the observation. One Bayer RGB detector observation defines one frame for each raw Bayer RGB channel, that is, one R-band frame, two G-band frames, and one B-band frame. The SplitCFA process may be used for channel extraction. Bias-subtraction must be performed prior to channel extraction. Color detectors with color-filter-array (CFA) patterns differing from Bayer RGB are not supported.
+   Intra-focal and extra-focal frames selected for combination must be bias-subtracted and must not be otherwise processed. Frames from color filter array detectors must not be demosaiced.
 
    Combined intra-focal and extra-focal images must entail at least 100 seconds and 100,000 e- of exposure to average out the effects of atmospheric turbulence and provide sufficient signal-to-noise ratio.
 
@@ -2758,7 +2758,7 @@ MTF 50\% spatial frequency: Sagittal 77.7 lp/mm, Meridional 77.6 lp/mm\n
       }
 
       { The defocused image diameter is too small. } {
-         The defocused image diameter is less than 48 pixels.
+         The defocused image diameter is less than 32 pixels.
 
          The problem may be due to insufficient defocus distance, large detector pixel size, exposure problems, or spurious noise structures.
       }
@@ -2871,4 +2871,4 @@ MTF 50\% spatial frequency: Sagittal 77.7 lp/mm, Meridional 77.6 lp/mm\n
 \make
 
 %% ****************************************************************************
-%% EOF WavefrontEstimator.pidoc - Released 2015/11/23 00:00:00 UTC
+%% EOF WavefrontEstimator.pidoc - Released 2016/12/30 00:00:00 UTC
