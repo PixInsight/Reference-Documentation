@@ -1,11 +1,11 @@
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2016/12/31 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2017/01/31 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of MureDenoise Script Version 1.19
+%% This file is part of MureDenoise Script Version 1.20
 %%
-%% Copyright (C) 2012-2016 Mike Schuster. All Rights Reserved.
-%% Copyright (C) 2003-2016 Pleiades Astrophoto S.L. All Rights Reserved.
+%% Copyright (C) 2012-2017 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2017 Pleiades Astrophoto S.L. All Rights Reserved.
 %%
 %% Redistribution and use in both source and binary forms, with or without
 %% modification, is permitted provided that the following conditions are met:
@@ -50,7 +50,7 @@
 \script MureDenoise
 
 \keywords {
-   noise reduction, image denoising, mixed Poisson-Gaussian noise
+   image denoising, mixed Poisson-Gaussian noise
 }
 
 \author {
@@ -58,7 +58,7 @@
 }
 
 \copyright {
-   2012-2016 Mike Schuster. All Rights Reserved.
+   2012-2017 Mike Schuster. All Rights Reserved.
 }
 
 \brief {
@@ -78,7 +78,7 @@
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   This document describes MureDenoise Version 1.19.
+   This document describes MureDenoise Version 1.20.
 
    \subsection { Mixed Poisson-Gaussian noise hypothesis } {
       The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
@@ -116,7 +116,7 @@
    }
 
    \subsection { \label correlation_hypothesis {Correlation hypothesis} } {
-      The denoising method employs a correlation hypothesis to partially compensate for the correlation introduced by image registration. Registration results in correlation between pixels within the interpolation filter's region of support which reduces the variance of a registered image. The correlation hypothesis models the Haar-wavelet correlation structure to improve denoising quality.
+      The denoising method employs a correlation hypothesis to partially compensate for the correlation introduced by image registration. Registration results in correlation between pixels within the interpolation filter's region of support which reduces the variance of a registered image. The correlation hypothesis models the Haar-wavelet correlation structure to improve output quality.
 
       The first component of the correlation hypothesis is the variance scaling function S(&kappa;, &iota;) that defines the average scaling of variance at wavelet scale &kappa; that results from an application of interpolation method &iota;. Figures \fignum {variance_scaling_function} shows an estimate of S(&kappa;, &iota;) for the supported interpolation methods. Variance scaling values approach 1 at increasing scales due to the locality of the correlation. The variance scaling function was estimated by numerical integration over the unit pixel domain on a set of pseudorandom variates from the Gaussian distribution.
 
@@ -134,13 +134,13 @@
    \subsection { Denoising method } {
       The denoising method is based on a statistical estimate of the oracle mean square error (MSE), or "risk", between the unknown noise-free image and the denoised output image. Given a mixed Poisson-Gaussian noise hypothesis, the denoising method minimizes the MSE estimate over a set of denoising processes to find the optimal one, in the sense of peak-signal-to-noise ratio (PSNR).\ref{Stein_1981}\ref{Luisier_2010}
 
-      The denoising processes are expressed as a linear combination of denoising threshold functions, from which only the weights are unknown. These weights are computed by a solution to a linear system of equations. This implies that all parameters of the method are determined automatically, without requiring user input.
+      The denoising processes are expressed as a linear combination of thresholding functions, from which only the weights are unknown. These weights are computed by a solution to a linear system of equations. This implies that all parameters of the method are determined automatically, without requiring user input.
 
-      The denoising method applies MSE minimization independently at each scale of an unnormalized Haar-wavelet decomposition that preserves hypothesis noise statistics across scales. The denoising threshold functions involve several parameters, which provides more adaptability than the standard single-parameter thresholding functions. In particular, the thresholds are adapted to local estimates of the signal-dependent noise variance, which are derived from the corresponding coarse coefficients at the same scale. The coarse coefficients are also used to aggregate interscale relationships into the denoising functions.
+      The denoising method applies MSE minimization independently at each scale of an unnormalized Haar-wavelet decomposition that preserves hypothesis noise statistics across scales. This independent MSE minimization at each wavelet scale is equivalent to a global image-domain MSE minimization, thanks to the orthogonality of Haar wavelets. The thresholding functions involve several parameters, which provides more adaptability than the standard single-parameter thresholding functions. In particular, the thresholds are adapted to local estimates of the signal-dependent noise variance, which are derived from the corresponding coarse coefficients at the same scale. The coarse coefficients are also used to incorporate interscale relationships into the thresholding functions.
 
       The denoising method uses cycle-spinning to suppress visual artifacts due to the lack of translation invariance of the decimated wavelet decomposition.\ref{Coifman_1995}\ref{Kamilov_2014} For a range of translations or shifts, cycle-spinning shifts the noisy image, denoises the shifted image, and then unshifts the denoised image. The result so produced are averaged together to form the output denoised image, which is nearly translation invariant.
 
-      The denoising method provides an option to compensate for large spatial scale noise variance scaling due to flatfielding. Large spatial scale noise scaling variations, resulting from the flatfield correction of optical vignettes and detector sensitivity variations, are estimating by smoothing the flatfield. The denoising method compensates for these variations by multiplying the noisy image by the smoothed flatfield, denoising the product, and then dividing the result by the smoothed flatfield to form the output denoised image.
+      The denoising method provides an option to compensate for large scale noise variance scaling due to flatfielding. Large scale noise scaling variations, resulting from the flatfield correction of optical vignettes and detector sensitivity variations, are estimating by smoothing the flatfield. The denoising method compensates for these variations by multiplying the noisy image by the smoothed flatfield, denoising the product, and then dividing the result by the smoothed flatfield to form the output denoised image.
    }
 
    \subsection { Single frame image denoising } {
@@ -148,9 +148,9 @@
 
       The image combination count parameter is set to 1 to specify that the image is a single frame exposure.
 
-      The flatfield view is set to the image used for flatfield calibration to enable large spatial scale flatfield compensation.
+      The flatfield view is set to the image used for flatfield calibration to enable large scale flatfield compensation.
 
-      Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible denoising quality improvement.
+      Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible output quality improvement.
 
       The detector gain parameter is set to a value obtained from camera manufacture data provide by the EGAIN FITS file keyword. If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script can provide an estimate.
 
@@ -159,6 +159,8 @@
       The variance scale parameter is set to one to indicate that the nominal amount of denoising be performed. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
 
       \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR).
+
+      Enabling the use gradient/noise thresholds parameter increases the adaptivity of the denoising process by incorporating interscale gradient to local noise ratio relationships into the thresholding functions. Increasing the adaptivity of the denoising process improves output quality, but also increases processing time by about 40\%.
 
       The cycle-spin count parameter provides an adjustable tradeoff between output quality and processing time. The default cycle-spin count of 8 typically provides very good quality results in reasonable time. With this default, denoising a 4K x 4K pixel image requires several minutes of time on a late 2015 processor and a single-threaded PixInsight PJSR platform.
 
@@ -235,7 +237,7 @@
    \subsection { Method noise } {
       MureDenoise provides an option to generate the method noise image. Method noise is the noise guessed by the denoising method, defined as the difference between the noisy input and the denoised output. Method noise should track hypothesis noise statistics, and is strongly signal dependent due to the presence of Poisson noise.
 
-      Figures \fignum {method_noise_denoised} and \fignum {method_noise} show crops of a denoised higher dynamic range 40 minute single frame H-alpha image of the ionized hydrogen region IC 1318b/c and the corresponding method noise image, the latter shown with linear stretch. Signal dependent method noise variations are clearly visible, however image structures unrelated to noise are small. Method noise departs from hypothesis noise statistics in areas where image gradient magnitude exceeds the noise level significantly.
+      Figures \fignum {method_noise_denoised} and \fignum {method_noise} show crops of a denoised higher dynamic range 40 minute single frame H-alpha image of the ionized hydrogen region IC 1318b/c and the corresponding method noise image, the latter shown with linear stretch. Signal dependent method noise variations are clearly visible, however image structures unrelated to noise are small.
 
       \figure [numbered:method_noise_denoised, float:left, marginleft:36pt] {
          \figtag Denoised image
@@ -265,7 +267,7 @@
 
          \definition {
             { View } {
-               The view of the linear monochannel image selected for denoising. The image must be a single frame image or an average combination of similarly exposed and registered frames. The size of the image must be at least 256 pixels in width and height.
+               The view of the linear monochannel image selected for denoising. The image must be a single frame image or an average combination of similarly exposed and registered frames. The size of the image must be at least 256 pixels in width and height. Pedestal must be zero.
 
                For linear multichannel images from monocolor detectors, run the monochannel denoiser on each channel separately. The script does not work properly for images from one shot color (OSC) detectors.
             }
@@ -315,9 +317,9 @@
 
          \definition {
             { View } {
-               To enable large spatial scale flatfield compensation, the view of the monochannel image used for flatfield calibration. The flatfield must be bias or dark-subtracted. To disable flatfield compensation, do not select a view.
+               To enable large scale flatfield compensation, the view of the monochannel image used for flatfield calibration. The flatfield must be bias or dark-subtracted. Pedestal must be zero. To disable flatfield compensation, do not select a view.
 
-               Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible denoising quality improvement.
+               Flatfield compensation is useful for telescopes with more than ~10\% optical vignetting. For telescopes with less vignetting, flatfield compensation results in negligible output quality improvement.
 
                The standard deviation of the smoothed flatfield is written to the process console as the \e {Flatfield scale} value. The value is normalized as a percentage of the mean of the smoothed flatfield.
             }
@@ -372,6 +374,10 @@
                The loaded variance scale value equals &eta; &Sigma;(\e{w}\sub{\e{i}}\e{s}\sub{\e{i}})\sup{2} / (&Sigma;\e{w}\sub{\e{i}})\sup{2}, where \e{w}\sub{\e{i}} and \e{s}\sub{\e{i}} equal the weight and scale factor of the \e{i}\sup{th} combined image and &eta; equals the number of images combined.
             }
 
+            { Use gradient/noise thresholds } {
+               Increase the adaptivity of the denoising process by incorporating interscale gradient to local noise ratio relationships into the thresholding functions. Increasing the adaptivity of the denoising process improves output quality, but also increases processing time by about 40\%.
+            }
+
             { Cycle-spin count } {
                Cycle-spin count provides an adjustable trade-off between output quality and processing time. Increasing the number of cycle-spins improves denoising quality, but also increases (nearly linearly) processing time.
 
@@ -379,9 +385,9 @@
             }
 
             { Generate method noise image } {
-               Generate the method noise of the denoising process as a new image window. Method noise is the noise guessed by the denoising method, defined as the difference between the noisy input and the denoised output. Method noise should track hypothesis noise statistics, and is strongly signal dependent due to the presence of Poisson noise. Method noise departs from hypothesis noise statistics in areas where image gradient magnitude exceeds the noise level significantly.
+               Generate the method noise of the denoising process as a new image window. Method noise is the noise guessed by the denoising method, defined as the difference between the noisy input and the denoised output. Method noise should track hypothesis noise statistics, and is strongly signal dependent due to the presence of Poisson noise.
 
-               The standard deviation of the method noise image is written to the process console as the \e {Method noise} value in DN units. The process log will also contain an estimate of the relative contributions of Poisson noise variance and Gaussian noise variance in the sky background, defined by the 10th percentile exposure. If the Gaussian noise variance contribution is less than 10\%, the image can be considered "sky background noise limited".
+               The standard deviation of the method noise image is written to the process console as the \e {Method noise} value in DN units. The process log will also contain an estimate of the relative contributions of Poisson noise variance and Gaussian noise variance in the 10th percentile exposure. If the Gaussian noise variance contribution is less than 10\%, the image can be considered "sky background noise limited".
             }
          }
       }
@@ -422,8 +428,6 @@
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
    \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Underestimates of detector gain, overestimates of detector Gaussian noise, and underestimates of detector offset risk similar problems.
-
-   Method noise departs from hypothesis noise statistics in areas where image gradient magnitude exceeds the noise level significantly.
 }
 
 \relatedscripts {
@@ -453,4 +457,4 @@
 \make
 
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2016/12/31 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2017/01/31 00:00:00 UTC
