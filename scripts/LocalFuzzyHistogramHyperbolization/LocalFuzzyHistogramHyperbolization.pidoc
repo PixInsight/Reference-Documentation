@@ -1,0 +1,330 @@
+\documentclass PIScriptDoc
+
+\script LocalFuzzyHistogramHyperbolization
+
+\keywords {
+   contrast enhancement, fuzzy logic, fuzzy membership function, histogram hyperbolization, histogram transformation
+}
+
+\author {
+   Frank Weidenbusch
+}
+
+\copyright {
+   2017 Frank Weidenbusch
+}
+
+\brief {
+   Contrast enhancement based on a fuzzy logic histogram hyperbolization algorithm.
+}
+
+\introduction {
+
+   Fuzzy logic is a mathemetical theory which was developed to deal with fuzzy data. In Boolean logic a term is eather true or false, whereas in fuzzy logic a term can be partial true.
+   The degree of truth is described with the aid of membership functions. Typically, fuzzy logic will be applied in the field of signal processing and image processing is an essential part of this.
+
+   \subsection { \label fuzzy_histogram_hyperbolization Fuzzy Histogram Hyperbolization } {
+
+      Histogram hyperbolization is a classical algorithm for contrast enhancement and the way to generalize it to a fuzzy logic algorithm was proposed by H. R. Tizhoosh and M. Fochem \ref Tizhoosh_1995.
+      For an image of size \e{M x N} any kind of histogram manipulation can be described by a function \e{f} which transforms the gray level \e{g\sub {m, n}} of the \e{(m, n)\sup {th}} pixel like
+
+      \equation[numbered:eqn_histTrans]{#:
+         $$
+         g'_{m, n} = \lambda \cdot f(g_{m, n})
+         $$
+      :#}
+
+      or for a fuzzy processing
+
+      \equation[numbered:eqn_fuzzyHistTrans]{#:
+         $$
+         g'_{m, n} = \lambda \cdot f(\mu(g_{m, n})) ,
+         $$
+      :#}
+
+      where \e{\mu(g\sub {m, n})} is the \lref {membership_functions}{membership} of \e{g\sub {m, n}}.
+
+      For fuzzy histogram hyperbolization (FHH) the parameters can be determined as follows
+
+      \equation[numbered:eqn_lambda]{#:
+         $$
+         \lambda = \frac{1}{e^{-1}-1}
+         $$
+      :#}
+
+      and
+
+      \equation[numbered:eqn_f]{#:
+         $$
+         f(\mu(g_{m, n})) = e^{{-\mu(g_{m, n})}^\beta}-1 .
+         $$
+      :#}
+
+      So finally, the equation for FHH will be:
+
+      \equation[numbered:eqn_FHH]{#:
+         $$
+         g'_{m, n} = \left(\frac{1}{e^{-1}-1}\right) \cdot \left(e^{{-\mu(g_{m, n})}^\beta}-1\right) .
+         $$
+      :#}
+
+      The fuzzifier \e{\beta} modifies the membership values additionally, which allows to control the gray level dynamics of the resulting image.
+   }
+
+   \subsection { \label membership_functions Membership Functions } {
+
+      As mentioned, the fuzzy membership function of a fuzzy set represents the degree of truth as an extension of valuation. For a given fuzzy set, in the case under consideration the gray levels of an astonimical image,
+      the most suitable membership function can not be determined automatically but must be disvovered by trial and error. For that reason the script offers four different alternertive membership functions.
+
+      \list[spaced] {
+
+         { \label linear \s {Linear function,} as used in the original paper \ref Tizhoosh_1995: \n \n
+
+            \equation[numbered:eqn_linear]{#:
+               $$
+               \mu(g_{m, n}) = \frac{g_{m, n} - g_{min}}{g_{max} - g_{min}} ,
+               $$
+            :#}
+
+            \n
+
+            where \e{g\sub {min}} and \e{g\sub {max}} are the minimal and maximal values of the image histogram. With the linear membership function the FHH algorithm transfers the original histogram values
+            (example with \e{g\sub {min} = 0.1} and \e{g\sub {max} = 0.9}) as follows: \n \n
+
+            \image[width:75\%;height:auto]{fig_0001.svg}
+
+            \n \n As can easily be seen in the figure below, the variation of the fuzzifier \e{\beta} has a wide influence on the FHH algorithm. \n \n
+
+            \image[width:75\%;height:auto]{fig_0002.svg}
+         }
+
+         { \label sigmoid \s {Sigmoid function,} as a typical S-shape function: \n \n
+
+            \equation[numbered:eqn_sigmoid]{#:
+               $$
+               \mu(g_{m, n}) = \frac{1}{1 + e^{\gamma \cdot \left(x_0 - \frac{g_{m, n} - g_{min}}{g_{max} - g_{min}}\right)}} ,
+               $$
+            :#}
+
+            \n
+
+            where \e{g\sub {min}} and \e{g\sub {max}} are again the minimal and maximal values of the image histogram. With the Sigmoid membership function the original histogram values (same example as above) will be transfered as follows: \n \n
+
+            \image[width:75\%;height:auto]{fig_0003.svg}
+
+            \n \n The specific parameters \e{x\sub {0}} and \e{\gamma} modify the shape of the Sigmoid function, whereas \e{\beta} works in the same way as for the linear membership function. The impact of \e{x\sub {0}} and \e{\gamma}
+            is shown in the following diagrams: \n \n
+
+            \image[width:75\%;height:auto]{fig_0004.svg}
+
+            \image[width:75\%;height:auto]{fig_0005.svg}
+
+            \n \n Typically, a fuzzy membership function is normalized, which means \e{\mu(0) = 0} and \e{\mu(1) = 1}. The Simgmoid membership function is not normalized,
+            so that the pixel values of the resulting image not fully utilize the range from zero to one. On the other hand the gaps on both tails of the curve are not really serious,
+            therefore the Sigmoid membership function works very efficient anyway.
+         }
+
+         { \label gauss \s {Gaussian function,} or to be more precise the left part of a Gaussian bell curve as another S-shape function: \n \n
+
+            \equation[numbered:eqn_gauss]{#:
+               $$
+               \mu(g_{m, n}) = e^{-\frac{1}{2} \cdot \frac{(g_{max} - g_{m, n})^2}{\sigma^2 \cdot (g_{max} - g_{min})^2}} ,
+               $$
+            :#}
+
+            \n
+
+            \e{g\sub {min}} and \e{g\sub {max}} as above. The FHH transformation with a Gaussian membership function is illustrated in the figure below: \n \n
+
+            \image[width:75\%;height:auto]{fig_0006.svg}
+
+            \n \n The parameter \e{\sigma} represents the standard deviation of the Gaussian distribution. The impact of \e{\sigma} is shown is the following diagram: \n \n
+
+            \image[width:75\%;height:auto]{fig_0007.svg}
+
+             \n \n The Gaussian membership function is also not normalized, because \e{\mu(0) \ne 0}. But similar to the Sigmoid membership function this has only a small effect on the quality of the FHH algorithm using a Gaussian membership function.
+
+         }
+
+         { \label normgauss \s {Normalized Gaussian function,} similar to the Gaussian membership function, but with an additional term \e{y\sub {0}} in the equations \eqnref eqn_lambda and \eqnref eqn_f to meet the stipulation \e{\mu(0) = 0}: \n \n
+
+            \equation[numbered:eqn_lamgda_ng]{#:
+               $$
+               \lambda = \frac{1}{e^{-1}-1-y_0}
+               $$
+            :#}
+
+            \n
+
+            and \n \n
+
+            \equation[numbered:eqn_f_mg]{#:
+               $$
+               f(\mu(g_{m, n})) = e^{{-\mu(g_{m, n})}^\beta}-1-y_0 .
+               $$
+            :#}
+
+            \n
+
+            with \n \n
+
+            \equation[numbered:eqn_y0]{#:
+               $$
+               y_{0} = e^{-\left(e^{-\frac{1}{2\sigma^2}\right)^\beta}}-1 ,
+               $$
+            :#}
+
+            \n
+
+            In comparison with the Gaussian membership function, the normalized Gaussian membership function utilizes the full range from zero to one,
+            so that the contrast enhancement is more powerful than for the ordinary Gaussian membership function.
+         }
+      }
+   }
+
+   \subsection { \label local_algorithm Local Algorithm } {
+
+      Generally, the FHH algorithm can be applied on an image as a whole. However, to increase the impact of the contrast enhancement, the algorithm should be applied locally to discrete segments of the image.
+      In this case the individual histogram information of each segment is used for the FHH algorithm \ref Tizhoosh_1997. For the local fuzzy histogram hyperbolization (LFHH) algorithm the target image will be evenly divided
+      into a grid pattern of rectangles. The LFHH algorithm also includes a final interpolation procedure which avoids a bordering between the segments.
+   }
+
+}
+
+\description {
+
+   \image [float:left,marginRight:1.5em,marginBottom:3.0em;width:50\%;height:auto]{scrsh_0001.png}
+
+   This script applies a FHH algorithm locally to a grayscale image. The specification of the parameters is devided into five sections:
+
+      \list[spaced] {
+         { \lref {image_selection}{Image Selection}}
+         { \lref {segmentation_parameters}{Segmentation Parameters}}
+         { \lref {fuzzy_parameters}{Fuzzy Parameters}}
+         { \lref {membership_function_parameters}{Membership Function Parameters}}
+         { \lref {output_options}{Output Options}}
+      }
+
+   The tool bar at the bottom includes a button to reset the parameters to the default settings as well as a button to show this documentation.
+
+   \subsection { \label image_selection Image Selection } {
+
+      \image [width:70\%;height:auto]{scrsh_0002.png}
+
+      In the image selection section a nonlinear grayscale image is needed to be selected as target image. Additionally, an optional star mask can be chosen.
+      The application of a star mask excludes stars from the contrast enhancement.
+
+   }
+
+   \subsection { \label segmentation_parameters Segmentation Parameters } {
+
+      \image [width:70\%;height:auto]{scrsh_0003.png}
+
+      To apply the FHH algorithm locally to the target image the size of the local image segments is needed to be specified. The segmentation can be chosen from 5 x 5 up to 25 x 25.
+      If clustering is selected, the fuzzy parameters of bordering segments with similar characteristics will be harmonized. Otherwise individual fuzzy parameters will be applied to each segment.
+      The threshold parameter is used to define the sensitivity of the clustering method.
+   }
+
+   \subsection { \label fuzzy_parameters Fuzzy Parameters } {
+
+      \image [width:70\%;height:auto]{scrsh_0004.png}
+
+      \e{g\sub {min}} and \e{g\sub {max}} are the essential parameters of every of the four \lref {membership_functions}{membership functions} which are offered by the script.
+      The \lref {local_algorithm}{local algorithm} identifies \e{g\sub {min}} and \e{g\sub {max}} individually for each single segment of the target image. In particular, for a granular segmentation the individual extrem values can vary in a wide range.
+      For that reason it might be useful the define a greatest lower bound (glb) for \e{g\sub {min}} respectively a least upper bound (lub) for \e{g\sub {max}} to limit the variation of the extrem values. \n
+
+      The fuzzifier \e{\beta} modifies the dynamics of the \lref {fuzzy_histogram_hyperbolization}{FHH} algorithm. This parameter can be used either globally or locally. In the case of a global use, a constant value for \e{\beta}
+      will be applied to every image segment. Whereas for a local use \e{\beta} is calculated individually for each segment depending on the mean segement brightness. In both cases the strength of the method can be controlled
+      by a user-defined specification of \e{\beta}.
+   }
+
+   \subsection { \label membership_function_parameters Membership Function Parameters } {
+
+      \image [width:70\%;height:auto]{scrsh_0005.png}
+
+      In this section the \lref {membership_functions}{membership function} can be chosen. Four membership functions are available:
+
+      \list {
+         { \lref {linear}{Linear function}}
+         { \lref {sigmoid}{Sigmoid function}}
+         { \lref {gauss}{Gaussian function}}
+         { \lref {normgauss}{Normalized Gaussian function}}
+      }
+
+   For the Sigmoid function the parameters \e{x\sub {0}} and \e{\gamma} can be specified as well as \e{\sigma} for the Gaussian and normalized Gaussian function.
+   }
+
+   \subsection { \label output_options Output Options } {
+
+      \image [width:70\%;height:auto]{scrsh_0006.png}
+
+      The output options allow to select an automatic Histogram Transformation (HT) process to optimize the brightness of the resulting image. Therefor the HT target median can be defined. \n
+
+      Additionally, it can be selected, whether the script will replace the the target image or that the modified image will be provided as a newly created image window and the target image won't be affected.
+   }
+}
+
+\usage {
+
+   \subsection { \label workflow Typical Workflow } {
+
+      A carful preparation of the target image and its star mask is essential for an effective application of the script. As every contrast enhancement algorithm FHH responds very sensitiv to the existing noise of the target image.
+      For that reason it is an important factor to reduce the noise before starting the script. The additional use of a star mask is strongly recommended, otherwise the contrast enhancement would strengthen the stars too much.
+      However, the size of the stars in the mask must be determined very carefully to avoid ring artefacts in the final image.
+
+      The next step is the selection of a reasonable segmentation. The local application causes a very strong contrast enhancement, therefore it is recommended not to choose a too granular segmentation.
+      Another possibility to regulate the effect of the segmentation is the clustering option. Usually, the clustering of neighboring segments with similar characteristics will lead to better results.
+      The clustering threshold determines the sensitivity of that method. Values between 0.05 and 0.15 are typical.
+
+      Before starting the determination of the particular FHH parameters it is useful to define the target median of the resulting image in the output options. Without that the manipulation of the histogram can lead to
+      unsatisfying results which are too dark or too bright. The parameter works comparable to those in other intensity transformation processes. Indeed the script applies a final HistogramTransformation using the specified target median.
+
+      Trying the different membership functions and assess their effect on the target image is a necessary labor. For this purpose the variation of the FHH parameters has a wider influence than the membership function parameters.
+      Usually the determination of the greatest lower bound for \e{g\sub {min}} respectively the least upper bound for \e{g\sub {max}} has the highest impact. Typical values for the greatest lower bound are between 0.2 and 0.4,
+      for the least upper bound between 0.7 and 0.9. In most cases the local \e{\beta}-method leads to better results then the global one. Typical values for \e{\beta} are between 1.1 and 1.5. The specific parameters for the single
+      membership functions can be used for a final fine tuning.
+
+      All used parameter values are documented in the console output. Additionally, the console output includes a measurement of the local contrast and the signal-to-noise ratio of the resulting image.
+      These key figures may be helpful to assess the image quality.
+   }
+
+   \subsection { \label examples Examples } {
+
+      In the following example LFHH is applied to a H\alpha-image of M16. On the left you can see the original target image and on the right the star mask used for the algorithm.
+
+      \image [width:49\%;height:auto]{img_M16.jpg} \image [width:49\%;height:auto]{img_StarMask.jpg}
+
+      \n
+
+      Typical results for the different membership function can be seen below. \n
+      Top left: Linear/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.10/HT median 0.23 \n
+      Top right: Sigmoid/15x15/Clustering 0.05/FHH glb 0.4/FHH lub 0.6/Local FHH beta 1.05/gamma 5.0/x0 0.50/HT median 0.23 \n
+      Bottom left: Gauss/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.20/sigma 0.60/HT median 0.23 \n
+      Bottom right: NormalizedGauss/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.10/sigma 0.75/HT median 0.23
+
+      \image [width:49\%;height:auto]{img_Linear.jpg} \image [width:49\%;height:auto]{img_Sigmoid.jpg}
+      \image [width:49\%;height:auto]{img_Gauss.jpg} \image [width:49\%;height:auto]{img_NormalizedGauss.jpg}
+
+      \n
+
+      And finally a simple PixelMath-combination of the four images.
+
+      \image [width:99\%;height:auto]{img_Aggregate.jpg}
+
+   }
+}
+
+\reference Tizhoosh_1995 {
+   Hamid R. Tizhoosh, Manfred Fochem, \e { Fuzzy Histogram Hyperbolization for Image Enhancement }, Proc. of EUFIT'95, vol. 3, pp. 1695 - 1698, 1995
+}
+
+\reference Tizhoosh_1997 {
+   H. R. Tizhoosh, G. Krell, B. Michaelis, \e { Locally adaptive Fuzzy Image Enhancement}, Computational Intelligence, Theory and Applications, Proc. of 5\sup{th} Fuzzy Days, pp. 272 - 276, 1997
+}
+
+\relatedtools {
+   LocalHistogramTransformation, HistogramTransformation, StarMask
+}
+
+\make
+
