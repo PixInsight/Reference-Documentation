@@ -170,7 +170,7 @@
 
             \equation[numbered:eqn_y0]{#:
                $$
-               y_{0} = e^{-\left(e^{-\frac{1}{2\sigma^2}\right)^\beta}}-1 ,
+               y_{0} = e^{-\left(e^{-\frac{1}{2\sigma^2}}\right)^\beta}-1 ,
                $$
             :#}
 
