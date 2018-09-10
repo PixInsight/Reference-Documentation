@@ -17,7 +17,7 @@
 }
 
 \copyright {
-   2014-2016 Klaus Kretzschmar
+   2014-2018 Klaus Kretzschmar
 }
 
 \brief {
@@ -66,20 +66,21 @@
       {\label indi_devices INDI Devices} {
       Select and connect to the INDI devices which are available on the INDI server.
 
-      To connect a hardware device with the \e {INDI server}, select one or several devices in the \lref indi_devices {INDI Devices}
-      tree-box and press the \e { Connect} button.
+      To connect a hardware device with the \e {INDI server}, select the top level node in the \lref indi_devices {INDI Devices}
+      tree-box and press the \e {Connect} button.
 
       \image[marginRight:1.25em,marginBottom:0.5em] INDIDeviceSelection_1.png
 
-      After successful connection, the server sends a list of device properties which are displayed in the \lref indi_properties
-      {INDI Device Properties} tree-box. Device properties are the control parameters of a hardware device, e.g. the property
+      After successful connection, the server sends a list of device properties which are displayed in the \lref indi_devices
+      {INDI Devices} tree-box. Device properties are the control parameters of a hardware device, e.g. the property
       CCD_TEMPARATURE controls the chip temperature of a CCD camera.
 
       }
-      {\label indi_properties INDI Device Properties} {
-      Edit and send new INDI property values to the INDI server.
 
-      This section lists all properties of a device in a tree-box control. A property consists of one-or-many elements which
+      {Edit and send new INDI property values to the INDI server} {
+
+      All properties of a CCD device are listed as subnodes of the device in the  \lref indi_devices {INDI Devices}
+      tree-box. A property consists of one-or-many elements which
       are grouped in a property tree-node and its values can be displayed by expanding the node. There are three different types
       of property values
 
@@ -95,12 +96,11 @@
       element} and pressing the \e Edit button. A new dialog appears which enables to a enter a new value for the property.
 
       \image[marginRight:1.25em,marginBottom:0.5em] INDIPropertyEdit.png
-
-
-
       }
-      {\label server_message Last server message } {
-        The most current message from the {\e INDI server} is displayed in this section.
+
+
+      {\label server_message Server messages } {
+        Messages from the {\e INDI server} are displayed at the bottom of this section.
       \image[marginRight:1.25em,marginBottom:0.5em] INDIPropertyMessage.png
       }
    }
