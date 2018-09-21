@@ -353,7 +353,7 @@
          }
 
          { \label subframe_property_Stars Stars } {
-
+           \image Images/Stars.png
 
             The number of stars detected and fitted in the subframe and used to estimate \lref subframe_property_FWHM {FWHM}, \lref subframe_property_Eccentricity {Eccentricity}, \lref subframe_property_FWHMMeanDev {FWHMMeanDev} and \lref subframe_property_EccentricityMeanDev {EccentricityMeanDev}.
 
@@ -369,19 +369,19 @@
          { \label subframe_property_FWHMMeanDev FWHMMeanDev } {
            \image Images/FWHMMeanDev.png
 
-           The mean absolute deviation from the mean star profile \e {full width at half maximum} (FWHM) estimate for the subframe in arcseconds or pixels.
+           The mean absolute deviation from the median star profile \e {full width at half maximum} (FWHM) estimate for the subframe in arcseconds or pixels.
          }
 
          { \label subframe_property_EccentricityMeanDev EccentricityMeanDev } {
            \image Images/EccentricityMeanDev.png
 
-           The mean absolute deviation from the mean star profile \e {eccentricity} estimate for the subframe.
+           The mean absolute deviation from the median star profile \e {eccentricity} estimate for the subframe.
          }
 
          { \label subframe_property_StarResidualMeanDev StarResidualMeanDev } {
            \image Images/StarResidualMeanDev.png
 
-           The mean absolute deviation from the mean \e {residual} of the star fitting process for the subframe.
+           The mean absolute deviation from the median \e {residual} of the star fitting process for the subframe.
          }
       }
    }
