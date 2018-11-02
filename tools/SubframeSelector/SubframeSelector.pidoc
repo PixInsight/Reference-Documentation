@@ -2,9 +2,9 @@
 %% SubframeSelector.pidoc - Released 2016/01/24 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of SubframeSelector Tool Version 01.01.0001
+%% This file is part of SubframeSelector Tool Version 01.04.0001
 %%
-%% Copyright (C) 2017 Cameron Leger. All Rights Reserved.
+%% Copyright (C) 2017-2018 Cameron Leger. All Rights Reserved.
 %% Copyright (C) 2012-2016 Mike Schuster. All Rights Reserved.
 %% Copyright (C) 2003-2016 Pleiades Astrophoto S.L. All Rights Reserved.
 %%
@@ -65,7 +65,7 @@
 }
 
 \copyright {
-   2017 Cameron Leger. All Rights Reserved.
+   2017-2018 Cameron Leger. All Rights Reserved.
 }
 
 \brief {
@@ -92,6 +92,18 @@
    }
 
    SubframeSelector relies on a C++ reimplementation of the PJSR StarDetector Script for star detection, the PSF-related code from the PixInsight \tref DynamicPSF {DynamicPSF} process for star fitting, and PixInsight's multiresolution support noise estimation capabilites\ref starck_1998. The script employs custom algorithms for data reduction and presentation. The subframe approval and weighting facilities rely on the \xref https://pixinsight.com/developer/pjsr/index.html \e { PixInsight JavaScript Runtime }.
+
+   \subsection { \label windows Overall Layout } {
+
+   The Subframe Selector is comprised of three windows that serve different functions.
+
+   The main window titled \e {SubframeSelector} is always available and has icons located top-right that open the other windows if they are not already open. This window is where you will "initialize" your settings (most of which will not change unless your imaging setup does), load the subframes to work on, and perform actions such as "Measure Subframes" or "Output Subframes".
+
+   The next window is titled \e {SubframeSelector | Expressions} and offers a large area to create and apply your Approval and Weighting expressions. More on that later!
+
+   The last window is titled \e {SubframeSelector | Measurements} and offers multiple ways of visualizing the information gathered about your subframes.
+
+   }
 
    \subsection { \label measurement_and_presentation Measurement and Presentation } {
       \image Images/Subframes.png
@@ -126,11 +138,15 @@
 
       \image Images/FWHM.png
 
-   Select a plot ordinate from the \lref Plots_ordinate {Ordinate} list to view a plot of the selected \lref Subframe_Properties {subframe property}. The plot's abscissa represents subframes identified by their \lref subframe_property_Index {Index} property whose value equals the index of the subframe in the \lref Target_Subframes_section {Subframes} list. The plot's left hand ordinate axis is labeled in units selected either in the \lref System_Parameters_section {System Parameters} section or in the ordinate's natural units. The solid blue line represents the value of the selected ordinate. The plot's right hand ordinate axis and dashed line is the \lref subframe_property_Weight {Weight} of each subframe.
+   Select a plot ordinate from the \lref Plots_ordinate {Ordinate} list to view plots of the selected \lref Subframe_Properties {subframe property}.
+
+   The first is a rather simple line plot and its abscissa represents subframes identified by their \lref subframe_property_Index {Index} property whose value equals the index of the subframe in the \lref Target_Subframes_section {Subframes} list. The plot's left hand ordinate axis is labeled in units selected either in the \lref System_Parameters_section {System Parameters} section or in the ordinate's natural units. The solid blue line represents the value of the selected ordinate. The plot's right hand ordinate axis and dashed line is the \lref subframe_property_Weight {Weight} of each subframe.
 
    The central horizontal black line corresponds to the median of the property across all subframes. The two gradations surrounding the median line correspond to one and two mean absolute deviation units greater than and less than the median, respectively.
 
    The vertical lines are visual aids to help associate subframes with their points. The points corresponding to adjacent subframes in index order.
+
+   The second plot contains a histogram and Empirical Distribution Function, which is a Cumulative Distribution Function applied to existing data. Whereas the first plot shows all subframes and their values, this plot shows all values and the amount of subframes in the bin's range. This plot's abscissa represents the total range in values for the property. The plot's left hand ordinate axis and solid blue bars represent the count of subframes within a certain value range. The plot's right hand ordinate axis and solid black line is the EDF. Essentially, for any x value, it will represent the count of subframes whose property is less than or equal to that value. In the example picture above, you can determine from this graph that nearly all subframes have a fairly standard distrubtion of FWHM values, but a couple are very large comparatively.
 
    The selected plot may be saved as a PDF file for archival by clicking the \lref Plots_PDF {PDF} button.
    }
@@ -176,38 +192,36 @@
 
       \image Images/LockedFWHM.png
 
-   In the plot above note that the \lref subframe_property_FWHM {FWHM} of subframe 71 is the highest. The subframe can be rejected by clicking either its checkbox in the table or its point in the plot. The rejection is indicated by a cross-mark in the table and a cross shaped point. The subframe is also locked by this action. This lock is indicated by the lock icons.
+   In the plot above note that the \lref subframe_property_FWHM {FWHM} of subframe 63 is the highest. The subframe can be rejected by clicking either its checkbox in the table or its point in the plot. The rejection is indicated by a cross-mark in the table and a cross shaped point. The subframe is also locked by this action. This lock is indicated by the lock icons.
 
-      \image Images/LockedEccentricity.png
+      \image Images/RemovalFWHM.png
 
-   In the plot above note that most subframe \lref subframe_property_Eccentricity {Eccentricity} values are less than 0.6 except for a few. The outliers have been rejected and locked. The rest of the Eccentricity values close to 2 Sigmas, so they are kept. Note that the previously rejected subframe remains rejected.
+   On second thought, we definitely don't want to include these results as they are also influencing the mean deviation of an otherwise normal graph. These two subframes will be \e {removed} by selecting them and pressing the \lref Table_Remove {Remove} button.
 
-      \image Images/MedianRemoval.png
+      \image Images/RemovedFWHM.png
 
-   In the plot above note that two subframe \lref subframe_property_Median {Median} values extremely low because of a glitch during the capture process. We definitely don't want to include these results, and they are also influencing the mean deviation of an otherwise normal graph. These two subframes will be \e {removed} by selecting them and pressing the \lref Table_Remove {Remove} button.
+   In the plot above note that after the two strong outliers were removed, the graph is more stable and useful for inspection.
 
-      \image Images/MedianRemoved.png
+      \image Images/ApprovalEccentricitySigma.png
 
-   In the plot above note that after the two strong outliers for the \lref subframe_property_Median {Median} property were removed, the graph is more stable and useful for inspection.
+   In the plot above the expression \e {EccentricitySigma < 2} was entered as a \lref subframe_approval_expression {subframe approval expression}. This expression states that an approved subframe's deviation of the \lref subframe_property_Eccentricity {Eccentricity} from the median is lower than 3. All subframes not satisfying this requirement are rejected.
 
-      \image Images/ApprovalFWHMEccentricitySNRWeight.png
-
-   In the plot above the subframe locks from the previous rejections were first released by shift-clicking the points in the graph and then the expression \e {FWHM < 25.5 && Math.abs(EccentricitySigma) < 3} was entered as a \lref subframe_approval_expression {subframe approval expression}. This expression states that an approved subframe must have a \lref subframe_property_FWHM {FWHM} less than 25.5 and the deviation of the \lref subframe_property_Eccentricity {Eccentricity} from the median is within 3 and -3 (because the Math.abs() function always returns a positive value). All subframes not satisfying this requirement are rejected. Note that all subframes remain unlocked, but the previously rejected subframes plus a few more are still rejected by the approval expression.
+   When entering expressions, you should use the icon to the right of the text entry in order to apply the expression to the subframes. Note that all subframes are unlocked since we removed the locked ones earlier, but different subframes are rejected by the approval expression.
 
    Once subframe approval/rejection descisions have been completed, the approved/rejected subframes may be optionally copied/moved to output directories for postprocessing. See the section \lref Output_Subframes {Output Subframes} for details.
    }
 
    \subsection { \label subframe_weighting Subframe Weighting } {
 
-   The SubframeSelector tool includes a subframe weighting facility which records subframe weights in FITS headers for postprocessing. Assigning integration weights to subframes is an example usage of this facility. Another example is the determination of the "best" subframe for use as a registration reference.
+   The SubframeSelector tool includes a subframe weighting facility which records subframe weights in FITS headers for postprocessing. Assigning integration weights to subframes is a very common example usage of this facility. Another example is the determination of the "best" subframe for use as a registration reference. Note that you do not have to remember these weights yourself. If you keep the SubframeSelector window open, or if you drag it into an icon in your workspace, you can reference them later. Even if the window and process were closed, the SubframeSelector caches the measurements, which means that running the process again on the same subframes and settings will be instantaneous! At this point, however, you'd have to remember or roughly recreate your Weighting eExpression. It's probably most helpful to determine a 'standard' Approval or Weighting Expression that you save into your workspace and project, such that each time you open the process it is there for your tweaking.
 
    Subframe weights are assigned by specifying a \lref subframe_weighting_expression {subframe weighting expression}. This expression is an arithmetic combination of a subframe properties whose value is interpreted as a subframe's weight.
 
    Examples of subframe weighting are shown below.
 
-      \image Images/ApprovalFWHMEccentricitySNRWeight.png
+      \image Images/SNRWeight.png
 
-   The expression \e {SNRWeight} was entered as a \lref subframe_weighting_expression {subframe weighting expression} as a very simple weighting function. Note that you can now see a secondary dashed line on the second y-axis that represents the subframe weight.
+   The expression \e {SNRWeight} was entered as a \lref subframe_weighting_expression {subframe weighting expression} as a very simple weighting function. Note that you can now see a secondary dashed line on the second y-axis that represents the subframe weight, and in the table the Weight column is equal to that of the SNRWeight. This is because `SNRWeight` is a property understood by the expression, and simply used as-is for the Weight.
 
    \lref subframe_property_SNRWeight {SNRWeight} is an unnormalized approximation of the current \e {NoiseEvaluation} weight used by the \tref ImageIntegration {ImageIntegration} process. See the definition of the \lref subframe_property_SNRWeight {SNRWeight} property for more information.
 
@@ -232,10 +246,6 @@
    The results are shown against the FWHM by choosing the plot ordinate \lref subframe_property_FWHM {FWHM}. Of course, different normalization factors may be choosen to modify the relative significance of \lref subframe_property_FWHM {FWHM} and \lref subframe_property_SNRWeight {SNRWeight} in the combination, and other parameters may be introduced to influence the weight.
 
    Clearly a weighting scheme such as this is subjective in nature. The assigned weights depend on the underlying subframe property statistics as well as the choice of normalization factors. However, there may be no "proper" way to combine disparate measures like \lref subframe_property_FWHM {FWHM}, \lref subframe_property_SNRWeight {SNRWeight} and other subframe properties. Judgement is required given the intended use of the weights and the relative importance of subframe properties with respect to that use.
-
-      \image Images/FWHMSigmaSNRWeightSigmaWeightTable.png
-
-   The table above is sorted by Weight in ascending order. Note that subframe 124, the one with the highest SNRWeight by far and relatively good FHWM and Eccentricity values, is located at the end.
    }
 
    \subsection { \label Output_Subframes Output Subframes } {
@@ -251,8 +261,6 @@
 
       \definition {
          { \label subframe_property_Index Index } {
-            \image Images/IndexApproveLockFilename.png
-
             The \e {index} number of the subframe in the \lref Target_subframes_list {Target subframes list}.
          }
 
@@ -272,20 +280,14 @@
          }
 
          { \label subframe_property_Weight Weight } {
-            \image Images/Weight.png
-
             The \e {weight} of the subframe as determined by the \lref subframe_weighting_expression {subframe weighting expression}.
          }
 
          { \label subframe_property_FWHM FWHM } {
-            \image Images/FWHMGraph.png
-
             The weighted mean star profile \e {full width at half maximum} (FWHM) estimate for the subframe in arcseconds or pixels. The FWHM is a well-known and standardized measurement of the size of a star as seen on the subframe. It is the width normalized in arcseconds or pixels of a functional fit to a star image, measured horizontally at half its maximum value. For all stars fit in an image, their FWHM is weighted by the \lref subframe_property_StarResidual {StarResidual} value to minimize the influence of bad fits.
          }
 
          { \label subframe_property_Eccentricity Eccentricity } {
-            \image Images/Eccentricity.png
-
             The weighted mean star profile \e {eccentricity} estimate for the subframe. Eccentricity is a measure of star profile distortion. Given an elliptical star profile with major axis diameter \e {a} and minor axis diameter \e {b} where \e {a} is greater than or equal to \e {b}, the star profile \e {eccentricity} equals (1 - \e {b}\sup {2} / \e {a}\sup {2})\sup {0.5}, the star profile \e {aspect ratio} equals \e {b} / \e {a} and the star profile \e {flatness} equals \e {a} / \e {b} - 1. For all stars fit in an image, their Eccentricity is weighted by the \lref subframe_property_StarResidual {StarResidual} value to minimize the influence of bad fits. A distortion with an eccentricity less than about 0.42 is not perceptible to most people. The table below shows the relationship between these measures.
 
             \table [header] {
@@ -315,8 +317,6 @@
          }
 
          { \label subframe_property_SNRWeight SNRWeight } {
-           \image Images/SNRWeight.png
-
             The \e {signal to noise ratio weight} estimate for the subframe. SNRWeight equals \lref subframe_property_MedianMeanDeviation {Median Mean Deviation}\sup{2} / \lref subframe_property_Noise {Noise}\sup{2}. SNRWeight is unnormalized approximation to the current \e {NoiseEvaluation} weight used by the \tref ImageIntegration {ImageIntegration} process when configured to use the average absolute deviation from the median as a scale estimator. In a subframe integration, the ratio between a subframe's SNRWeight and the reference subframe's SNRWeight approximately equals the \e {NoiseEvaluation} weight of the subframe.
 
             The significance of the unnormalized SNRWeight and the normalized \e {NoiseEvaluation} weight is that a weighted subframe integration using these weights is an approximate maximum likelyhood estimator for pixel values that correspond to background limited targets, without requiring additional information such as exposure times or sensor parameters. See the \tref ImageIntegration {ImageIntegration} documentation for more information.
@@ -329,59 +329,41 @@
          }
 
          { \label subframe_property_Median Median } {
-           \image Images/Median.png
-
             The \e {median} of the subframe in electrons or Data Numbers.
          }
 
          { \label subframe_property_MedianMeanDeviation MedianMeanDev } {
-           \image Images/MedianMeanDeviation.png
-
             The \e {mean absolute deviation from the median} of the subframe in electrons or Data Numbers.
          }
 
          { \label subframe_property_Noise Noise } {
-           \image Images/Noise.png
-
             An estimate of the \e {standard deviation of Gaussian noise} for the subframe in electrons or Data Numbers. Noise is currently determined by a wavelet-based multiscale algorithm\ref starck_1998.
          }
 
          { \label subframe_property_NoiseRatio NoiseRatio } {
-           \image Images/NoiseRatio.png
-
             The ratio of number of pixels in the subframe deemed free of image structure to the total number of pixels, so this value is always between \[0,1\]; used to estimate \lref subframe_property_Noise {Noise}.
          }
 
          { \label subframe_property_Stars Stars } {
-
-
             The number of stars detected and fitted in the subframe and used to estimate \lref subframe_property_FWHM {FWHM}, \lref subframe_property_Eccentricity {Eccentricity}, \lref subframe_property_FWHMMeanDev {FWHMMeanDev} and \lref subframe_property_EccentricityMeanDev {EccentricityMeanDev}.
 
             Stars may sometimes be used as a measure of subframe quality, as worse observing conditions such as clouds, less exposure time, etc, will result in fewer detectable stars. Note however that for undersampled subframes, stars are tiny and the dimmest usually will be rejected as hot pixels. Better focus, better seeing, and better tracking will result in even smaller stars, higher hot pixel rejection, and smaller Stars values. So a smaller Stars may indicate a better subframe.
          }
 
          { \label subframe_property_StarResidual StarResidual } {
-           \image Images/StarResidual.png
-
             The \e {mean absolute deviation from the median residual} of the star fitting process for the subframe. Residuals are currently measured as the mean absolute deviation between the fitted \lref Star_Detector_Point_spread_function {PSF} model and the star image data in normalized units.
          }
 
          { \label subframe_property_FWHMMeanDev FWHMMeanDev } {
-           \image Images/FWHMMeanDev.png
-
-           The mean absolute deviation from the mean star profile \e {full width at half maximum} (FWHM) estimate for the subframe in arcseconds or pixels.
+           The mean absolute deviation from the median star profile \e {full width at half maximum} (FWHM) estimate for the subframe in arcseconds or pixels.
          }
 
          { \label subframe_property_EccentricityMeanDev EccentricityMeanDev } {
-           \image Images/EccentricityMeanDev.png
-
-           The mean absolute deviation from the mean star profile \e {eccentricity} estimate for the subframe.
+           The mean absolute deviation from the median star profile \e {eccentricity} estimate for the subframe.
          }
 
          { \label subframe_property_StarResidualMeanDev StarResidualMeanDev } {
-           \image Images/StarResidualMeanDev.png
-
-           The mean absolute deviation from the mean \e {residual} of the star fitting process for the subframe.
+           The mean absolute deviation from the median \e {residual} of the star fitting process for the subframe.
          }
       }
    }
@@ -442,6 +424,10 @@
             This parameter specifies the working method to operate when Executing Globally. Options are Measure Subframes, Output Subframes, and Star Detector Preview.
          }
 
+         { \label Window_icons Window Icons } {
+            Use these two icons to show the Expressions and Measurements windows if they have been closed.
+         }
+
          { \label Target_subframes_list Target subframes list } {
             This control is a list with all the subframes currently selected for measurement. On this list you can:
 
@@ -476,6 +462,10 @@
 
          { Clear } {
             Click to clear the list of target subframes.
+         }
+
+         { File Cache } {
+            This checkbox determines whether or not the SubframeSelector will use already-computed measurements from a cache instead of measuring the subframes again. Usually, this will always be on to speed up the measurement process if it was done once before.
          }
       }
    }
@@ -666,12 +656,16 @@
             This parameter specifies the \lref subframe_approval_expression {subframe approval expression}, a constraint on subframe properties used to approve and reject subframes.
 
             A cross icon to the left of the \lref subframe_approval_expression {subframe approval expression} indicates that the expression is invalid and that all unlocked subframes will be approved.
+
+            The icon on the right will apply the current \lref subframe_approval_expression {subframe approval expression} to the measured frames.
          }
 
          { Weighting } {
             This parameter specifies the \lref subframe_weighting_expression {subframe weighting expression}, an arithmetic combination of subframe properties used to assign subframe weights.
 
             A cross icon to the left of the \lref subframe_weighting_expression {subframe weighting expression} indicates that the expression is invalid and that zero will be used as a substitute weight.
+
+            The icon on the right will apply the current \lref subframe_weighting_expression {subframe weighting expression} to the measured frames.
          }
       }
    }
@@ -686,6 +680,10 @@
 
          { \label Table_Sort_Table_by_ordering Sort table by ordering } {
             This parameter specifies a table sort ordering.
+         }
+
+         { \label Table_Counts Approved/Locked Counts } {
+            The text here conveniently shows the total count of subframes, how many are currently Approved, and how many are currently Locked.
          }
 
          { \label Table_Toggle_Approve Toggle Approve } {
@@ -741,8 +739,8 @@
       \image Images/FWHM.png
 
       \definition {
-         { Plot } {
-            The plot displays values of the selected plot ordinate. On the plot you can:
+         { Left Plot } {
+            The plot displays values of the selected plot ordinate. On this plot you can:
             \list {
                {
                   Click a subframe's point to toggle its approved/rejected state. The subframe will also be locked.
@@ -762,12 +760,27 @@
             }
          }
 
+         { Right Plot } {
+            The plot displays a histogram and Empirical Distribution Function for the selected plot ordinate. On this plot you can:
+            \list {
+               {
+                  Hover over a point to display the subframe's Weight, plot value, plot value in sigma units, and the median of the plot values.
+               }
+               {
+                  Click-and-drag a selection to zoom in on a region.
+               }
+               {
+                  Double-click to reset the viewport.
+               }
+            }
+         }
+
          { \label Plots_ordinate Ordinate } {
             This parameter specifies the plot ordinate.
          }
 
-         { \label Plots_PDF PDF } {
-            Click this button to save all plots in a multiple image FITS file.
+         { \label Plots_PDF Save PDF } {
+            Click this button to save the current plot as a PDF.
          }
       }
    }
