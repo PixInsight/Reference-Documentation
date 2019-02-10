@@ -13,7 +13,7 @@
 }
 
 \copyright {
-   2012-15, Andrés del Pozo
+   2012-17, Andrés del Pozo
 }
 
 \brief {
@@ -118,9 +118,9 @@
             The coordinates of the selected object are copied to the \lref{Coordinates}{Coordinates} fields.
          }
 
-         {Epoch}
+         {Obs. Date}
          {
-            This fields defines the date when the image was taken.
+            This field (Observation date) defines the date when the image was taken.
             It is necessary for calculating the position of the stars using their \xref{http://en.wikipedia.org/wiki/Proper_motion}{proper motion}.
 
             If the image has a valid \s{DATE-OBS} keyword the script initializes this field to the date in this keyword.
@@ -162,7 +162,12 @@
 
       \definition
       {
-         {Local catalog \label Catalog}
+         {Automatic catalog \label Catalog}
+         {
+            When this option is selected the script chooses the best catalog for the
+             estimated field of view of the image.
+         }
+         {Local catalog}
          {
             If this option is selected the script uses a catalog stored locally.
             In this case you have to configure the path where the catalog is stored.
@@ -185,18 +190,18 @@
                   When the catalog has proper motion data the coordinates of the stars are stored for the given epoch.
                }
             }
-
          }
-         {VizieR star catalog}
+         {Online star catalog}
          {
             \xref{http://vizier.u-strasbg.fr/}{VizieR} is an online catalog server that provides information of many catalogs.
-              From the many catalog available the script allows to use a subset:
+              The script allows to use a subset of the available catalogs:
               \list{
-               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/315}{UCAC3}: This catalog contains stars of magnitudes between 8 and 16.}
-               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/317}{PPMXL}: This catalog contains stars of magnitude up to 20.}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?V/50}{BrightStars}: This catalog contains the 9100 brightest stars (magnitude<8)}
                {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/259}{TYCHO-2}: This catalog is the result of the Hipparcos space telescope and
                contains the 2.5 million brightest stars (magnitude<13). }
-               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?V/50}{BrightStars}: This catalog contains the 9100 brightest stars (magnitude<8)}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/315}{UCAC3}: This catalog contains stars of magnitudes between 8 and 16.}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/317}{PPMXL}: This catalog contains stars of magnitude up to 20.}
+               {\xref{http://cdsarc.u-strasbg.fr/viz-bin/Cat?I/337}{Gaia DR1}: This catalog contains stars of magnitude up to 20.}
               }
               You have to select the catalog best suited for your image.
               For example for very wide field images (focal length<25mm) you should use the catalog \e{BrightStars} since it has enough
@@ -214,6 +219,11 @@
             If the value is too low the script won't have enough stars to compare, but if it is too high the script will try to match
             stars of the image to stars that aren't visible.
             This will slow the process and it could confuse the algorithm and prevent finding a solution or worse: it could find a bad solution.
+         }
+         {Automatic magnitude}
+         {
+            When this option is selected the script chooses the optimal magnitude limit for the
+             estimated field of view of the image.
          }
       }
    }

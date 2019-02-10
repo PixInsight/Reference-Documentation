@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+   <title>PixInsight Reference Documentation | LocalFuzzyHistogramHyperbolization</title>
+   <meta name="keywords" content="contrast enhancement, fuzzy logic, fuzzy membership function, histogram hyperbolization, histogram transformation" />
+   <meta name="author" content="Frank Weidenbusch" />
+   <meta name="description" content="Contrast enhancement based on a fuzzy logic histogram hyperbolization algorithm." />
+   <meta name="robots" content="INDEX,FOLLOW" />
+   <meta name="generator" content="PixInsight Documentation Compiler script version 1.6.2" />
+   <script type="text/javascript" src="../../pidoc/scripts/pidoc-utility.js"></script>
+   <link type="text/css" href="../../pidoc/css/pidoc-common.css" rel="stylesheet" />
+   <link type="text/css" href="../../pidoc/css/pidoc-highlight.css" rel="stylesheet" />
+   <link type="text/css" href="../../pidoc/css/pidoc-tool.css" rel="stylesheet" />
+   <link rel="icon" href="../../pidoc/icons/pidoc-icon.png" type="image/png" />
+   <link rel="shortcut icon" href="../../pidoc/icons/pidoc-icon.png" type="image/png" />
+</head>
+<body>
+<script type="text/javascript">
+   pidoc_generateDynamicContents();
+</script>
+
+<h1>LocalFuzzyHistogramHyperbolization</h1>
+
+<div id="authors">
+<p>By Frank Weidenbusch</p>
+</div>
+
+<hr class="separator"/>
+
+<div id="brief">
+<p>Contrast enhancement based on a fuzzy logic histogram hyperbolization algorithm. <a href="#__contents__">[more]</a></p></div>
+
+<div id="keywords">
+<p><strong>Keywords:</strong> contrast enhancement, fuzzy logic, fuzzy membership function, histogram hyperbolization, histogram transformation</p>
+</div>
+
+<h3 class="pidoc_sectionTitle" id="__toc__">Contents</h3>
+<p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'toc', this );">[hide]</p>
+<div id="toc">
+<ul>
+<li class="pidoc_tocItem"><a href="#__Introduction__">1&emsp;Introduction</a>
+<ul>
+<li class="pidoc_tocSubitem"><a href="#__Introduction_:_Fuzzy_Histogram_Hyperbolization__">1.1&emsp;Fuzzy Histogram Hyperbolization</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Introduction_:_Membership_Functions__">1.2&emsp;Membership Functions</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Introduction_:_Local_Algorithm__">1.3&emsp;Local Algorithm</a></li>
+</ul>
+</li>
+<li class="pidoc_tocItem"><a href="#__Description__">2&emsp;Description</a>
+<ul>
+<li class="pidoc_tocSubitem"><a href="#__Description_:_Image_Selection__">2.1&emsp;Image Selection</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Description_:_Segmentation_Parameters__">2.2&emsp;Segmentation Parameters</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Description_:_Fuzzy_Parameters__">2.3&emsp;Fuzzy Parameters</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Description_:_Membership_Function_Parameters__">2.4&emsp;Membership Function Parameters</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Description_:_Output_Options__">2.5&emsp;Output Options</a></li>
+</ul>
+</li>
+<li class="pidoc_tocItem"><a href="#__Usage__">3&emsp;Usage</a>
+<ul>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Typical_Workflow__">3.1&emsp;Typical Workflow</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Examples__">3.2&emsp;Examples</a></li>
+</ul>
+</li>
+<li class="pidoc_tocItem"><a href="#__references__">References</a></li>
+<li class="pidoc_tocItem"><a href="#__relatedTools__">Related Tools</a></li>
+</ul>
+</div>
+
+<div id="__contents__">
+
+<div class="pidoc_section" id="__Introduction__">
+   <h3 class="pidoc_sectionTitle">1&emsp;Introduction</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Introduction', this );">[hide]</p>
+   <div id="Introduction">
+<p>Fuzzy logic is a mathematical theory which was developed to deal with fuzzy data. In Boolean logic a term is either true or false, whereas in fuzzy logic a term can be partial true. The degree of truth is described with the aid of membership functions. Typically, fuzzy logic will be applied in the field of signal processing and image processing is an essential part of this.</p>
+<div class="pidoc_subsection" id="__Introduction_:_Fuzzy_Histogram_Hyperbolization__">
+   <h4 class="pidoc_subsectionTitle">1.1&emsp;<a id="fuzzy_histogram_hyperbolization"></a>Fuzzy Histogram Hyperbolization</h4>
+<p>Histogram hyperbolization is a classical algorithm for contrast enhancement and the way to generalize it to a fuzzy logic algorithm was proposed by H. R. Tizhoosh and M. Fochem <sup><a href="#__reference_1__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Reference 1]<br/>
+Hamid R. Tizhoosh, Manfred Fochem, <em>Fuzzy Histogram Hyperbolization for Image Enhancement</em>, Proc. of EUFIT'95, vol. 3, pp. 1695 - 1698, 1995">[1]</a></sup>. For an image of size <em>M x N</em> any kind of histogram manipulation can be described by a function <em>f</em> which transforms the grey level <em>g<sub>m, n</sub></em> of the <em>(m, n)<sup>th</sup></em> pixel like</p>
+<a id="__equation_1__"></a><div class="pidoc_equation"><img src="images/eqn_0001.svg" alt=""/><span class="pidoc_equation_number">[1]</span></div>
+<p>or for a fuzzy processing</p>
+<a id="__equation_2__"></a><div class="pidoc_equation"><img src="images/eqn_0002.svg" alt=""/><span class="pidoc_equation_number">[2]</span></div>
+<p>where <em>&mu;(g<sub>m, n</sub>)</em> is the <a href="#membership_functions">membership</a> of <em>g<sub>m, n</sub></em>.</p>
+<p>For fuzzy histogram hyperbolization (FHH) the parameters can be determined as follows</p>
+<a id="__equation_3__"></a><div class="pidoc_equation"><img src="images/eqn_0003.svg" alt=""/><span class="pidoc_equation_number">[3]</span></div>
+<p>and</p>
+<a id="__equation_4__"></a><div class="pidoc_equation"><img src="images/eqn_0004.svg" alt=""/><span class="pidoc_equation_number">[4]</span></div>
+<p>So finally, the equation for FHH will be:</p>
+<a id="__equation_5__"></a><div class="pidoc_equation"><img src="images/eqn_0005.svg" alt=""/><span class="pidoc_equation_number">[5]</span></div>
+<p>The fuzzifier <em>&beta;</em> modifies the membership values additionally, which allows to control the grey level dynamics of the resulting image.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Introduction_:_Membership_Functions__">
+   <h4 class="pidoc_subsectionTitle">1.2&emsp;<a id="membership_functions"></a>Membership Functions</h4>
+<p>As mentioned, the fuzzy membership function of a fuzzy set represents the degree of truth as an extension of valuation. For a given fuzzy set, in the case under consideration the sample values of an astonomical image, the most suitable membership function cannot be determined automatically but must be discovered by trial and error. For that reason the script offers four different alternative membership functions for contrast enhancement and additionally one for stretching linear images.</p>
+
+<ul class="pidoc_list">
+<li><a id="linear"></a> <strong>Linear function,</strong> as used in the original paper <sup><a href="#__reference_1__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Reference 1]<br/>
+Hamid R. Tizhoosh, Manfred Fochem, <em>Fuzzy Histogram Hyperbolization for Image Enhancement</em>, Proc. of EUFIT'95, vol. 3, pp. 1695 - 1698, 1995">[1]</a></sup>: <br/>
+ <br/> <a id="__equation_6__"></a><div class="pidoc_equation"><img src="images/eqn_0006.svg" alt=""/><span class="pidoc_equation_number">[6]</span></div>
+<br/> where <em>g<sub>min</sub></em> and <em>g<sub>max</sub></em> are the minimal and maximal values of the image histogram. With the linear membership function the FHH algorithm transfers the original histogram values (example with <em>g<sub>min</sub> = 0.1</em> and <em>g<sub>max</sub> = 0.9</em>) as follows: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0001.svg" alt=""/>
+<br/>
+ <br/>
+ As can easily be seen in the figure below, the variation of the fuzzifier <em>&beta;</em> has a wide influence on the FHH algorithm. <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0002.svg" alt=""/>
+</li>
+<li class="pidoc_spaced_list_item"><a id="MTF"></a> <strong>MTF function,</strong> as a typical S-shape function: : <br/>
+ <br/> <a id="__equation_7__"></a><div class="pidoc_equation"><img src="images/eqn_0007.svg" alt=""/><span class="pidoc_equation_number">[7]</span></div>
+<br/> where <em>g<sub>min</sub></em> and <em>g<sub>max</sub></em> are again the minimal and maximal values of the image histogram and <em>mid</em> is the alterable midtone of the MTF function. With the MTF membership function the original histogram values (same example as above) will be transferred as follows: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0008.svg" alt=""/>
+<br/>
+ <br/>
+ The midtone <em>mid</em> determins the shape of the MTF function, whereas <em>&beta;</em> works in the same way as for the linear membership function. The following diagram illustrates the impact of <em>mid</em>: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0009.svg" alt=""/>
+</li>
+<li class="pidoc_spaced_list_item"><a id="sigmoid"></a> <strong>Sigmoid function,</strong> as another S-shape function: <br/>
+ <br/> <a id="__equation_8__"></a><div class="pidoc_equation"><img src="images/eqn_0008.svg" alt=""/><span class="pidoc_equation_number">[8]</span></div>
+<br/> <em>g<sub>min</sub></em>, <em>g<sub>max</sub></em> and <em>mid</em> as above. The effect of the Sigmoid membership function is shown below: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0003.svg" alt=""/>
+<br/>
+ <br/>
+ The specific parameters <em>mid</em> and <em>&gamma;</em> modify the shape of the Sigmoid function. The impact of <em>mid</em> and <em>&gamma;</em> is shown in the following diagrams: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0004.svg" alt=""/>
+<img style="width:75%;height:auto;" src="images/fig_0005.svg" alt=""/>
+<br/>
+ <br/>
+ Typically, a fuzzy membership function is normalized, which means <em>&mu;(0) = 0</em> and <em>&mu;(1) = 1</em>. The Sigmoid membership function is not normalized, so that the pixel values of the resulting image not fully utilize the range from zero to one. On the other hand the gaps on both tails of the curve are not really serious, therefore the Sigmoid membership function works very efficient anyway.</li>
+<li class="pidoc_spaced_list_item"><a id="normsigmoid"></a> <strong>Normalized Sigmoid function,</strong> similar to the Sigmoid membership function, but with a normalization term <em>N</em> in <a href="#__equation_8__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Equation 8]<br/>
+<img src='images/eqn_0008.svg' alt=''/>">[8]</a>: <br/>
+ <br/> <a id="__equation_9__"></a><div class="pidoc_equation"><img src="images/eqn_0009.svg" alt=""/><span class="pidoc_equation_number">[9]</span></div>
+<br/> where <em>N</em> is defined as <br/>
+ <br/> <a id="__equation_10__"></a><div class="pidoc_equation"><img src="images/eqn_0010.svg" alt=""/><span class="pidoc_equation_number">[10]</span></div>
+<br/> with <br/>
+ <br/> <a id="__equation_11__"></a><div class="pidoc_equation"><img src="images/eqn_0011.svg" alt=""/><span class="pidoc_equation_number">[11]</span></div>
+<br/> <a id="__equation_12__"></a><div class="pidoc_equation"><img src="images/eqn_0012.svg" alt=""/><span class="pidoc_equation_number">[12]</span></div>
+In comparison with the Sigmoid membership function, the normalized Sigmoid membership function utilizes the full range from zero to one, so that the contrast enhancement is more powerful than for the ordinary Sigmoid membership function.</li>
+<li class="pidoc_spaced_list_item"><a id="gauss"></a> <strong>Gaussian function,</strong> or to be more precise the left part of a Gaussian bell curve as another S-shape function: <br/>
+ <br/> <a id="__equation_13__"></a><div class="pidoc_equation"><img src="images/eqn_0013.svg" alt=""/><span class="pidoc_equation_number">[13]</span></div>
+<br/> <em>g<sub>min</sub></em> and <em>g<sub>max</sub></em> as above. The FHH transformation with a Gaussian membership function is illustrated in the figure below: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0006.svg" alt=""/>
+<br/>
+ <br/>
+ The parameter <em>&sigma;</em> represents the standard deviation of the Gaussian distribution. The impact of <em>&sigma;</em> is shown is the following diagram: <br/>
+ <br/> <img style="width:75%;height:auto;" src="images/fig_0007.svg" alt=""/>
+<br/>
+ <br/>
+ The Gaussian membership function is also not normalized, because <em>&mu;(0) &ne; 0</em>. But similar to the Sigmoid membership function this has only a small effect on the quality of the FHH algorithm using a Gaussian membership function.</li>
+<li class="pidoc_spaced_list_item"><a id="normgauss"></a> <strong>Normalized Gaussian function,</strong> similar to the Gaussian membership function, but with an additional term <em>y<sub>0</sub></em> in the equations <a href="#__equation_3__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Equation 3]<br/>
+<img src='images/eqn_0003.svg' alt=''/>">[3]</a> and <a href="#__equation_4__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Equation 4]<br/>
+<img src='images/eqn_0004.svg' alt=''/>">[4]</a> to meet the stipulation <em>&mu;(0) = 0</em>: <br/>
+ <br/> <a id="__equation_14__"></a><div class="pidoc_equation"><img src="images/eqn_0014.svg" alt=""/><span class="pidoc_equation_number">[14]</span></div>
+<br/> and <br/>
+ <br/> <a id="__equation_15__"></a><div class="pidoc_equation"><img src="images/eqn_0015.svg" alt=""/><span class="pidoc_equation_number">[15]</span></div>
+<br/> with <br/>
+ <br/> <a id="__equation_16__"></a><div class="pidoc_equation"><img src="images/eqn_0016.svg" alt=""/><span class="pidoc_equation_number">[16]</span></div>
+<br/> In comparison with the Gaussian membership function, the normalized Gaussian membership function allows a more powerful contrast enhancement than the ordinary Gaussian membership function.</li>
+<li class="pidoc_spaced_list_item"><a id="MMTF"></a> <strong>Masked MTF function,</strong> as a modified membership function especially for stretching linear images: <br/>
+ <br/> The MTF function is a typically used for stretching linear images and defined as <br/>
+ <br/> <a id="__equation_17__"></a><div class="pidoc_equation"><img src="images/eqn_0017.svg" alt=""/><span class="pidoc_equation_number">[17]</span></div>
+<br/> where the shape of the function is characterized by the midtone <em>mid</em>. <br/>
+ <br/> To mitigate the effects of the MTF function, an iterative algorithm <em>M<sub>i</sub></em> is applied as follows: <br/>
+ <br/> <a id="__equation_18__"></a><div class="pidoc_equation"><img src="images/eqn_0018.svg" alt=""/><span class="pidoc_equation_number">[18]</span></div>
+<br/> <a id="__equation_19__"></a><div class="pidoc_equation"><img src="images/eqn_0019.svg" alt=""/><span class="pidoc_equation_number">[19]</span></div>
+<br/> <a id="__equation_20__"></a><div class="pidoc_equation"><img src="images/eqn_0020.svg" alt=""/><span class="pidoc_equation_number">[20]</span></div>
+<br/> The Masked MTF function <em>MMTF</em> used in the script is defined as <br/>
+ <br/> <a id="__equation_21__"></a><div class="pidoc_equation"><img src="images/eqn_0021.svg" alt=""/><span class="pidoc_equation_number">[21]</span></div>
+<br/> The two parameters <em>mid</em> and <em>mid<sub>mask</sub></em> are not identical and are automatically calculated by the script dependig on the image data. By this construction, a function <em>MMTF</em> is defined which produces a very strong stretch for small values and a weakened stretch for large values. This is ideal for using MMTF as a membership function for the Fuzzy Histogram Hyperbolization algorithm to stretch linear images.</li>
+</ul>
+
+</div>
+
+<div class="pidoc_subsection" id="__Introduction_:_Local_Algorithm__">
+   <h4 class="pidoc_subsectionTitle">1.3&emsp;<a id="local_algorithm"></a>Local Algorithm</h4>
+<p>Generally, the FHH algorithm can be applied on an image as a whole. However, to increase the impact of the contrast enhancement, the algorithm should be applied locally to discrete segments of the image. In this case the individual histogram information of each segment is used for the FHH algorithm <sup><a href="#__reference_2__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Reference 2]<br/>
+H. R. Tizhoosh, G. Krell, B. Michaelis, <em>Locally adaptive Fuzzy Image Enhancement</em>, Computational Intelligence, Theory and Applications, Proc. of 5<sup>th</sup> Fuzzy Days, pp. 272 - 276, 1997">[2]</a></sup>. For the local fuzzy histogram hyperbolization (LFHH) algorithm the target image will be evenly divided into a grid pattern of rectangles. The LFHH algorithm also includes a final interpolation procedure which avoids a bordering between the segments.</p>
+</div>
+
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Description__">
+   <h3 class="pidoc_sectionTitle">2&emsp;Description</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Description', this );">[hide]</p>
+   <div id="Description">
+<img style="float:left;margin-right:1.5em;margin-bottom:3.0em;width:50%;height:auto;" src="images/scrsh_0001.png" alt=""/>
+<p>This script applies a FHH algorithm locally to greyscale and color images. The specification of the parameters is divided into five sections:</p>
+
+<ul class="pidoc_list">
+<li><a href="#image_selection">Image Selection</a></li>
+<li class="pidoc_spaced_list_item"><a href="#segmentation_parameters">Segmentation Parameters</a></li>
+<li class="pidoc_spaced_list_item"><a href="#fuzzy_parameters">Fuzzy Parameters</a></li>
+<li class="pidoc_spaced_list_item"><a href="#membership_function_parameters">Membership Function Parameters</a></li>
+<li class="pidoc_spaced_list_item"><a href="#output_options">Output Options</a></li>
+</ul>
+
+<p>The tool bar at the bottom includes a button to reset the parameters to the default settings as well as a button to show this documentation.</p>
+<div class="pidoc_subsection" id="__Description_:_Image_Selection__">
+   <h4 class="pidoc_subsectionTitle">2.1&emsp;<a id="image_selection"></a>Image Selection</h4>
+<img style="width:70%;height:auto;" src="images/scrsh_0002.png" alt=""/>
+<p>Originally, the script was intended to provide contrast enhancement for nonlinear grayscale images. Although contrast enhancement should basically be applied to the luminance component, the script can also process color images. In addition, linear grayscale images can be stretched as well. For this the membership function Masked MTF has to be used. (Although the <a href="#MMTF">Masked MTF function</a> gives good results for color images, it is still not capable for rationally stretching linear RGB images. The script has a check routine, if a processing of a linear RGB image leads to meaningful results. Basically, processes like <a href="../../tools/MaskedStretch/MaskedStretch.html" title="../../tools/MaskedStretch/MaskedStretch.html">MaskedStretch</a> or <a href="../../tools/ArcsinhStretch/ArcsinhStretch.html" title="../../tools/ArcsinhStretch/ArcsinhStretch.html">ArcsinhStretch</a> are better suited for stretching RGB images.)</p>
+<p>Additionally, an optional star mask can be chosen. The application of a star mask excludes stars from the contrast enhancement. Stretching linear images with Masked MTF requires no star mask!</p>
+</div>
+
+<div class="pidoc_subsection" id="__Description_:_Segmentation_Parameters__">
+   <h4 class="pidoc_subsectionTitle">2.2&emsp;<a id="segmentation_parameters"></a>Segmentation Parameters</h4>
+<img style="width:70%;height:auto;" src="images/scrsh_0003.png" alt=""/>
+<p>To apply the FHH algorithm locally to the target image the size of the local image segments is needed to be specified. The segmentation can be chosen from 5 x 5 up to 25 x 25. If clustering is selected, the fuzzy parameters of bordering segments with similar characteristics will be harmonized. Otherwise individual fuzzy parameters will be applied to each segment. The threshold parameter is used to define the sensitivity of the clustering method.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Description_:_Fuzzy_Parameters__">
+   <h4 class="pidoc_subsectionTitle">2.3&emsp;<a id="fuzzy_parameters"></a>Fuzzy Parameters</h4>
+<img style="width:70%;height:auto;" src="images/scrsh_0004.png" alt=""/>
+<p><em>g<sub>min</sub></em> and <em>g<sub>max</sub></em> are the essential parameters of every of the four <a href="#membership_functions">membership functions</a> for contrast enhancement which are offered by the script. The <a href="#local_algorithm">local algorithm</a> identifies <em>g<sub>min</sub></em> and <em>g<sub>max</sub></em> individually for each single segment of the target image. In particular, for a granular segmentation the individual extreme values can vary in a wide range. For that reason it might be useful the define a greatest lower bound (glb) for <em>g<sub>min</sub></em> respectively a least upper bound (lub) for <em>g<sub>max</sub></em> to limit the variation of the extreme values. <br/></p>
+<p>The fuzzifier <em>&beta;</em> modifies the dynamics of the <a href="#fuzzy_histogram_hyperbolization">FHH</a> algorithm. This parameter can be used either globally or locally. In the case of a global use, a constant value for <em>&beta;</em> will be applied to every image segment. Whereas for a local use <em>&beta;</em> is calculated individually for each segment depending on the mean segment brightness. In both cases the strength of the method can be controlled by a user-defined specification of <em>&beta;</em>.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Description_:_Membership_Function_Parameters__">
+   <h4 class="pidoc_subsectionTitle">2.4&emsp;<a id="membership_function_parameters"></a>Membership Function Parameters</h4>
+<img style="width:70%;height:auto;" src="images/scrsh_0005.png" alt=""/>
+<p>In this section the <a href="#membership_functions">membership function</a> can be chosen. Four membership functions for contrast enhancement and one for stretching linear images are available:</p>
+
+<ul class="pidoc_list">
+<li><a href="#linear">Linear function</a></li>
+<li><a href="#MTF">MTF function</a></li>
+<li><a href="#sigmoid">Sigmoid function</a></li>
+<li><a href="#gauss">Gaussian function</a></li>
+<li><a href="#MMTF">Masked MTF function (linear stretch)</a></li>
+</ul>
+
+<p>The midtone of the MTF and Sigmoid function can be speciefied as well as the parameters <em>&gamma;</em> for the Sigmoid function and <em>&sigma;</em> for the Gaussian function. For these two functions, which are originally not normalized (which means that the pixel values of the resulting image not fully utilize the range from zero to one), the option of an additional normalization can also be selected.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Description_:_Output_Options__">
+   <h4 class="pidoc_subsectionTitle">2.5&emsp;<a id="output_options"></a>Output Options</h4>
+<img style="width:70%;height:auto;" src="images/scrsh_0006.png" alt=""/>
+<p>The output options allow to select an automatic Histogram Transformation (HT) process to optimize the brightness of the resulting image. Therefor the HT target median can be defined. <br/></p>
+<p>Additionally, it can be selected, whether the script will replace the the target image or that the modified image will be provided as a newly created image window and the target image won't be affected.</p>
+</div>
+
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Usage__">
+   <h3 class="pidoc_sectionTitle">3&emsp;Usage</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Usage', this );">[hide]</p>
+   <div id="Usage">
+<div class="pidoc_subsection" id="__Usage_:_Typical_Workflow__">
+   <h4 class="pidoc_subsectionTitle">3.1&emsp;<a id="workflow"></a>Typical Workflow</h4>
+<p>A careful preparation of the target image and its star mask is essential for an effective application of the script. As every contrast enhancement algorithm, FHH is very sensitive to the existing noise in the target image. For that reason it is an important factor to reduce the noise before starting the script. Any existing stacking artifacts should be removed before as well. The additional use of a star mask is strongly recommended, otherwise the contrast enhancement would strengthen the stars too much. However, the size of the stars in the mask must be determined very carefully to avoid ring artifacts in the final image. Only the stretching of linear images with Masked MTF does not require the use of a star mask.</p>
+<p>The next step is the selection of a reasonable segmentation. The local application causes a very strong contrast enhancement, therefore it is recommended not to choose a too granular segmentation. Another possibility to regulate the effect of the segmentation is the clustering option. Usually, the clustering of neighboring segments with similar characteristics will lead to better results. The clustering threshold determines the sensitivity of that method. Values between 0.05 and 0.15 are typical.</p>
+<p>Before starting the determination of the particular FHH parameters it is useful to define the target median of the resulting image in the output options. Without that the manipulation of the histogram can lead to unsatisfying results which are too dark or too bright. The parameter works comparable to those in other intensity transformation processes. Indeed the script applies a final instance of <a href="../../tools/HistogramTransformation/HistogramTransformation.html" title="../../tools/HistogramTransformation/HistogramTransformation.html">HistogramTransformation</a> using the specified target median.</p>
+<p>Trying out the different membership functions to assess their effect on the target image is a necessary labor. For this purpose the variation of the FHH parameters has a wider influence than the membership function parameters. Usually the determination of the greatest lower bound for <em>g<sub>min</sub></em> respectively the least upper bound for <em>g<sub>max</sub></em> has the highest impact. Typical values for the greatest lower bound are between 0.2 and 0.4, for the least upper bound between 0.7 and 0.9. In most cases the local <em>&beta;</em>-method leads to better results then the global one. Typical values for <em>&beta;</em> are between 1.1 and 1.5. The specific parameters for the single membership functions can be used for a final fine tuning.</p>
+<p>Since contrast enhancement with LFHH is very strong, moderate parameter settings must be selected for color images to avoid color artifacts. A good alternative for enhancing the contrast of color images is to extract the luminance component from the RGB image, then apply LFHH to the L image and merge it back to the RGB image using <a href="../../tools/LRGBCombination/LRGBCombination.html" title="../../tools/LRGBCombination/LRGBCombination.html">LRGBCombination.</a> Try both alternatives and take the best, or combine them.</p>
+<p>All used parameter values are documented in the console output and are stored in the FITS header of the resulting image. Additionally, the console output includes a measurement of the local contrast and the signal-to-noise ratio of the resulting image. These key figures may be helpful to assess the image quality.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Examples__">
+   <h4 class="pidoc_subsectionTitle">3.2&emsp;<a id="examples"></a>Examples</h4>
+<p>In the following example LFHH is applied to a H&alpha;-image of M16. On the left you can see the original target image and on the right the star mask used for the algorithm.</p>
+<img style="width:49%;height:auto;" src="images/img_M16.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_StarMask.jpg" alt=""/>
+<p><br/></p>
+<p>Typical results for the different membership function can be seen below. <br/>
+ Top left: Linear/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.10/HT median 0.23 <br/>
+ Top right: MTF/15x15/Clustering 0.05/FHH glb 0.4/FHH lub 0.6/Local FHH beta 1.20/midtone 0.50/HT median 0.23 <br/>
+ Mid left: Sigmoid/15x15/Clustering 0.05/FHH glb 0.4/FHH lub 0.6/Local FHH beta 1.05/gamma 5.0/midtone 0.50/HT median 0.23 <br/>
+ Mid right: Sigmoid Normalized/15x15/Clustering 0.05/FHH glb 0.4/FHH lub 0.6/Local FHH beta 1.05/gamma 5.0/midtone 0.50/ <br/>
+ &nbsp; &nbsp; &nbsp; &nbsp; &thinsp; &thinsp; &thinsp; &thinsp; &thinsp; &thinsp; HT median 0.23 <br/>
+ Bottom left: Gauss/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.20/sigma 0.60/HT median 0.23 <br/>
+ Bottom right: Gauss Normalized/15x15/Clustering 0.05/FHH glb 0.45/FHH lub 0.55/Local FHH beta 1.10/sigma 0.75/ <br/>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &thinsp; &thinsp; &thinsp; HT median 0.23</p>
+<img style="width:49%;height:auto;" src="images/img_Linear.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_MTF.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_Sigmoid.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_NormalizedSigmoid.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_Gauss.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_NormalizedGauss.jpg" alt=""/>
+<p><br/></p>
+<p>And finally a simple combination of the four images with <a href="../../tools/PixelMath/PixelMath.html" title="../../tools/PixelMath/PixelMath.html">PixelMath:</a></p>
+<img style="width:99%;height:auto;" src="images/img_Aggregate.jpg" alt=""/>
+<p><br/></p>
+<p>The next example, a synthetic L component of IC 410's core region, shows the results of stretching a linear image using the Masked MTF membership function. For comparison, the first image is stretched with AutoSTF, the second one with Masked MTF (parameter settings: Masked MTF/25x25/Clustering 0.05/Local FHH beta 1.20/MMTF strength 1.30/HT median 0.23).</p>
+<img style="width:49%;height:auto;" src="images/img_IC410HT.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_IC410LFHH.jpg" alt=""/>
+<p><br/></p>
+<p>For the same target as in the last example, but now as a non-linear SHO image, the following example shows the different results for contrast enhancement of RGB images. In the top row you can see on the left the original target image and on the right the star mask which was used for the algorithm, the lower row shows the effect of contrast enhancement with extracted L component on the left (parameter settings for L: Gauss/25x25/Clustering 0.05/FHH glb 0.35/FHH lub 0.85/Local FHH beta 1.20/sigma 0.55/HT median 0.22) and the result of the direct application of the script on the right (parameter settings: Gauss/25x25/Clustering 0.05/FHH glb 0.35/FHH lub 0.85/Local FHH beta 1.20/sigma 0.55/HT median 0.20).</p>
+<img style="width:49%;height:auto;" src="images/img_IC410_SHO.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_IC410_SHO_starmask.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_IC410_SHO_LRGBC.jpg" alt=""/>
+<img style="width:49%;height:auto;" src="images/img_IC410_SHO_LFHH.jpg" alt=""/>
+<p><br/></p>
+<p>And again a combination of the two images with <a href="../../tools/PixelMath/PixelMath.html" title="../../tools/PixelMath/PixelMath.html">PixelMath:</a></p>
+<img style="width:99%;height:auto;" src="images/img_IC410_SHO_Aggregate.jpg" alt=""/>
+</div>
+
+   </div>
+</div>
+
+<div class="pidoc_section" id="__references__">
+   <h3 class="pidoc_sectionTitle">References</h3>
+   <div id="references">
+      <p id="__reference_1__"><strong>[1]</strong> Hamid R. Tizhoosh, Manfred Fochem, <em>Fuzzy Histogram Hyperbolization for Image Enhancement</em>, Proc. of EUFIT'95, vol. 3, pp. 1695 - 1698, 1995</p>
+      <p id="__reference_2__"><strong>[2]</strong> H. R. Tizhoosh, G. Krell, B. Michaelis, <em>Locally adaptive Fuzzy Image Enhancement</em>, Computational Intelligence, Theory and Applications, Proc. of 5<sup>th</sup> Fuzzy Days, pp. 272 - 276, 1997</p>
+   </div>
+</div>
+
+<div class="pidoc_section" id="__related_tools__">
+   <h3 class="pidoc_sectionTitle">Related Tools</h3>
+   <div id="related_tools">
+<p><a href="../../tools/HistogramTransformation/HistogramTransformation.html" title="../../tools/HistogramTransformation/HistogramTransformation.html">HistogramTransformation</a>, <a href="../../tools/LocalHistogramEqualization/LocalHistogramEqualization.html" title="../../tools/LocalHistogramEqualization/LocalHistogramEqualization.html">LocalHistogramEqualization</a>, <a href="../../tools/StarMask/StarMask.html" title="../../tools/StarMask/StarMask.html">StarMask</a></p>
+   </div>
+</div>
+
+<hr class="separator"/>
+
+<div id="copyright">
+   <p>Copyright &copy; 2018 Frank Weidenbusch</p>
+</div>
+
+<div id="footer">
+   <p>Generated by the PixInsight Documentation Compiler script version 1.6.2 on 2018-03-10 20:33:05 UTC</p>
+</div>
+<br/>
+<br/>
+
+</div> <!-- contents -->
+
+</body>
+</html>
