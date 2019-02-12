@@ -1,11 +1,11 @@
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2017/02/16 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2019/02/16 00:00:00 UTC
 %% ****************************************************************************
 %%
-%% This file is part of MureDenoise Script Version 1.21
+%% This file is part of MureDenoise Script Version 1.22
 %%
-%% Copyright (C) 2012-2017 Mike Schuster. All Rights Reserved.
-%% Copyright (C) 2003-2017 Pleiades Astrophoto S.L. All Rights Reserved.
+%% Copyright (C) 2012-2019 Mike Schuster. All Rights Reserved.
+%% Copyright (C) 2003-2019 Pleiades Astrophoto S.L. All Rights Reserved.
 %%
 %% Redistribution and use in both source and binary forms, with or without
 %% modification, is permitted provided that the following conditions are met:
@@ -58,7 +58,7 @@
 }
 
 \copyright {
-   2012-2017 Mike Schuster. All Rights Reserved.
+   2012-2019 Mike Schuster. All Rights Reserved.
 }
 
 \brief {
@@ -78,7 +78,7 @@
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   This document describes MureDenoise Version 1.21.
+   This document describes MureDenoise Version 1.22.
 
    \subsection { Mixed Poisson-Gaussian noise hypothesis } {
       The mixed Poisson-Gaussian noise hypothesis used by MureDenoise is defined as y ~ &nu;&Rho;(x)/(&eta;&alpha;) + &Nu;(&delta;, &nu;&sigma;\sup{2}/&eta;), where
@@ -158,7 +158,7 @@
 
       The variance scale parameter is set to one to indicate that the nominal amount of denoising be performed. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
 
-      \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR).
+      \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Denoising artifacts typically take on a “checkerboard” pattern, visible with high stretch in the background areas of the denoised image.
 
       The cycle-spin count parameter provides an adjustable tradeoff between output quality and processing time. The default cycle-spin count of 8 typically provides very good quality results in reasonable time. With this default, denoising a 4K x 4K pixel image requires several minutes of time on a late 2015 processor and a single-threaded PixInsight PJSR platform.
 
@@ -331,7 +331,11 @@
             { Gain } {
                The gain of the detector in e-/DN.
 
-               If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script can provide an estimate.
+               Manufacture detector specifications usually include a gain value in e-/DN. Use this value.
+
+               If detector gain is unknown, the \sref FlatSNREstimator {FlatSNREstimator} script can provide an estimate (two flat images and one bias image must be provided).
+
+               Note that detector gains for binned and unbinned images likely differ.
             }
 
             { Gaussian noise } {
@@ -339,7 +343,11 @@
 
                Gaussian noise should be set to an estimate of detector read noise or an estimate of the quadrature sum of read noise and dark current noise.
 
-               If detector Gaussian noise is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate.
+               Manufacture detector specifications usually include a read noise value in e-. Divide this value by Detector Gain to obtain a value in DN, and use this result.
+
+               If detector Gaussian noise is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate (two bias or dark images must be provided).
+
+               Note that detector Gaussian noises for binned and unbinned images likely differ.
             }
 
             { Offset } {
@@ -347,7 +355,7 @@
 
                Offset must be set to 0 for a bias or dark-subtracted image, unless the image has a non-zero pedestal, in which case offset must be set equal to the pedestal.
 
-               If detector offset is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate.
+               If detector offset is unknown, the \sref DarkBiasNoiseEstimator {DarkBiasNoiseEstimator} script can provide an estimate (two bias images must be provided).
             }
          }
       }
@@ -359,7 +367,7 @@
             { \label variance_scale {Variance scale} } {
                This parameter scales hypothesis noise variance. A value of one corresponds to nominal hypothesis noise variance and a corresponding nominal amount of denoising. A value less than one will reduce the amount of denoising. A value greater than one will increase the amount of denoising.
 
-               \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR).
+               \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Denoising artifacts typically take on a “checkerboard” pattern, visible with high stretch in the background areas of the denoised image.
 
                To account for the effects of average combination image normalization and weighting, variance scale may be loaded from \e{ImageIntegration} generated image metadata or a process log file.
             }
@@ -374,6 +382,8 @@
 
             { Cycle-spin count } {
                Cycle-spin count provides an adjustable trade-off between output quality and processing time. Increasing the number of cycle-spins improves denoising quality, but also increases (nearly linearly) processing time.
+
+               The script works at multiple resolutions. To create the coarser resolutions, the script combines pixels from finer resolutions. There are multiple ways to choose which pixels to combine. Each cycle-spin chooses different pixels to combine, and performs a complete denoising operation. The results from all of the cycle-spins are averaged together to produced the final result. The net effect is to average out the variations in noise estimation due to pixel choice, and so gives a better result.
 
                The default cycle-spin count of 8 typically provides very good quality results in reasonable time. With this default, denoising a 4K x 4K pixel image requires several minutes of time on a late 2015 processor and a single-threaded PixInsight PJSR platform.
             }
@@ -421,7 +431,9 @@
 
    \s{ Warning }: Do not combine denoised images. Signal-to-noise ratio (SNR) will be enhanced by combining noisy images and denoising the result. Combined images must be equally exposed, have the same pixel resolution, and be registered by projective transformation with no distortion correction.
 
-   \s{ Warning }: Excessively large variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Underestimates of detector gain, overestimates of detector Gaussian noise, and underestimates of detector offset risk similar problems.
+   \s{ Warning }: Excessively large Denoise Variance scale values risk the generation of denoising artifacts and the loss of signal-to-noise ratio (SNR). Underestimates of detector gain, overestimates of detector Gaussian noise, and underestimates of detector offset risk similar problems. Denoising artifacts typically take on a “checkerboard” pattern, visible with high stretch in the background areas of the denoised image.
+
+   \s{ Warning }: Even if no denoising artifacts are visible, incorrect parameters or excessively large Denoise Variance scale values can result is loss of signal. In general, avoid the temptation to get “more” denoising by increasing the Denoise Variance scale parameter. If more denoising is needed, use a different method later during image processing.
 }
 
 \relatedscripts {
@@ -451,4 +463,4 @@
 \make
 
 %% ****************************************************************************
-%% MureDenoise.pidoc - Released 2017/02/16 00:00:00 UTC
+%% MureDenoise.pidoc - Released 2019/02/16 00:00:00 UTC
