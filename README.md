@@ -1,4 +1,5 @@
-# Reference-Documentation
+PixInsight Reference Documentation
+----------------------------------
 
 This repository is obsolete and will no longer be updated.
 
